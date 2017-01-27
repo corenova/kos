@@ -1,0 +1,8 @@
+module node-red-nest {
+  prefix 'nest';
+  import node-red { prefix red; }
+	
+  container nest-config {
+    uses red:node;
+  }
+}

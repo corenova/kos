@@ -1,0 +1,20 @@
+'use strict';
+
+co = require('co')
+mqtt = require('mqtt')
+BSON = require('bson')
+
+class KineticObjectStream extends Stream {
+
+  push: (topic..., data) ->
+  
+  
+}
+
+kos = ->
+
+kos.connect = (url) ->
+  mqtt.connect(url)
+  
+
+module.exports = kos

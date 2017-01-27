@@ -1,0 +1,66 @@
+submodule node-red-trigger {
+  belongs-to node-red { prefix red; }
+  import kos-react { prefix react; }
+
+  grouping trigger {
+    uses red:node {
+      augment "exec/input" {
+        uses red:message;
+      }
+      augment "exec/output" {
+        uses red:message;
+      }
+    }
+    description
+      "
+      <p>Creates two messages on the output separated by a timeout whenever <i>any</i> <code>msg</code> arrives on the input.</p>
+
+      <p>For example, this can be used to toggle a Raspberry PI GPIO pin on and off.</p>
+
+      <p>The two output states can be specified as can the duration of the timer.
+      Either output can be set to a value, or templated from the inbound
+      <code>msg</code> using mustache syntax. <pre>The payload is {{payload}}</pre></p>
+
+      <p>If the <code>msg.payload</code> is an object then setting the output to
+      <i>existing payload</i> will pass the complete payload object through.</p>
+
+      <p>Optionally the timer can be extended by being retriggered... or not.</p>
+
+      <p>By setting the first output to <i>nothing</i>, and selecting extend timer - a watchdog timer can be created.
+      No output will happen as long as repeated inputs occur within the timeout period.</p>
+      <p>Setting the timer to 0 creates an \"infinite\" timeout - the first output will happen but the second
+      never will, and neither can the first be retriggered - so a true one shot.</p>
+
+      <p>If a <code>msg.reset</code> property is present, or the <code>msg.payload</code>
+      matches the optional reset value, any timeout currently in progress
+      will be cleared and the second output will not happen.</p>
+
+      <p>The blue status icon will be visible while the node is active.</p>
+      ";
+    leaf op1 {
+      red:label "Send";
+      type operation-input;
+      default 1;
+    }
+    leaf op2 {
+      red:label "Then Send";
+      type operation-input;
+      default 0;
+    }
+    leaf duration {
+      type duration-value;
+      mandatory true;
+    }
+    leaf units {
+      type duration-units;
+    }
+    leaf extend {
+      type boolean;
+      red:label "extend delay if new message arrives";
+    }
+    leaf reset {
+      type string;
+    }
+  }
+  
+}

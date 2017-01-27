@@ -1,0 +1,124 @@
+module node-red {
+  prefix red;
+
+  import ietf-inet-types { prefix inet; }
+  
+  identity red-category;
+  identity config {
+    base red-category;
+  }
+  identity function {
+    base red-category;
+  }
+  /*
+   * Type Definitions
+   */ 
+  typedef uri {
+    type inet:uri;
+  }
+  typedef color {
+    type union {
+      type string {
+        description "hex color";
+        pattern '#[a-fA-F0-9]+';
+      }
+      type empty;
+    }
+  }
+  typedef operation-input {
+    type union {
+      type red:flow;
+      type red:global;
+      type number;
+      type boolean;
+      type red:json;
+      type red:payload;
+      type string;
+      type empty;
+    }
+  }
+  typedef duration-value {
+    type uint16;
+  }
+  typedef duration-units {
+    type enumeration {
+      enum "ms" {
+        description "Miliseconds";
+      }
+      enum "sec" {
+        description "Seconds";
+      }
+      enum "min" {
+        description "Minutes";
+      }
+      enum "hour" {
+        description "Hours";
+      }
+    }
+    default "ms";
+  }
+  /*
+   * Groupings
+   */
+  grouping node {
+    anydata RED;
+    leaf category {
+      type identityref {
+        base node-category;
+      }
+      mandatory true;
+    }
+    leaf name {
+      type string;
+    }
+    leaf color {
+      type red:color;
+    }
+    leaf label {
+      type string;
+      mandatory true;
+    }
+    leaf icon {
+      type red:uri;
+    }
+    action exec {
+      description
+        "Invoked by RED when a given Node is triggered (e.g. 'input' event)
+
+        
+        ";
+      input {
+        // should be augmented by children
+      }
+      output {
+        // should be augmented by children
+      }
+    }
+    action edit {
+      description
+        "Invoked by RED when a given Node is being edited (e.g. oneditprepare)
+
+         Implementating this is optional, especially if using
+         react:component for rendering the node.
+        ";
+    }
+    action save {
+      description
+        "Invoked by RED when a given Node is being saved (e.g. oneditsave)
+
+         Implementing this is optional, especially if using
+         react:component for rendering the node.
+        ";
+    }
+    action send {
+      input {
+        uses red:message;
+      }
+    }
+  }
+  
+  grouping message {
+    anydata payload;
+  }
+  
+}

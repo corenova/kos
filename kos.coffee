@@ -2,13 +2,16 @@
 
 co = require('co')
 url = require('url')
-mqtt = require('mqtt') # should make this an optional dependency
 stream = require('stream')
 through2 = require('through2')
+
+# make this an optional dependency
+try mqtt = require('mqtt')
 
 # expose KineticObjectStream
 module.exports = kos['default'] = kos.kos = kos = KineticObjectStream
 
+# expose additional classes for external construction/extensions
 module.exports.Object = KineticObject
 module.exports.Action = KineticAction
 
@@ -18,37 +21,41 @@ pushUnique = (items...) ->
 
 class KineticObjectStream extends stream.Duplex
 
-  constructor: (origin, opts={}) ->
+  constructor: (source) ->
     # allow usage w/o the new operator
     unless this instanceof KineticObjectStream
       return new KineticObjectStream arguments...
 
-    opts.readableObjectMode = true
-    opts.writableObjectMode = true
-    
-    super opts
-    
-    @comsumes = []
+    super {
+      readableObjectMode: true
+      writableObjectMode: true
+    }
+
+    @queue = []
+
+    @consumes = []
     @provides = []
-    @ignores = [] # explicitly disabled key(s)
+    @ignores = []
     @actions = []
 
-    self = this
-    
     # the core essence of KOS 
+    self = this
     core = through2.obj (chunk, enc, callback) ->
       unless chunk instanceof KineticObject
         return callback new Error "chunk is not a KineticObject"
-      return callback() if chunk.key in self.ignores
-      
-      core.push chunk if chunk.key in self.provides
-      actions = self.actions[chunk.key]
-      # TODO: should call this parallel
-      kf.exec chunk for kf in actions ? []
+      unless chunk.key in self.ignores
+        core.push chunk if chunk.key in self.provides
+        action.exec chunk for action in self.match(chunk.key) # execute in parallel?
       callback()
     this.pipe(core).pipe(this)
     
-    @queue = []
+    @connect source if source?
+    
+  #--------------------------------------------------------
+  # Interfacing with KOS's source entity link
+  #--------------------------------------------------------
+  connect: (source) ->
+    self = this
     @link = new Promise (resolve, reject) ->
       # url.parse(origin)
       #
@@ -60,7 +67,7 @@ class KineticObjectStream extends stream.Duplex
       mq.on 'message', (topic, message, packet) ->
         self.queue.push new KineticObject topic, message
 
-  # subscribe to upstream link for topic/key(s)
+  # subscribe from upstream link for topic/key(s)
   consume: (keys...) ->
     co ->
       link = yield @link
@@ -73,34 +80,89 @@ class KineticObjectStream extends stream.Duplex
     pushUnique.apply @provides, keys.filter(String)
     return this
 
+  # Convenience function for pushing KineticObject into Readable stream
+  # 
+  # Normally, this shouldn't be needed as the input objects should be
+  # coming from the `link`. It's basically a way for an external
+  # entity to interface with the internal dataflow state. Should use
+  # sparingly.
+  # 
+  # i.e. feed('hello',someObj)
+  feed: (key, val) -> @push new KineticObject key, val
+
+  #--------------------------------------------------------
+  # Interfacing with KineticActions within KOS
+  #--------------------------------------------------------
+
   # Primary entry point to define a new KineticAction within KOS
   # 
-  # returns a KineticAction
+  # returns: a new KineticAction
   in: (inputs...) ->
     action = (new KineticAction inputs).join(this)
-    @insert action
+    @bind action
     return action
-
-  bind: (action) ->
-    pushUnique.call @actions, action
-    return this
-
-  # Convenience function for expressing singular input/output transform
+    
+  # Alternative convenience function for expressing singular
+  # input/output transform
   # 
-  # i.e. io('hello','world').bind(fn)
+  # i.e. io('my/input','my/output').bind(fn)
+  #
+  # returns: a new KineticAction
   io: (input, output) ->
     unless arguments.length is 2
       throw new Error "[io] must supply exactly two arguments (input, output)"
     @in(input).out(output)
 
-  # Convenience function for pushing KineticObject into Readable stream
-  # 
-  # Normally, this shouldn't be needed as the input objects should be
-  # coming from the `link`. It's basically a way for an external
-  # entity to interface with the internal dataflow state.
-  # 
-  # i.e. feed('hello',someObj)
-  feed: (key, val) -> @push new KineticObject key, val
+  # Alternative facility to insert an *existing* KineticAction into KOS
+  #
+  # Bound KineticActions will be triggered by matching key/topic(s) flowing within KOS
+  #
+  # Please note that binding KineticAction does NOT automatically
+  # result in the KineticAction also feeding it's generated output back into KOS. 
+  #
+  #
+  # returns: current KOS
+  bind: (action, opts={}) ->
+    unless action instanceof KineticAction
+      throw new Error "[KOS:bind] must supply a valid KineticAction"
+    opts.forceDuplex ?= false
+    pushUnique.call @actions, action
+    action.
+    return this
+
+  unbind: (action) ->
+    return this unless action instanceof KineticAction
+    idx = @actions.indexOf(action)
+    @actions.splice idx, 1 unless idx < 0
+    return this
+
+  # returns list of matching KineticAction(s) that will be triggered
+  # by the specified key/topic.
+  #
+  # TODO: there is an opportunity for optimization here by creating a
+  # mapping cache (but need to deal with each actions that may
+  # dynamically change)
+  match: (key) -> @actions.filter (ka) -> key in ka.inputs
+
+  #--------------------------------------------------------
+  # KOS Duplex Stream Implementation
+  #--------------------------------------------------------
+
+  _read: ->
+    while (@queue.length) {
+      ko = @queue.shift()
+      continue unless ko instanceof KineticObject
+      @push ko
+    }
+    
+  _write: (chunk, encoding, cb) ->
+    unless chunk instanceof KineticObject
+      cb new Error 'chunk must be KineticObject (should pipe into transform first)'
+    else co ->
+      link = yield @link
+      link.publish(chunk.key, chunk.serialize())
+      cb()
+
 
   #
   # Advanced Usage (typically used for troubleshooting)
@@ -115,23 +177,6 @@ class KineticObjectStream extends stream.Duplex
   enable: (keys...) ->
     @ignores.filter (el) -> keys.indexOf(el) < 0
     return this
-
-  # custom implementation for Readable
-  _read: ->
-    while (@queue.length) {
-      ko = @queue.shift()
-      continue unless ko instanceof KineticObject
-      @push ko
-    }
-    
-  # custom implementation for Writable
-  _write: (chunk, encoding, cb) ->
-    unless chunk instanceof KineticObject
-      cb new Error 'chunk must be KineticObject (should pipe into transform first)'
-    else co ->
-      link = yield @link
-      link.publish(chunk.key, chunk.serialize())
-      cb()
 
 
 class KineticObject
@@ -182,6 +227,9 @@ class KineticAction
   exec: (ko) ->
     unless ko instanceof KineticObject
       throw new Error "[KineticAction:exec] cannot execute without KineticObject"
+    unless typeof @action is 'function'
+      console.warn "[KineticAction:exec] no action function bound for (#{@inputs} -> #{@outputs}), skipping"
+      return
     @set ko.key, ko.value
     @action.apply this, ko.key, ko.value
 

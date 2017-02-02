@@ -1,22 +1,26 @@
 {
   "name": "kos",
-  "version": "0.0.1",
-  "description": "A visual flow composer for distributed edge computing",
+  "version": "1.0.0",
+  "description": "A dataflow streaming framework for creating awesome state machines",
   "bin": {
-    "kos": "./kos-cli.js"
+    "kos": "./bin/kos.js"
   },
   "main": "index.js",
-  "scripts": {
-    "test": "mocha"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/corenova/kos.git"
   },
   "keywords": [
     "adaptive",
-    "fabric",
-    "reactive"
+    "dataflow",
+    "react",
+    "kinetic",
+    "stream",
+    "pipeline",
+    "pipe",
+    "flow",
+    "action",
+    "transform"
   ],
   "author": "Peter K. Lee <peter@corenova.com>",
   "license": "Apache-2.0",
@@ -24,17 +28,10 @@
     "url": "https://github.com/corenova/kos/issues"
   },
   "homepage": "https://github.com/corenova/kos#readme",
-  "devDependencies": {
-    "typescript": "^2.1.4"
+  "scripts": {
+    "test": "mocha"
   },
   "dependencies": {
-    "@types/express": "^4.0.34",
-    "@types/minimist": "^1.2.0",
-    "co": "^4.6.0",
-    "config": "^1.24.0",
-    "express": "^4.14.0",
-    "minimist": "^1.2.0",
-    "node-red": "^0.15.3",
-    "yang-js": "^1.0.0"
+    "delegates": "^1.0.0"
   }
 }

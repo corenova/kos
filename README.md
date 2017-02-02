@@ -1,37 +1,21 @@
 # Kinetic Object Stream
 
-Simple, unopionated, data exchange framework that just works.
+Simple, unopionated*, dataflow transform streaming framework that
+makes your apps more interesting.
 
-input restconf
-  - data
-  - operation
-output restconf
-  
-input netconf
-  - data
-  - operation
-output netconf
+## DataFlow Pipelines
 
-input notification
-output notification
+kos1.pipe(kos2)
+kos1 -> read -> _read -> [buffer] -> kos2 -> write -> _write -> [source]
 
-function rpc
-function action
-function read
-function create
-function update
-function patch
-function delete
+kos.Action((hi) => {
 
-yang-module (config node, like mqtt broker)
+}).in('foo','bar').out('foo+bar')
 
 
+Simply **consume** the objects you need and **provide** the objects
+you have to the world around you. 
 
-
-Simply **pull** the objects you need closer to you and **push** the
-objects you have to the world around you. The fabric automatically
-adapts to the *movement* of objects and self-organizes for optimal
-performance.
 
 ```javascript
 import Kos, {pull, push} from 'kos'

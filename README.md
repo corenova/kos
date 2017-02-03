@@ -29,51 +29,23 @@ $ npm install
 
 ## Usage Example
 
-First, let's start with a *trivial* scenario of making a web request and
-getting back the result.
+First, let's start with a **trivial** scenario of making a web request
+and getting back the result. We'll be utilizing available
+[@kos/http](./flows/http) flow module for this exercise.
 
 ```javascript
-const kos = require('kos')
-const WebFlow = kos.flow
-  .in('http/request').out('http/response').bind(function() {
-    let req = this.get('http/request')
-    // ...some code to make the actual http request
-	this.send('http/response', "a fake response")
-  })
-  .in('http/request','http/response').out('http/transaction').bind(function(){
-    let [ req, res ] = this.get(...this.inputs)
-	this.send('http/transaction', { request: req, response: res })
-  })
+const HttpFlow = require('@kos/http')
+HttpFlow
+  .on('http/response/body', data => console.log(data))
+  .feed('http/request/get/url', 'http://www.google.com')
 ```
 
-Here's how you can initiate the flow:
 
-```
-WebFlow
-  .on('http/response', data => console.log(data))
-  .on('http/transaction', data => console.log(data))
-  .feed('http/request','http://www.google.com')
-```
 
-Wait, you're probably wondering, doesn't this only make things far
-more complicated? I mean, you could've achieved similar results with
-something simpler like this:
-
-```javascript
-const request = require('request')
-request('http://www.google.com', (error, response, body) => {
-  if (!error && response.statusCode == 200) {
-    console.log(body)
-  }
-})
-```
-
-Well, hang tight, we're getting to the good stuff.
-
-Let's make things a bit more *interesting* and say you now want to
+Let's make things a bit more **interesting** and say you now want to
 find images from the requested URL.
 
-But instead of adding to the original `WebFlow`, let's start a new one.
+But instead of adding to the original `HttpFlow`, let's start a new one.
 
 ```javascript
 const FindImagesFlow = kos.flow

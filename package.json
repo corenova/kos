@@ -1,7 +1,7 @@
 {
   "name": "kos",
   "version": "1.0.0",
-  "description": "A dataflow streaming framework for creating awesome state machines",
+  "description": "A dataflow streaming framework for creating awesome data pipelines",
   "bin": {
     "kos": "./bin/kos.js"
   },

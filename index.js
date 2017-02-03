@@ -1,4 +1,4 @@
-const KineticObjectStream = require('./lib/kos')
+const KineticObjectStream = require('./lib/stream')
 
 function kos(options) {
   return new KineticObjectStream(options)

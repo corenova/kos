@@ -1,42 +1,17 @@
 # Kinetic Object Stream
 
-Simple, unopionated*, dataflow transform streaming framework that
-makes your apps more interesting.
+Simple, unopionated,
+[dataflow](https://en.wikipedia.org/wiki/Dataflow) streaming framework
+for creating *awesome* data pipelines for your apps.
 
-## DataFlow Pipelines
+It's a data-centric paradigm for moving objects through a pipeline of
+computational actors that can execute concurrently.
 
-kos1.pipe(kos2)
-kos1 -> read -> _read -> [buffer] -> kos2 -> write -> _write -> [source]
+Conduct [data science](https://en.wikipedia.org/wiki/Data_science)
+experiments, share your flows, and embrace KOS.
 
-kos.Action((hi) => {
-
-}).in('foo','bar').out('foo+bar')
-
-
-Simply **consume** the objects you need and **provide** the objects
-you have to the world around you. 
-
-
-```javascript
-import Kos, {pull, push} from 'kos'
-
-// supports YANG data model schema
-Kos.use('module hello { leaf world { type string; } }')
-
-// this example simply talks to itself...
-pull('hello:world').on('data', (msg, from) => console.log(`got: ${msg} from: #{from}`) );
-push('hello:world').write('success!');
-
-```
-
-Obviously, it gets *far more interesting* when you do this across
-multiple instances running on different nodes. Refer to
-[Distributed KOS](#distributed-kos) section for more
-details.
-
-Nevertheless, embracing `Kos` within the same application also has
-useful value (i.e. serving as internally consistent schema-validated
-*store* for [React](http://facebook.github.io/react) web apps).
+  [![NPM Version][npm-image]][npm-url]
+  [![NPM Downloads][downloads-image]][downloads-url]
 
 ## Installation
 
@@ -52,98 +27,200 @@ $ cd kos
 $ npm install
 ```
 
-## Distributed KOS
+## Usage Example
 
-
-
-### Simple Client-to-Server (one-one) Example
-
-Here we consider a simple two-tier web application architecture with a
-communication between a web browser client and a web application
-server.
-
-#### Client-side Source
+First, let's start with a *trivial* scenario of making a web request and
+getting back the result.
 
 ```javascript
-import Kos, {pull, push} from 'kos'
-import OAuthSchema from 'kos-oauth.yang'
+const kos = require('kos')
+const WebFlow = kos.flow
+  .in('http/request').out('http/response').bind(function() {
+    let req = this.get('http/request')
+    // ...some code to make the actual http request
+	this.send('http/response', "a fake response")
+  })
+  .in('http/request','http/response').out('http/transaction').bind(function(){
+    let [ req, res ] = this.get(...this.inputs)
+	this.send('http/transaction', { request: req, response: res })
+  })
+```
 
-var Store = Kos.createStore()
+Here's how you can initiate the flow:
 
-const HelloWorldSchema = (`
-  module hello-world {
-    prefix hello;
-	container world {
-	  leaf message { type string; }
-    }
+```
+WebFlow
+  .on('http/response', data => console.log(data))
+  .on('http/transaction', data => console.log(data))
+  .feed('http/request','http://www.google.com')
+```
+
+Wait, you're probably wondering, doesn't this only make things far
+more complicated? I mean, you could've achieved similar results with
+something simpler like this:
+
+```javascript
+const request = require('request')
+request('http://www.google.com', (error, response, body) => {
+  if (!error && response.statusCode == 200) {
+    console.log(body)
   }
-`)
+})
+```
 
-Kos.use(OAuthSchema, HelloWorldSchema)
+Well, hang tight, we're getting to the good stuff.
 
-push("oauth:identity").write({
-  user: 'test',
-  pass: 'dummy'
-}).pipe(Store)
+Let's make things a bit more *interesting* and say you now want to
+find images from the requested URL.
 
-pull("hello:world").pipe(Store)
+But instead of adding to the original `WebFlow`, let's start a new one.
+
+```javascript
+const FindImagesFlow = kos.flow
+  .in('http/response').out('http/response/html').bind(function() {
+    // some code to detect the response is HTML
+  })
+  .in('http/response/html').out('html/image').bind(function() {
+    let html = this.get('http/response/html')
+	// ... some code to scan html and extract image tags
+	let images = []
+	for (let img of images) {
+	  this.send('html/image',img)
+    }
+  })
+// define the pipeline WebFlow -> FindImagesFlow
+WebFlow.pipe(FindImagesFlow)
 
 ```
 
-### Server-side Source
+Now, when you `feed` the `http/request` into `WebFlow` the
+`FindImagesFlow` will now get you all the image tags found.
+
+Great, but what you really wanted was the actual images, right?
+
+Let's make another flow for this:
+
+```javascript
+const FetchImageFlow = kos.flow
+  .in('html/image').out('http/request').bind(function() {
+    let imgtag = this.get('html/image')
+	// ... some code should go here to grab src attribute
+	this.send('http/request', 'url/to/image')
+   })
+// define the pipeline FindImagesFlow -> FetchImageFlow -> WebFlow
+FindImagesFlow.pipe(FetchImageFlow).pipe(WebFlow)
 ```
 
+Wait, isn't that a **circular loop** back into `WebFlow`?
+
+Yep, that original *complicated* `WebFlow` block just became a lot
+more useful and reusable. The `FetchImageFlow` will trigger for every
+`html/image` tag found in a given `http/response/html` data chunk and
+initiate a new `http/request` into the `WebFlow`.
+
+While it's a very **powerful** construct to inherently support
+*circular* pipelines, care must be taken to prevent *infinite*
+loops. For example, if the subsequent `http/request` from
+`FetchImageFlow` was made to yet another HTML page instead of to an
+image, then the operation will continue to *loop forever* until no
+further HTML page links were found (unless of course, that's exactly
+what you wanted it to do).
+
+To finish off this *trivial* example, let's grab images from `WebFlow`
+and send it along to some cognitive analytics service to find out if
+these are pictures of people.
+
+```javascript
+const AnalyzeImageFlow = kos.flow
+  .in('http/response').out('http/response/image').bind(function() {
+    let res = this.get('http/response')
+	// ... some code to check mimetype of res
+	let mimetype = 'image' 
+	if (mimetype === 'image')
+	  this.send('http/response/image', res)
+  })
+  .in('http/response/image').out('image/jpeg','image/png').bind(function() {
+    // we only care about JPEG and PNG files
+	// send either one based on what we find
+  })
+  .in('image*','image/analysis/provider').out('image/analysis/result').bind(function() {
+    let [ img, service ] = this.get(...this.inputs)
+	let res = service.analyze(img)
+	this.send('image/analysis/result', res)
+  })
+  .in('image/analysis/result').out('picture/people').bind(function() {
+    let analysis = this.get('image/analysis/result')
+    // some code to detect if result was a picture
+	if (analysis.type == 'picture' && analysis.hasPeople) {
+  	  this.send('picture/people', analysis.source)
+	}
+  })
+// define the pipeline WebFlow -> AnalyzeImageFlow
+WebFlow.pipe(AnalyzeImageFlow)
 ```
 
-The underlying fabric will continuously trace the path of objects in
-motion and adapt accordingly to attain optimal equilibrium based on a
-set of primitive laws of physics.
+Now, to put the dataflow to work:
 
-Every time a `pull/push` operation takes place, the logical distance
-between the transacting nodes is adjusted based on the computed pull
-vs. push force calculation. Over time, the participating nodes will
-self-organize into logical clusters to optimize the relationship
-between objects.
+```javascript
+WebFlow
+  .on('picture/people',x => console.log('found picture!'))
+  .feed('image/analysis/provider', someAnalysisInstance)
+  .feed('http/request','http://www.google.com')
+```
 
-### Discovering Objects
+There you have it! You now have a web scraper that can find pictures
+of people at arbitrary URLs. You can find a more complete version of
+this in the [examples](./examples) folder of this repository.
 
-The fabric brokers relationships based on the *data model schema* of
-the underlying object(s) in question. When a new node joins the KOS
-fabric, it makes `pull` request(s) containing the *data model schema*
-of the objects it wants. It also makes `push` request(s) containing
-the *data model schema* of the objects it provides. An established
-`pull` request opens a new **readable** stream while an established
-`push` request opens a new **writable** stream.
+Welcome to [Dataflow Programming](https://en.wikipedia.org/wiki/Dataflow_programming).
 
-Successful transmit/receive of objects are achieved when there is an
-overlap of the propagation domain between the two participating nodes.
+## Multiple DataFlow Instances
 
-### Establishing Trust
+For simple use cases, having just one instance of a KOS dataflow
+pipeline may be sufficient.
 
-The trust relationship between communicating nodes is established
-utilizing the same `pull/push` negotiation. Each party makes *pull*
-request(s) with the *data model schema* of the object for
-authentication/authorization it wants from each other.
+However, if you need to have multiple instances within your
+application to manage separate dataflow transactions or to wire up the
+flows differently than originally defined, read on.
 
-### Pulling Objects
+Continuing from the [Usage Example](#usage-example) above, let's say
+you just want to re-use the `WebFlow` without the other flows being
+associated.
 
-The strength of your `pull` increases as you accumulate more
-objects. It is magnified between nodes that share more similar
-objects. Stronger the `pull`, the receiver can fetch objects from
-greater distances, which can span multiple hops across nearby
-nodes. When you get too heavy and cannot store any more objects
-(i.e. out of storage) you may *decide* to [explode](#Exploding Node)
-and become a *nebula* (cluster of stars). If you explicitly choose
-*not* to [explode](#Exploding Node) but instead adapt to the
-accumulation by destroying existing objects, you then become a *black
-hole*. A *black hole* node serves as a garbage collector within the
-KOS fabric and is a useful construct to constrain increasing entropy.
+```javascript
+let myWebFlow = new WebFlow
+```
 
-### Pushing Objects
+You can also do `WebFlow()`, which is equivalent to `new
+WebFlow`. This effectively creates a new instance of the KOS dataflow
+without any of the pre-existing `pipe` relationships.
 
-The strength of your `push` increases as you provide more objects to
-interested nodes. It is magnified between nodes that share less
-similar objects. Stronger the `push`, the transmitter can send
-objects across greater distances, which can span multiple hops across
-nearby nodes. If the object you `push` does not have any interested
-consumers, it may never traverse beyond the transmitting node.
+With your own instance of `WebFlow`, you can `inject` additional flow
+rules, or `pipe` it to other flows:
+
+```javascript
+let myAnalyzeImageFlow = new AnalyzeImageFlow
+myWebFlow
+  .in('http/response').bind(function(key, value) {
+    // do something
+  })
+  .pipe(AnalyzeImageFlow)
+```
+
+## State Management
+
+TBD...
+
+
+## License
+  [Apache 2.0](LICENSE)
+
+This software is brought to you by
+[Corenova Technologies](http://www.corenova.com). We'd love to hear
+your feedback.  Please feel free to reach me at <peter@corenova.com>
+anytime with questions, suggestions, etc.
+
+[npm-image]: https://img.shields.io/npm/v/kos.svg
+[npm-url]: https://npmjs.org/package/kos
+[downloads-image]: https://img.shields.io/npm/dt/kos.svg
+[downloads-url]: https://npmjs.org/package/kos

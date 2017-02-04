@@ -33,7 +33,7 @@ experiments, share your flows, and embrace KOS.
    └─╼ http/response        ╾─╼ ƒ(extractBody) ╾─╼ http/response/body
 ```
 
-The above render was generated for [HTTP Flow](./flows/http) module
+The above render was generated for [kos:flow:http](./flows/http.js) module
 using the included `kos` CLI utility.
 
 ## Installation
@@ -52,10 +52,11 @@ more *named output* **Object(s)**.
 
 First, let's start with a **trivial** scenario of making a web request
 and getting back the result. We'll be utilizing one of the built-in
-flow module ([HttpFlow](./flows/http)) for this exercise.
+flow module ([kos:flow:http](./flows/http.js)) for this exercise.
 
 ```javascript
-const HttpFlow = require('./flows/http')
+const kos = require('kos')
+const HttpFlow = kos.load('flows/http')
 HttpFlow
   .on('http/response/body', data => console.log(data))
   .feed('module/superagent', require('superagent'))

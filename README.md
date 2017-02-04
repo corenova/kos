@@ -96,7 +96,6 @@ const FindImagesFlow = kos.flow
   })
 // define the pipeline WebFlow -> FindImagesFlow
 WebFlow.pipe(FindImagesFlow)
-
 ```
 
 Now, when you `feed` the `http/request` into `WebFlow` the

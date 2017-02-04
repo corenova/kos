@@ -19,19 +19,19 @@ const HttpFlow = kos.flow
   .out('http/request/delete','http/request/patch')
   .bind(function classify(msg) {
     let req = msg.value
-	if (req.method === 'GET')  this.send('http/request/get', req)
-	if (req.method === 'POST') this.send('http/request/post', req)
+    if (req.method === 'GET')  this.send('http/request/get', req)
+    if (req.method === 'POST') this.send('http/request/post', req)
   })
   .in('http/request/get').out('http/response').bind(invoke)
   .in('http/request/get/url').out('http/request/get').bind(function simpleGet(msg) {
-	this.send({ url: msg.value })
+    this.send({ url: msg.value })
   })
   .in('http/request/post').out('http/response').bind(invoke)
   .in('http/request/put').out('http/response').bind(invoke)
   .in('http/request/delete').out('http/response').bind(invoke)
   .in('http/request/patch').out('http/response').bind(invoke)
   .in('http/response').out('http/response/body').bind(function extractBody(msg) {
-	this.send(msg.value.body)
+    this.send(msg.value.body)
   })
 
 module.exports = HttpFlow
@@ -44,12 +44,12 @@ function invoke(msg) {
   switch (method) {
   case 'get':
   case 'delete':
-	request[method](url).end((err, res) => { if (!err) this.send(res) })
-	break;
+    request[method](url).end((err, res) => { if (!err) this.send(res) })
+    break;
   case 'post':
   case 'put':
   case 'patch':
-	request[method](url).data(data).end((err, res) => { if (!err) this.send(res) })
-	break;
+    request[method](url).data(data).end((err, res) => { if (!err) this.send(res) })
+    break;
   }
 }

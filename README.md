@@ -2,9 +2,9 @@
 
 Simple, unopionated,
 [dataflow](https://en.wikipedia.org/wiki/Dataflow) streaming framework
-for creating *awesome* data pipelines for your apps.
+for creating **awesome data pipelines** for your apps.
 
-It's a data-centric paradigm for moving objects through a pipeline of
+It's a **data-centric** paradigm for moving *objects* through a pipeline of
 computational actors that can execute concurrently.
 
 Conduct [data science](https://en.wikipedia.org/wiki/Data_science)
@@ -13,34 +13,67 @@ experiments, share your flows, and embrace KOS.
   [![NPM Version][npm-image]][npm-url]
   [![NPM Downloads][downloads-image]][downloads-url]
 
+```
+├─ label: kos:flow:http
+├─ summary: Provides HTTP transaction flow utilizing 'superagent' module
+├─ requires
+│  └─ module/superagent
+└──┐
+   │                                            ┌╼ http/request/get
+   │                                            ├╼ http/request/post
+   ├─╼ http/request         ╾─╼ ƒ(classify)    ╾┼╼ http/request/put
+   │                                            ├╼ http/request/delete
+   │                                            └╼ http/request/patch
+   ├─╼ http/request/get     ╾─╼ ƒ(invoke)      ╾─╼ http/response
+   ├─╼ http/request/get/url ╾─╼ ƒ(simpleGet)   ╾─╼ http/request/get
+   ├─╼ http/request/post    ╾─╼ ƒ(invoke)      ╾─╼ http/response
+   ├─╼ http/request/put     ╾─╼ ƒ(invoke)      ╾─╼ http/response
+   ├─╼ http/request/delete  ╾─╼ ƒ(invoke)      ╾─╼ http/response
+   ├─╼ http/request/patch   ╾─╼ ƒ(invoke)      ╾─╼ http/response
+   └─╼ http/response        ╾─╼ ƒ(extractBody) ╾─╼ http/response/body
+```
+
+The above render was generated for [HTTP Flow](./flows/http) module
+using the included `kos` CLI utility.
+
 ## Installation
 
 ```bash
-$ npm install kos
+$ npm install -g kos
 ```
 
-For development/testing, clone from the repo and initialize:
+## Definition
 
-```bash
-$ git clone https://github.com/corenova/kos
-$ cd kos
-$ npm install
-```
+A **Kinetic Object Stream** contains a **Flow** of **Actions** that
+operates on one or more *named input* **Object(s)** to produce one or
+more *named output* **Object(s)**.
 
-## Usage Example
+## Using Flows
 
 First, let's start with a **trivial** scenario of making a web request
-and getting back the result. We'll be utilizing available
-[@kos/http](./flows/http) flow module for this exercise.
+and getting back the result. We'll be utilizing one of the built-in
+flow module ([HttpFlow](./flows/http)) for this exercise.
 
 ```javascript
-const HttpFlow = require('@kos/http')
+const HttpFlow = require('./flows/http')
 HttpFlow
   .on('http/response/body', data => console.log(data))
+  .feed('module/superagent', require('superagent'))
   .feed('http/request/get/url', 'http://www.google.com')
 ```
 
+The above example illustrates how you can interact with a **Flow**
+created using the `kos` library. You `feed` the **Stream** with a
+*named input* `http/request/get/url` and handle the resulting *named
+output* `http/response/body`. Underneath the hood, a number of
+**Action(s)** are triggered until you get back the *named data* of
+interest.
 
+### feed(key, value)
+
+### on(key, callback)
+
+## Creating Flows
 
 Let's make things a bit more **interesting** and say you now want to
 find images from the requested URL.

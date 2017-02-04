@@ -1,9 +1,8 @@
 'use strict';
 
-const KineticStream = require('./stream')
-const KineticAction = require('./action')
+// TODO: need to revisit this module and tune it...
 
-const ACT = {
+const BOX = {
   L: {
 	top:  '┌╼ ',
 	item: '├╼ ',
@@ -12,7 +11,7 @@ const ACT = {
 	mid2: '┼╼ ',
 	mid3: '┴╼ ',
 	one:  '─╼ ',
-	dash: '─ '
+	dash: '╼ '
   },
   R: {
 	top:  ' ╾┐',
@@ -22,33 +21,17 @@ const ACT = {
 	mid2: ' ╾┼',
 	mid3: ' ╾┴',
 	one:  ' ╾─',
-	dash: ' ─'
-  }
-}
-
-const BOX = {
-  L: {
-	top: '┌'
+	dash: ' ╾'
   },
-  R: {
-	top: '┐'
-  },
-  nest: '│ '
+  nest: '│',
+  item: '├',
+  last: '└'
 }
 
 const FUNC = 'ƒ'
 const SEP = ' '
 
-const ITEM = {
-  key:   '─ ',
-  nokey: '──┐'
-}
-
-function indent(str, count=1, sep=' ') {
-  return str.replace(/^(?!\s*$)/mg, sep.repeat(count))
-}
-
-function findLogest(a) {
+function findLongest(a) {
   let c = 0, d = 0, l = 0, i = a.length
   if (i) while (i--) {
 	d = a[i].length
@@ -60,7 +43,7 @@ function findLogest(a) {
 }
 
 function renderListItem(item, i, options={}) {
-  let { width, height, isMiddle=false, left=ACT.L, right=ACT.R } = options
+  let { width, height, isMiddle=false, left=BOX.L, right=BOX.R } = options
   let str = ''
   let label = item + SEP.repeat(width - item.length)
   if (height === 1)
@@ -83,27 +66,28 @@ function renderListItem(item, i, options={}) {
   return str
 }
 
-function renderAction(action) {
-  let { inputs, outputs, handler } = action
-  let name = !handler ? '(missing)' : '('+handler.name+')'
-  if (!name) name = '(anonymous)'
-
+function renderAction(action, funcWidth, inputWidth, outputWidth) {
+  let { inputs, outputs, handler={} } = action
+  // BOX for inputs
   let inbox = {
 	height: inputs.length,
-	width: findLogest(inputs).length,
+	width: inputWidth || findLongest(inputs).length,
 	start: 0
   }
+  let funcName = handler.name || ''
+  if (!funcWidth) funcWidth = funcName.length
+  // BOX for outputs
   let outbox = {
 	height: outputs.length,
-	width:  findLogest(outputs).length,
+	width:  outputWidth || findLongest(outputs).length,
 	start: 0
   }
   let height = inbox.height > outbox.height ? inbox.height : outbox.height
   let block = {
-	lines: [],
 	height: height,
 	width: 0,
-	middle: Math.floor((height - 1) / 2)
+	middle: Math.floor((height - 1) / 2),
+	lines: []
   }
 
   if (inbox.height > outbox.height) {
@@ -112,7 +96,7 @@ function renderAction(action) {
   if (outbox.height > inbox.height) {
 	inbox.start = Math.floor((outbox.height - inbox.height) / 2)
   }
-  for (let idx = 0, i = 0, o = 0; idx < block.height; idx++) {
+  for (let idx=0, i=0, o=0; idx < block.height; idx++) {
 	let line = ''
 	if (idx >= inbox.start && i < inbox.height) {
 	  line += renderListItem(inputs[i], i++, {
@@ -124,14 +108,17 @@ function renderAction(action) {
 	  line += SEP.repeat(inbox.width + 6)
 	}
 	if (idx === block.middle) {
-	  line += ACT.L.dash + FUNC + name + ACT.R.dash
+	  let label = FUNC + '(' + funcName + ')' + SEP.repeat((funcWidth - funcName.length)) 
+	  if (funcName)
+		line += BOX.L.dash + label + BOX.R.dash
 	} else {
-	  line += SEP.repeat(name.length + 5)
+	  line += SEP.repeat(funcWidth + 7)
 	}
 	if (idx >= outbox.start && o < outbox.height) {
 	  line += renderListItem(outputs[o], o++, {
 		height: outbox.height,
 		width:  outbox.width,
+		right: {},
 		isMiddle: (idx === block.middle)
 	  })
 	}
@@ -143,30 +130,31 @@ function renderAction(action) {
 }
 
 function renderStream(stream) {
-  let { actions, upstreams, downstreams } = stream
-  let section = {
-	height: 0,
-	width: 0
-  }
-  let blocks = actions.map(x => {
-	let block = renderAction(x)
-	if (block.width > section.width)
-	  section.width = block.width
-	section.height += block.height
-	return block
-  })
-  console.log(blocks)
-
-  return stream.actions
-	.map(x => renderAction(x))
-	.join("\n")
+  let { actions, inputs, outputs } = stream
+  let inputWidth  = findLongest(inputs).length
+  let outputWidth = findLongest(outputs).length
+  let funcWidth   = findLongest(actions.map((x => x.handler.name))).length
+  let lines = actions.reduce(((acc, action, idx) => {
+	let item = renderAction(action, funcWidth, inputWidth, outputWidth)
+	let last = idx == (actions.length - 1)
+	for (let i=0; i < item.lines.length; i++) {
+	  let line = item.lines[i]
+	  if (i < item.middle)
+		line = BOX.nest + line
+	  else if (i === item.middle)
+		if (last)
+		  line = BOX.last + line
+	    else
+		  line = BOX.item + line
+	  else if (last)
+		line = SEP + line
+	  else
+		line = BOX.nest + line
+	  acc.push(line)
+	}
+	return acc
+  }), [])
+  return lines.join("\n")
 }
 
-function render(flow) {
-  if (flow instanceof KineticStream) return renderStream(flow)
-  if (flow instanceof KineticAction) return renderAction(flow)
-  console.log("no match?")
-  console.log(flow)
-}
-
-module.exports = render
+module.exports = renderStream

@@ -4,37 +4,68 @@ Simple, unopionated,
 [dataflow](https://en.wikipedia.org/wiki/Dataflow) streaming framework
 for creating **awesome data pipelines** for your apps.
 
-It's a **data-centric** paradigm for moving *objects* through a pipeline of
-computational actors that can execute concurrently.
-
-Conduct [data science](https://en.wikipedia.org/wiki/Data_science)
+It's a **data-centric** paradigm for moving *objects* through a
+pipeline of computational actors that can execute
+concurrently. Conduct
+[data science](https://en.wikipedia.org/wiki/Data_science)
 experiments, share your flows, and embrace KOS.
 
   [![NPM Version][npm-image]][npm-url]
   [![NPM Downloads][downloads-image]][downloads-url]
 
+A **Kinetic Object Stream** contains a **Flow** of **Actions** that
+operates on one or more *named input* **Object(s)** to produce one or
+more *named output* **Object(s)**.
+
 ```
 ├─ label: kos:flow:http
-├─ summary: Provides HTTP transaction flow utilizing 'superagent' module
-├─ requires
-│  └─ module/superagent
+├─ summary: Provides HTTP client and/or server flows
+├─ subflows
+│  ├─ kos:flow:http:client
+│  └─ kos:flow:http:server
+├─ actions
+│  ├─ ƒ(simpleGet)
+│  └─ ƒ(extractBody)
 └──┐
-   │                                            ┌╼ http/request/get
-   │                                            ├╼ http/request/post
-   ├─╼ http/request         ╾─╼ ƒ(classify)    ╾┼╼ http/request/put
-   │                                            ├╼ http/request/delete
-   │                                            └╼ http/request/patch
-   ├─╼ http/request/get     ╾─╼ ƒ(invoke)      ╾─╼ http/response
+   ├─ kos:flow:http:client
+   │  ├─ summary: Provides HTTP client flows utilizing 'superagent' module
+   │  ├─ requires
+   │  │  └─ module/superagent
+   │  ├─ actions
+   │  │  ├─ ƒ(classify)
+   │  │  └─ ƒ(handleRequest)
+   │  └──┐
+   │     │                                             ┌╼ http/request/get
+   │     │                                             ├╼ http/request/post
+   │     ├─╼ http/request        ╾─╼ ƒ(classify)      ╾┼╼ http/request/put
+   │     │                                             ├╼ http/request/delete
+   │     │                                             └╼ http/request/patch
+   │     ├─╼ http/request/get    ╾─╼ ƒ(handleRequest) ╾─╼ http/response
+   │     ├─╼ http/request/post   ╾─╼ ƒ(handleRequest) ╾─╼ http/response
+   │     ├─╼ http/request/put    ╾─╼ ƒ(handleRequest) ╾─╼ http/response
+   │     ├─╼ http/request/delete ╾─╼ ƒ(handleRequest) ╾─╼ http/response
+   │     └─╼ http/request/patch  ╾─╼ ƒ(handleRequest) ╾─╼ http/response
+   │
+   ├─ kos:flow:http:server
+   │  ├─ summary: Provides HTTP server flows utilizing 'express' module
+   │  ├─ requires
+   │  │  └─ module/express
+   │  ├─ actions
+   │  │  ├─ ƒ(runServer)
+   │  │  └─ ƒ(handleRoute)
+   │  └──┐
+   │     ├─╼ http/listen    ╾─╼ ƒ(runServer)   ╾─╼ http/server
+   │     └┬╼ http/server    ╾┬╼ ƒ(handleRoute) ╾─╼ http/request
+   │      └╼ http/route     ╾┘
+   │
    ├─╼ http/request/get/url ╾─╼ ƒ(simpleGet)   ╾─╼ http/request/get
-   ├─╼ http/request/post    ╾─╼ ƒ(invoke)      ╾─╼ http/response
-   ├─╼ http/request/put     ╾─╼ ƒ(invoke)      ╾─╼ http/response
-   ├─╼ http/request/delete  ╾─╼ ƒ(invoke)      ╾─╼ http/response
-   ├─╼ http/request/patch   ╾─╼ ƒ(invoke)      ╾─╼ http/response
    └─╼ http/response        ╾─╼ ƒ(extractBody) ╾─╼ http/response/body
 ```
 
-The above render was generated for [kos:flow:http](./flows/http.js) module
-using the included `kos` CLI utility.
+The above render was generated for [kos:flow:http](./flows/http.js)
+module using the included `kos` CLI utility. Please refer to
+[Managing Flows](#managing-flows) section below for more info on
+utilizing the `kos` CLI utility.
 
 ## Installation
 
@@ -42,11 +73,8 @@ using the included `kos` CLI utility.
 $ npm install -g kos
 ```
 
-## Definition
-
-A **Kinetic Object Stream** contains a **Flow** of **Actions** that
-operates on one or more *named input* **Object(s)** to produce one or
-more *named output* **Object(s)**.
+Installing this module with `-g` flag enables system-wide access to
+the `kos` utility.
 
 ## Using Flows
 
@@ -54,9 +82,9 @@ First, let's start with a **trivial** scenario of making a web request
 and getting back the result. We'll be utilizing one of the built-in
 flow module ([kos:flow:http](./flows/http.js)) for this exercise.
 
-```javascript
+```js
 const kos = require('kos')
-const HttpFlow = kos.load('flows/http')
+const HttpFlow = kos.load('kos/flows/http')
 HttpFlow
   .on('http/response/body', data => console.log(data))
   .feed('module/superagent', require('superagent'))
@@ -70,9 +98,20 @@ output* `http/response/body`. Underneath the hood, a number of
 **Action(s)** are triggered until you get back the *named data* of
 interest.
 
-### feed(key, value)
+An **important** concept here is that the
+[superagent](http://npmjs.com/package/superagent) library for
+transacting the HTTP transaction is being *fed* into the flow by the
+consumer of the `Flow`. What this means is that the Flow
+**dependency** is resolved dynamically and can be updated dynamically
+by the consumer on-demand. In fact, it doesn't even have to be the
+actual `superagent` module itself, only something that provides
+similar API interfaces that the `superagent` module provides.
 
 ### on(key, callback)
+
+
+### feed(key, value)
+
 
 ## Creating Flows
 
@@ -81,7 +120,7 @@ find images from the requested URL.
 
 But instead of adding to the original `HttpFlow`, let's start a new one.
 
-```javascript
+```js
 const FindImagesFlow = kos.flow
   .in('http/response').out('http/response/html').bind(function() {
     // some code to detect the response is HTML
@@ -105,7 +144,7 @@ Great, but what you really wanted was the actual images, right?
 
 Let's make another flow for this:
 
-```javascript
+```js
 const FetchImageFlow = kos.flow
   .in('html/image').out('http/request').bind(function() {
     let imgtag = this.get('html/image')
@@ -135,7 +174,7 @@ To finish off this *trivial* example, let's grab images from `WebFlow`
 and send it along to some cognitive analytics service to find out if
 these are pictures of people.
 
-```javascript
+```js
 const AnalyzeImageFlow = kos.flow
   .in('http/response').out('http/response/image').bind(function() {
     let res = this.get('http/response')
@@ -166,7 +205,7 @@ WebFlow.pipe(AnalyzeImageFlow)
 
 Now, to put the dataflow to work:
 
-```javascript
+```js
 WebFlow
   .on('picture/people',x => console.log('found picture!'))
   .feed('image/analysis/provider', someAnalysisInstance)
@@ -192,7 +231,7 @@ Continuing from the [Usage Example](#usage-example) above, let's say
 you just want to re-use the `WebFlow` without the other flows being
 associated.
 
-```javascript
+```js
 let myWebFlow = new WebFlow
 ```
 
@@ -203,7 +242,7 @@ without any of the pre-existing `pipe` relationships.
 With your own instance of `WebFlow`, you can `inject` additional flow
 rules, or `pipe` it to other flows:
 
-```javascript
+```js
 let myAnalyzeImageFlow = new AnalyzeImageFlow
 myWebFlow
   .in('http/response').bind(function(key, value) {

@@ -1,5 +1,7 @@
 'use strict';
 
+const tree = require('treeify').asTree
+
 // TODO: need to revisit this module and tune it...
 
 const BOX = {
@@ -30,6 +32,10 @@ const BOX = {
 
 const FUNC = 'ƒ'
 const SEP = ' '
+
+function indent(str, count=1, sep=' ') {
+  return str.replace(/^(?!\s*$)/mg, sep.repeat(count))
+}
 
 function findLongest(a) {
   let c = 0, d = 0, l = 0, i = a.length
@@ -129,7 +135,7 @@ function renderAction(action, funcWidth, inputWidth, outputWidth) {
   return block
 }
 
-function renderStream(stream) {
+function renderActions(stream) {
   let { actions, inputs, outputs } = stream
   let inputWidth  = findLongest(inputs).length
   let outputWidth = findLongest(outputs).length
@@ -155,6 +161,37 @@ function renderStream(stream) {
 	return acc
   }), [])
   return lines.join("\n")
+}
+
+function renderStream(stream, level=1) {
+  let str = ''
+  let info = {
+	label:    stream._label,
+	summary:  stream._summary,
+	requires: stream.requires,
+	ignores:  stream.ignores,
+    subflows: stream.subflows.map(x => x._label),
+    actions:  stream.actions.map(x => FUNC + '(' + x.handler.name + ')'),
+    '': null
+  }
+  if (level > 1) delete info.label
+  for (let key in info) {
+	if (Array.isArray(info[key])) {
+	  if (info[key].length)
+		info[key] = info[key].reduce(((a,b) => { 
+		  a[b] = null; return a 
+		}), {})
+	  else delete info[key]
+	}
+  }
+  str += tree(info, true)
+  for (let flow of stream.subflows) {
+    str += '   ├─ '+flow._label+"\n"
+    str += indent(renderStream(flow, level+1), 1, '   │  ') + "\n"
+    str += "   │\n"
+  }
+  str += indent(renderActions(stream), 3)
+  return str
 }
 
 module.exports = renderStream

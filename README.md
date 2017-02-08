@@ -13,9 +13,9 @@ experiments, share your flows, and embrace KOS.
   [![NPM Version][npm-image]][npm-url]
   [![NPM Downloads][downloads-image]][downloads-url]
 
-A **Kinetic Object Stream** contains a **Flow** of **Actions** that
-operates on one or more *named input* **Object(s)** to produce one or
-more *named output* **Object(s)**.
+A **Kinetic Object Stream** contains a **Flow** of **Action(s)**
+and/or **Stream(s)** that operates on one or more *named input*
+**Object(s)** to produce one or more *named output* **Object(s)**.
 
 ```
 ├─ label: kos:flow:http
@@ -55,17 +55,19 @@ more *named output* **Object(s)**.
    │  │  └─ ƒ(handleRoute)
    │  └──┐
    │     ├─╼ http/listen    ╾─╼ ƒ(runServer)   ╾─╼ http/server
-   │     └┬╼ http/server    ╾┬╼ ƒ(handleRoute) ╾─╼ http/request
+   │     └┬╼ http/server    ╾┬╼ ƒ(handleRoute) ╾─╼ http/server/request
    │      └╼ http/route     ╾┘
    │
    ├─╼ http/request/get/url ╾─╼ ƒ(simpleGet)   ╾─╼ http/request/get
-   └─╼ http/response        ╾─╼ ƒ(extractBody) ╾─╼ http/response/body
+   ├─╼ http/response        ╾─╼ ƒ(extractBody) ╾─╼ http/response/body
+   └┬╼ http/server/request  ╾┬╼ ƒ(proxy)       ╾─╼ http/request
+    └╼ http/proxy           ╾┘
 ```
 
 The above render was generated for [kos:flow:http](./flows/http.js)
-module using the included `kos` CLI utility. Please refer to
-[Managing Flows](#managing-flows) section below for more info on
-utilizing the `kos` CLI utility.
+module via `kos show` using the included `kos` CLI utility. Please
+refer to [Managing Flows](#managing-flows) section below for more info
+on utilizing the `kos` CLI utility.
 
 ## Installation
 
@@ -74,11 +76,12 @@ $ npm install -g kos
 ```
 
 Installing this module with `-g` flag enables system-wide access to
-the `kos` utility.
+the `kos` utility. It is the *preferred* installation method, but it's
+perfectly fine to install as a local dependency.
 
 ## Using Flows
 
-First, let's start with a **trivial** scenario of making a web request
+First, let's start with a **simple** scenario of making a web request
 and getting back the result. We'll be utilizing one of the built-in
 flow module ([kos:flow:http](./flows/http.js)) for this exercise.
 
@@ -98,19 +101,24 @@ output* `http/response/body`. Underneath the hood, a number of
 **Action(s)** are triggered until you get back the *named data* of
 interest.
 
+### Feeding Dependency
+
 An **important** concept here is that the
 [superagent](http://npmjs.com/package/superagent) library for
-transacting the HTTP transaction is being *fed* into the flow by the
-consumer of the `Flow`. What this means is that the Flow
+transacting the HTTP Client requests is being *fed* into the flow by
+the consumer of the `Flow`. What this means is that the Flow
 **dependency** is resolved dynamically and can be updated dynamically
 by the consumer on-demand. In fact, it doesn't even have to be the
 actual `superagent` module itself, only something that provides
 similar API interfaces that the `superagent` module provides.
 
-### on(key, callback)
+The de-coupling of *module dependencies* from the flow module package
+enables fluid runtime resolution and adaptation.
+
+## Combining Flows
 
 
-### feed(key, value)
+
 
 
 ## Creating Flows

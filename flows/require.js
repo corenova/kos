@@ -36,7 +36,7 @@ module.exports = kos.flow
       if (target === 'npm') return this.throw("cannot auto-resolve npm")
       if (pending.has(target)) return
       this.push('pending', target) // save at the flow-level
-      this.send('npm/install', { name: target })
+      this.send('npm/install', target)
     }
   })
   .in('require','npm/installed').out('require')

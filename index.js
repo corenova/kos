@@ -25,4 +25,9 @@ kos.Transform = require('./lib/transform')
 
 exports = module.exports = kos['default'] = kos.kos = kos
 
-exports.debug = new kos.Action((key,val) => console.log(key+':'+val))
+// for debugging, you can pipe your flow to this
+// ex. myFlow.pipe(kos.debug)
+exports.debug = (new kos.Action).in('*').bind(function debug(msg) {
+  console.log('['+ msg.key +']')
+  console.log(msg.value)
+})

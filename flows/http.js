@@ -13,17 +13,27 @@ const kos = require('..')
 const http = require('http')
 
 const HttpClientFlow = kos.flow
-  .label('kos:flow:http:client')
+  .label('kos-flow-http-client')
   .summary("Provides HTTP client flows utilizing 'superagent' module")
   .require('module/superagent')
   .in('http/request')
-  .out('http/request/get','http/request/post','http/request/put')
-  .out('http/request/delete','http/request/patch')
+  .out('http/request/get')
+  .out('http/request/post')
+  .out('http/request/put')
+  .out('http/request/patch')
+  .out('http/request/delete')
   .bind(function classify(msg) {
     let req = msg.value
-    if (req.method === 'GET')  this.send('http/request/get', req)
-    if (req.method === 'POST') this.send('http/request/post', req)
+    if (!req.method) return // should flag error...
+    switch (req.method.toUpperCase()) {
+    case 'GET':    this.send('http/request/get', req); break;
+    case 'POST':   this.send('http/request/post', req); break;
+    case 'PUT':    this.send('http/request/put', req); break;
+    case 'PATCH':  this.send('http/request/patch', req); break;
+    case 'DELETE': this.send('http/request/patch', req); break;
+    }
   })
+  // example of dynamic merge of common actions
   .in('http/request/get').out('http/response').bind(handleRequest)
   .in('http/request/post').out('http/response').bind(handleRequest)
   .in('http/request/put').out('http/response').bind(handleRequest)
@@ -31,7 +41,7 @@ const HttpClientFlow = kos.flow
   .in('http/request/delete').out('http/response').bind(handleRequest)
 
 const HttpServerFlow = kos.flow
-  .label('kos:flow:http:server')
+  .label('kos-flow-http-server')
   .summary("Provides HTTP server flows utilizing 'express' module")
   .require('module/express')
   .in('http/listen').out('http/server').bind(runServer)
@@ -39,22 +49,24 @@ const HttpServerFlow = kos.flow
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
 module.exports = kos.flow
-  .label('kos:flow:http')
+  .label('kos-flow-http')
   .summary("Provides HTTP client and/or server flows")
   .use(HttpClientFlow)
   .use(HttpServerFlow)
-  .in('http/request/get/url').out('http/request/get').bind(function simpleGet(msg) {
+  .in('http/request/get/url').out('http/request/get')
+  .bind(function simpleGet(msg) {
     this.send('http/request/get', { url: msg.value })
   })
-  .in('http/response').out('http/response/body').bind(function extractBody(msg) {
+  .in('http/response').out('http/response/body')
+  .bind(function extractBody(msg) {
     this.send('http/response/body', msg.value.body)
   })
   .in('http/server/request','http/proxy').out('http/request').bind(proxy)
 
-function handleRequest(msg) {
+function handleRequest({ key, value }) {
   let agent = this.pull('module/superagent')
-  let method = msg.key.replace(/^.+\/(\w+)$/,'$1').toLowerCase()
-  let { url, data } = msg.value
+  let method = key.replace(/\/(\w+)$/,'$1').toLowerCase()
+  let { url, data } = value
 
   switch (method) {
   case 'get':

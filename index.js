@@ -15,6 +15,8 @@ kos.load = function(flowfile) {
   } catch (e) {
 	flow = require(path.resolve(flowfile))
   }
+  if (!(flow instanceof KineticObjectStream))
+    throw new Error("kos.load should only load KineticObjectStream")
   return flow
 }
 
@@ -27,7 +29,10 @@ exports = module.exports = kos['default'] = kos.kos = kos
 
 // for debugging, you can pipe your flow to this
 // ex. myFlow.pipe(kos.debug)
-exports.debug = (new kos.Action).in('*').bind(function debug(msg) {
-  console.log('['+ msg.key +']')
-  console.log(msg.value)
+try { var debug = require('debug')('kos/debug') }
+catch (e) { var debug = console.log }
+
+kos.debug = (new kos.Action).in('*').bind(function log(msg) {
+  debug(msg.key)
+  debug(msg.value)
 })

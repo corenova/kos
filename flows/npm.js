@@ -29,7 +29,6 @@ module.exports = NpmFlow
 
 function initialize({ value }) {
   let npm = this.pull('module/npm')
-  console.log("initialize npm")
   npm.load(value, (err, res) => {
     if (err) this.throw(err)
     else this.send('npm:ready', true)

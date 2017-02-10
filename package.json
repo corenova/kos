@@ -1,7 +1,7 @@
 {
   "name": "kos",
   "version": "1.0.0",
-  "description": "A dataflow streaming framework for creating awesome data pipelines",
+  "description": "A dataflow streaming framework for creating awesome data pipelines and state machines",
   "bin": {
     "kos": "./bin/kos.js"
   },
@@ -38,5 +38,10 @@
   },
   "optionalDependencies": {
     "superagent": "^3.4.1"
+  },
+  "devDependencies": {
+    "debug": "^2.6.0",
+    "mocha": "^3.2.0",
+    "should": "^11.2.0"
   }
 }

@@ -32,7 +32,6 @@ module.exports = kos.flow
     let pending = this.pull('pending')
     let { target, code } = value
     if (code === 'MODULE_NOT_FOUND') {
-      console.log('not found '+target)
       if (target === 'npm') return this.throw("cannot auto-resolve npm")
       if (pending.has(target)) return
       this.push('pending', target) // save at the flow-level

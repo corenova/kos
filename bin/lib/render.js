@@ -166,11 +166,11 @@ function renderActions(stream) {
 function renderStream(stream, level=1) {
   let str = ''
   let info = {
-	label:    stream._label,
-	summary:  stream._summary,
+	label:    stream.label(),
+	summary:  stream.summary(),
 	requires: stream.requires,
 	ignores:  stream.ignores,
-    subflows: stream.subflows.map(x => x._label),
+    subflows: stream.subflows.map(x => x.label()),
     actions:  stream.actions.map(x => FUNC + '(' + x.handler.name + ')'),
     '': null
   }
@@ -186,7 +186,7 @@ function renderStream(stream, level=1) {
   }
   str += tree(info, true)
   for (let flow of stream.subflows) {
-    str += '   ├─ '+flow._label+"\n"
+    str += '   ├─ '+flow.label()+"\n"
     str += indent(renderStream(flow, level+1), 1, '   │  ') + "\n"
     str += "   │\n"
   }

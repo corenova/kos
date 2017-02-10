@@ -51,7 +51,8 @@ building data pipelines or embedding as a subflow.
 This is the common pattern for using existing flows. As discussed in
 the prior section, we'll take a look at how we can automate fulfilling
 the [kos-flow-http](../flows/http.md) module's dependency on
-`module/superagent`.
+`module/superagent` by using [kos-flow-require](../flows/require.md)
+module.
 
 ```js
 const kos = require('kos')
@@ -69,7 +70,6 @@ HttpFlow
   .feed('http/request/get/url', 'http://www.google.com')
 ```
 
-
 ## Multiple DataFlow Instances
 
 For simple use cases, having just one instance of a KOS dataflow
@@ -80,25 +80,26 @@ application to manage separate dataflow transactions or to wire up the
 flows differently than originally defined.
 
 Continuing from the [Using Multiple Flows](#using-multiple-flows)
-above, let's say you just want to re-use the `WebFlow` without the
+above, let's say you just want to re-use the `HttpFlow` without the
 other flows being associated.
 
 ```js
-let myWebFlow = new WebFlow
+let myHttpFlow = new HttpFlow
 ```
 
-You can also do `WebFlow()`, which is equivalent to `new
-WebFlow`. This effectively creates a new instance of the KOS dataflow
+You can also do `HttpFlow()`, which is equivalent to `new
+HttpFlow`. This effectively creates a new instance of the KOS dataflow
 without any of the pre-existing `pipe` relationships.
 
-With your own instance of `WebFlow`, you can `inject` additional flow
-rules, or `pipe` it to other flows:
+With your own instance of `HttpFlow`, you can add additional flow
+rules, or `pipe` it to other flows without affecting the original
+`HttpFlow`:
 
 ```js
-let myAnalyzeImageFlow = new AnalyzeImageFlow
-myWebFlow
-  .in('http/response').bind(function(key, value) {
+let myRequireFlow = new RequireFlow
+myRequireFlow.pipe(myHttpFlow)
+myHttpFlow
+  .in('http/response').bind(function foo(msg) {
     // do something
   })
-  .pipe(AnalyzeImageFlow)
 ```

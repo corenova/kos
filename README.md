@@ -96,11 +96,12 @@ perfectly fine to install as a local dependency.
 
 The following flow modules are included inside the `kos` repository.
 
+- [kos-flow-function](./flows/function.md)
 - [kos-flow-http](./flows/http.md)
 - [kos-flow-mqtt](./flows/mqtt.md)
-- [kos-flow-require](./flows/require.md)
 - [kos-flow-npm](./flows/npm.md)
 - [kos-flow-react](./flows/react.md)
+- [kos-flow-require](./flows/require.md)
 - ... and many more coming soon!
 
 As discussed in

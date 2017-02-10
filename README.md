@@ -11,8 +11,10 @@ concurrently. Conduct
 [data science](https://en.wikipedia.org/wiki/Data_science)
 experiments, share your flows, and embrace KOS.
 
+<!---
   [![NPM Version][npm-image]][npm-url]
   [![NPM Downloads][downloads-image]][downloads-url]
+--->
 
 ## Introduction
 

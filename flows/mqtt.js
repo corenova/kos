@@ -13,28 +13,45 @@ const kos = require('..')
 module.exports = kos.flow
   .label('kos:flow:mqtt')
   .summary("Provides MQTT transaction flow utilizing 'mqtt' module")
-  .require('module/mqtt')
-  .in('mqtt/connect').out('mqtt/client').bind(connect)
-  .in('mqtt/connect/url').out('mqtt/connect').bind(function simpleConnect(msg) {
-    this.send({ url: msg.value })
-  })
-  .in('mqtt/client','mqtt/subscribe').out('mqtt/subscription','mqtt/message').bind(subscribe)
-  .in('mqtt/client','mqtt/message').bind(publish)
+  .require('module/mqtt', 'module/url')
+  .default('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
 
-function connect() {
-  let mqtt = this.pull('module/mqtt')
-  let { url } = this.get('mqtt/connect')
-  // TODO: should parse url and verify mqtt can connect
-  let client = mqtt.connect(url)
-  mq.on('connect', () => { this.send(client) })
-  mq.on('error', (err) => { this.throw(err) })
+  .in('mqtt/connect').out('mqtt/client').bind(connect)
+
+  .in('mqtt/connect/url').out('mqtt/connect')
+  .bind(function simpleConnect({ value }) {
+    this.send({ url: value })
+  })
+
+  .in('mqtt/client','mqtt/subscribe').default('topics', new Set)
+  .out('mqtt/subscription','mqtt/message')
+  .bind(subscribe)
+
+  .in('mqtt/client','mqtt/message').bind(publish)
+  .in('mqtt/message/*').out('mqtt/message')
+  .bind(function convert({ key, value }) {
+    let topic = key.replace(/mqtt\/message\/(.+)$/,'$1')
+    this.send('mqtt/message', {
+      topic: topic,
+      payload: value
+    })
+  })
+
+function connect({ value }) {
+  let [ mqtt, {parse}, protocols ] = this.pull('module/mqtt', 'module/url', 'protocols')
+  let { url, options } = value
+  try { url = parse(url) }
+  catch (e) { return this.throw(e) }
+  
+  if (protocols.includes(url.protocol)) {
+    let client = mqtt.connect(url)
+    mq.on('connect', () => this.send('mqtt/client', client))
+    mq.on('error', e => this.throw(e))
+  }
 }
 
 function subscribe() {
-  let { client, topic } = this.get('mqtt/client','mqtt/subscribe')
-  if (!this.has('topics')) {
-    this.set('topics', new Set)
-  }
+  let [ client, topic ] = this.inputs
   let topics = this.get('topics')
   if (!client.listeners('message').length) {
     // brand new client
@@ -43,25 +60,31 @@ function subscribe() {
         this.send('mqtt/message', { 
           origin: client,
           topic: topic, 
-          message: message, 
-          package: packet 
+          payload: message, 
+          packet: packet 
         })
     })
+    client.on('error', err => this.throw(err))
     client.subscribe(Array.from(topics), null, (err, granted) => {
-      if (!err) granted.forEach(x => this.send('mqtt/subscription', x))
+      if (err) this.throw(err)
+      else granted.forEach(x => this.send('mqtt/subscription', x))
     })
   }
   if (!topics.has(topic)) {
     // brand new topic
     topics.add(topic)
     client.subscribe(topic, null, (err, granted) => {
-      if (!err) granted.forEach(x => this.send('mqtt/subscription', x))
+      if (err) this.throw(err)
+      else granted.forEach(x => this.send('mqtt/subscription', x))
     })
   }
 }
 
 function publish() {
-  let [ client, msg ] = this.get('mqtt/client','mqtt/message')
-  if (message.origin != client)
-    client.publish(msg.topic, msg.message)
+  let [ client, message ] = this.inputs
+  if (message.origin != client) {
+    client.publish(message.topic, message.payload, null, (err) => {
+      if (err) this.throw(err)
+    })
+  }
 }

@@ -1,14 +1,40 @@
 # kos-flow-require
 
+This flow module provides a useful pattern for fulfilling `module/xxx`
+dependencies for other flows. It can be *embedded* or used as a *data
+pipeline* to other flows that have `module/xxx` related dependencies.
+
+You can also make this flow become NPM-aware and attempt automatic
+fetch/install utilizing NPM if the local `require` fails to find the
+requested module. It includes the [kos-flow-npm](./npm.md) module as a
+subflow to this module although it will remain *inactive* until it
+receives a `require/npm` trigger message.
+
 Source code is [here](./require.js).
 
 ## Usage
 
 ```js
-const Require = require('kos/flows/require')
+const RequireFlow = require('kos/flows/require')
 // or
 const kos = require('kos')
-const Require = kos.load('kos/flows/require')
+const RequireFlow = kos.load('kos/flows/require')
+```
+
+Simple example:
+```js
+RequireFlow
+  .on('module/url', x => console.log(x))
+  .feed('require/url')
+```
+
+Enabling it to `require` external modules not found in the local
+system:
+```js
+RequireFlow
+  .on('module/delegates', x => console.log(x))
+  .feed('require/npm')
+  .feed('require/delegates')
 ```
 
 ## kos show

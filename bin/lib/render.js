@@ -115,8 +115,10 @@ function renderAction(action, funcWidth, inputWidth, outputWidth) {
 	}
 	if (idx === block.middle) {
 	  let label = FUNC + '(' + funcName + ')' + SEP.repeat((funcWidth - funcName.length)) 
-	  if (funcName)
+	  if (outbox.height)
 		line += BOX.L.dash + label + BOX.R.dash
+      else
+        line += BOX.L.dash + label
 	} else {
 	  line += SEP.repeat(funcWidth + 7)
 	}

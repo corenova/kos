@@ -1,6 +1,6 @@
 # kos-flow-http
 
-Source code is [here](./http.js).
+Source code is available [here](./http.js).
 
 ## Usage
 

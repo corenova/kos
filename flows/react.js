@@ -1,11 +1,12 @@
 const kos = require('..')
 
-const ReactFlow = kos.flow
+module.exports = kos.flow
   .label('kos-flow-react')
   .require('module/react')
   .in('module/react').out('react/element').bind(createElement)
-  .in('react/components').out('react/component').bind(
-    let components = msg.value ? []
+  .in('react/components').out('react/component')
+  .bind(function chunkify({ value }) {
+    let components = value || []
     for (let c of components)
       this.send('react/component', c)
   })

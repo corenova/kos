@@ -19,7 +19,7 @@ const MqttFlow = kos.load('kos-flow-mqtt')
 ```
 
 Enabling the flow:
-```
+```js
 MqttFlow
   .on('mqtt/message', ({topic, payload}) => console.log(payload))
   .feed('module/mqtt', require('mqtt'))

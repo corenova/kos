@@ -28,6 +28,7 @@ module.exports = kos.flow
   .bind(subscribe)
 
   .in('mqtt/client','mqtt/message').bind(publish)
+
   .in('mqtt/message/*').out('mqtt/message')
   .bind(function convert({ key, value }) {
     let topic = key.replace(/mqtt\/message\/(.+)$/,'$1')

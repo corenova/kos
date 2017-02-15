@@ -1,5 +1,8 @@
 # kos-flow-http
 
+THis flow module provides message based transaction using HTTP as a
+client and/or server.
+
 Source code is available [here](./http.js).
 
 ## Usage

@@ -10,17 +10,17 @@ describe("kos-flow-require", () => {
 
   it('should load default node.js module', done => {
     RequireFlow.on('module/url', res => done())
-    RequireFlow.feed('require/url')
+    RequireFlow.feed('require','url')
   })
   
   it('should load NPM module', done => {
     RequireFlow.on('module/npm', res => done())
-    RequireFlow.feed('require/npm')
+    RequireFlow.feed('require','npm')
   })
 
   it('should load non-existent module (via npm install)', done => {
     RequireFlow.on('module/delegates', res => done())
-    RequireFlow.feed('require/delegates')
+    RequireFlow.feed('require','delegates')
   })
 })
 

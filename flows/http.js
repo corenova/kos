@@ -12,8 +12,7 @@
 const kos = require('..')
 const http = require('http')
 
-const HttpClientFlow = kos.flow
-  .label('kos-flow-http-client')
+const HttpClientFlow = kos.flow('http-client')
   .summary("Provides HTTP client flows utilizing 'superagent' module")
   .require('module/superagent')
   .in('http/request')
@@ -40,19 +39,17 @@ const HttpClientFlow = kos.flow
   .in('http/request/patch').out('http/response').bind(handleRequest)
   .in('http/request/delete').out('http/response').bind(handleRequest)
 
-const HttpServerFlow = kos.flow
-  .label('kos-flow-http-server')
+const HttpServerFlow = kos.flow('http-server')
   .summary("Provides HTTP server flows utilizing 'express' module")
   .require('module/express')
   .in('http/listen').out('http/server').bind(runServer)
   .in('http/server','http/route').out('http/server/request').bind(handleRoute)
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
-module.exports = kos.flow
-  .label('kos-flow-http')
+module.exports = kos.flow('http')
   .summary("Provides HTTP client and/or server flows")
-  .use(HttpClientFlow)
-  .use(HttpServerFlow)
+  .use('http-client')
+  .use('http-server')
   .in('http/request/get/url').out('http/request/get')
   .bind(function simpleGet(msg) {
     this.send('http/request/get', { url: msg.value })

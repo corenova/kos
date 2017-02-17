@@ -74,7 +74,7 @@ function renderListItem(item, i, options={}) {
 
 function renderAction(action, funcWidth, inputWidth, outputWidth) {
   let { inputs, outputs, handler={} } = action
-  // BOX for inputs
+  // BOX for consumed inputs
   let inbox = {
 	height: inputs.length,
 	width: inputWidth || findLongest(inputs).length,
@@ -82,7 +82,7 @@ function renderAction(action, funcWidth, inputWidth, outputWidth) {
   }
   let funcName = handler.name || ''
   if (!funcWidth) funcWidth = funcName.length
-  // BOX for outputs
+  // BOX for provided outputs
   let outbox = {
 	height: outputs.length,
 	width:  outputWidth || findLongest(outputs).length,
@@ -171,7 +171,6 @@ function renderStream(stream, level=1) {
 	label:    stream.label(),
 	summary:  stream.summary(),
 	requires: stream.requires,
-	ignores:  stream.ignores,
     subflows: stream.subflows.map(x => x.label()),
     actions:  stream.actions.map(x => FUNC + '(' + x.handler.name + ')'),
     '': null

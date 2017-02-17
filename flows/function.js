@@ -2,8 +2,7 @@
 
 const kos = require('..')
 
-module.exports = kos.flow
-  .label('kos-flow-function')
+module.exports = kos.flow('function')
   .summary("Provides dynamic function exeuction via messages")
   .require('function')
   .in('arguments').out('return').require('function','caller')

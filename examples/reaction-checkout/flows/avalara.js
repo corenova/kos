@@ -17,9 +17,6 @@ function calculateTaxRates(addr) {
   this.log('triggering tax calaculation')
   Avalara.taxByAddress(apiKey, ...address, res => {
     if (res.error) this.throw(res.error)
-    else {
-      res.address = addr // save the address for which the response belongs
-      this.send('avalara/response', res)
-    }
+    else this.send('avalara/response', res)
   })
 }

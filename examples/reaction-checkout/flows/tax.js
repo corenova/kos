@@ -2,28 +2,31 @@
 
 const kos = require('kos')
 
-module.exports = kos.flow
-  .label('reaction-tax')
+module.exports = kos.flow('reaction-tax')
   .use('flow/taxcloud')
   .use('flow/avalara')
 
   // taxcloud request trigger
-  .in('reaction/cart/items/taxable').require('flow/taxcloud','reaction/cart')
-  .out('taxcloud/request')
+  .in('cart/items/taxable').require('flow/taxcloud','reaction/cart')
+  .out('taxcloud/taxes')
   .bind(invokeTaxCloud)
 
   // avalara request trigger
-  .in('reaction/cart/items/taxable').require('flow/avalara', 'reaction/cart')
-  .out('avalara/request/address')
+  .in('cart/items/taxable').require('flow/avalara', 'reaction/cart')
+  .out('cart/items/tax')
   .bind(invokeAvalara)
 
   // tax calculation from multiple possible triggers
-  .in('taxcloud/response/items')
-  .in('avalara/response')
-  .require('reaction/cart/items/taxable','reaction/cart')
+  .in('taxcloud/taxes')
+  .in('avalara/taxes')
+  .require('cart/items/taxable','reaction/cart')
   .default('taxes', new Map)
-  .out('reaction/tax/rate')
+  .out('cart/taxes')
   .bind(calculateTaxes)
+
+//--------------
+// FLOW ACTIONS
+//--------------
 
 function invokeTaxCloud(items) {
   let cart = this.pull('reaction/cart')
@@ -45,12 +48,45 @@ function invokeTaxCloud(items) {
     Index: idx,
     ItemID: x.id,
     Price: x.price,
-    Quantity: x.quantity
+    Qty: x.quantity
   }))
+
+  this.transact('taxcloud/request','taxcloud/response/items')
+    .timeout(1000)
+    .feed(...requests)
+    .end((err, res) => {
+      if (err) return this.throw(err)
+      
+
+    })
 }
 
 function invokeAvalara(items) {
-  
+  let addrs = new Set(items.map(x => x.destination))
+  let addresses = Array.from(addrs)
+
+  this.transact('avalara/request/address','avalara/response')
+    .timeout(1000)
+    .feed(...addresses) // multiple parallel requests
+    .end((err, res) => {
+      if (err) return this.throw(err)
+      let map = new Map
+      res.forEach((x, idx) => map.set(addresses[idx], x))
+      this.send('cart/items/tax', items.map(x => {
+        let taxRate = map.get(x.destination).totalRate
+        let cost = x.price * x.quantity
+        let tax = cost * (taxRate / 100)
+        return Object.assign({}, x, {
+          tax: {
+            rate: taxRate,
+            amount: tax
+          }
+        })
+      }))
+    })
+
+  for (let address of addresses)
+    this.send('avalara/request/address', address)
 }
 
 // calculateTaxes - this routine gets called every time one of
@@ -58,11 +94,9 @@ function invokeAvalara(items) {
 // on whichever tax calculation services send along sufficient
 // response(s) in order to formulate the overall cart tax calculation.
 function calculateTaxes(res) {
-  let [ cart, items ] = this.get('reaction/cart', 'reaction/cart/items/taxable')
+  let items = this.get('cart/items/taxable')
   let [ active, taxes ] = this.get('active', 'taxes')
   if (!active || active !== items) {
-    if (taxes.size !== active.length) 
-      this.throw('unable to calculate taxes for cart:', cart.id)
     this.set('active', items)
     this.set('taxes', taxes = new Map)
   }
@@ -76,11 +110,15 @@ function calculateTaxes(res) {
   case 'avalara/response':
     items
       .filter(x => x.destination === res.address)
-      .forEach(x => taxes.set(x, res))
+      .forEach(x => {
+        let cost = x.price * x.quantity
+        let tax = cost * (res.totalRate / 100)
+        taxes.set(x, tax)
+      })
     break;
   }
 
   if (items.every(x => taxes.has(x))) {
-    this.send('reaction/
+    this.send('cart/taxes', Array.from(taxes.values()))
   }
 }

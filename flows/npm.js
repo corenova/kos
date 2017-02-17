@@ -21,24 +21,27 @@ const NpmFlow = kos.flow
   })
   .in('npm/load').out('npm:ready').bind(initialize)
   .in('npm/install').out('npm/installed').require('npm:ready').bind(install)
-  .in('npm/install/*').out('npm/install').bind(installByName)
-  .in('npm/*').bind(queueCommands)
+
+  .in('npm/install')
+  .in('npm/uninstall')
+  .bind(queueCommands)
+
   .in('npm:ready').out('npm/*').bind(sendCommands)
 
 module.exports = NpmFlow
 
-function initialize({ value }) {
+function initialize(options) {
   let npm = this.pull('module/npm')
-  npm.load(value, (err, res) => {
+  npm.load(options, (err, res) => {
     if (err) this.throw(err)
     else this.send('npm:ready', true)
   })
 }
 
-function queueCommands(msg) {
+function queueCommands() {
   let ready = this.pull('npm:ready')
-  if (!ready && msg.key !== 'npm/load') 
-    this.push('pending', msg)
+  if (!ready) 
+    this.push('pending', this.inputs[0])
 }
 
 function sendCommands() {
@@ -55,18 +58,12 @@ function sendCommands() {
     this.send('npm/install', Array.from(install))
 }
 
-function install(msg) {
+function install(pkgs) {
   let npm = this.pull('module/npm')
-  let pkgs = msg.value
   if (!Array.isArray(pkgs)) pkgs = [ pkgs ]
   pkgs = [].concat(...pkgs).filter(String)
   npm.commands.install(pkgs, (err, res) => {
     if (err) this.throw(err)
     else this.send('npm/installed', new Map(res))
   })
-}
-
-function installByName({ key }) {
-  let req = key.replace(/^.*\/(.+)$/)
-  this.send('npm/install', req)
 }

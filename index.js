@@ -1,12 +1,7 @@
 const KineticObjectStream = require('./lib/stream')
 const path = require('path')
 
-function kos(options) {
-  return new KineticObjectStream(options)
-}
-Object.defineProperty(kos, 'flow', {
-  get() { return new KineticObjectStream }
-})
+const kos = new KineticObjectStream({ label: 'core' })
 
 kos.load = function(flowfile) {
   let flow

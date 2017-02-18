@@ -5,53 +5,53 @@
 // by the upstream consumer.
 
 const kos = require('..')
-const path = require('path')
 
-const NpmFlow = kos.flow
-  .label('kos-flow-npm')
+module.exports = kos.flow('kos-npm')
   .summary("Provides NPM registry transactions utilizing 'npm' module")
   .require('module/npm')
-  .default({
-    pending: new Set,
-    installing: new Set
-  })
-  .in('module/npm').out('npm/load')
-  .bind(function triggerLoad() {
-    this.send('npm/load', { loglevel: 'silent', loaded: false })
-  })
-  .in('npm/load').out('npm:ready').bind(initialize)
-  .in('npm/install').out('npm/installed').require('npm:ready').bind(install)
+  .default('ready', false)
+  .default('pending', new Set)
 
-  .in('npm/install')
-  .in('npm/uninstall')
-  .bind(queueCommands)
+  .in('module/npm').out('npm/load').bind(triggerLoad)
+  .in('npm/load').out('npm/ready').bind(initialize)
 
-  .in('npm:ready').out('npm/*').bind(sendCommands)
+  .in('npm/install').out('npm/defer','npm/installed').bind(install)
 
-module.exports = NpmFlow
+  .in('npm/defer').bind(queueCommands)
+  .in('npm/ready').out('npm/install','npm/uninstall').bind(sendCommands)
+
+//--- Kinetic Actions Handlers
+
+function triggerLoad(npm) {
+  this.send('npm/load', { loglevel: 'silent', loaded: false })
+}
 
 function initialize(options) {
   let npm = this.pull('module/npm')
   npm.load(options, (err, res) => {
     if (err) this.throw(err)
-    else this.send('npm:ready', true)
+    else {
+      this.push('ready', true)
+      this.send('npm/ready', true)      
+    }
   })
 }
 
-function queueCommands() {
-  let ready = this.pull('npm:ready')
-  if (!ready) 
-    this.push('pending', this.inputs[0])
+function queueCommands(defer) {
+  this.push('pending', defer)
 }
 
 function sendCommands() {
   let pending = this.pull('pending')
   let install = new Set
   for (let cmd of pending) {
-    if (cmd.key === 'npm/install')
-      install.add(cmd.value)
-    else
-      this.send(cmd.key, cmd.value)
+    let [ key, arg ] = cmd
+    switch (key) {
+    case 'npm/install': arg.forEach(pkg => install.add(pkg))
+      break;
+    default: this.send(key, arg)
+      break;
+    }
   }
   pending.clear()
   if (install.size)
@@ -59,11 +59,14 @@ function sendCommands() {
 }
 
 function install(pkgs) {
-  let npm = this.pull('module/npm')
-  if (!Array.isArray(pkgs)) pkgs = [ pkgs ]
-  pkgs = [].concat(...pkgs).filter(String)
-  npm.commands.install(pkgs, (err, res) => {
-    if (err) this.throw(err)
-    else this.send('npm/installed', new Map(res))
-  })
+  let [ npm, ready ] = this.pull('module/npm', 'ready')
+  pkgs = [].concat(pkgs).filter(String)
+  if (!ready) this.send('npm/defer', [ this.trigger, pkgs ])
+  else {
+    npm.commands.install(pkgs, (err, res) => {
+      if (err) this.throw(err)
+      else this.send('npm/installed', new Map(res))
+    })
+  }
 }
+

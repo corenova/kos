@@ -19,8 +19,8 @@ module.exports = kos.flow
   .in('mqtt/connect').out('mqtt/client').bind(connect)
 
   .in('mqtt/connect/url').out('mqtt/connect')
-  .bind(function simpleConnect({ value }) {
-    this.send({ url: value })
+  .bind(function simpleConnect(url) {
+    this.send('mqtt/connect', { url: url })
   })
 
   .in('mqtt/client','mqtt/subscribe').default('topics', new Set)
@@ -38,9 +38,9 @@ module.exports = kos.flow
     })
   })
 
-function connect({ value }) {
+function connect(opts) {
   let [ mqtt, {parse}, protocols ] = this.pull('module/mqtt', 'module/url', 'protocols')
-  let { url, options } = value
+  let { url, options } = opts
   try { url = parse(url) }
   catch (e) { return this.throw(e) }
   

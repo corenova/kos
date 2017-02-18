@@ -3,16 +3,17 @@
 const kos = require('kos')
 
 module.exports = kos.flow('reaction-tax')
+  .require('reaction/cart')
   .use('flow/taxcloud')
   .use('flow/avalara')
 
   // taxcloud request trigger
-  .in('cart/items/taxable').require('flow/taxcloud','reaction/cart')
+  .in('cart/items/taxable').require('flow/taxcloud')
   .out('taxcloud/taxes')
   .bind(invokeTaxCloud)
 
   // avalara request trigger
-  .in('cart/items/taxable').require('flow/avalara', 'reaction/cart')
+  .in('cart/items/taxable').require('flow/avalara')
   .out('cart/items/tax')
   .bind(invokeAvalara)
 

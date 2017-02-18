@@ -138,9 +138,9 @@ function renderAction(action, funcWidth, inputWidth, outputWidth) {
 }
 
 function renderActions(stream) {
-  let { actions, inputs, outputs } = stream
-  let inputWidth  = findLongest(inputs).length
-  let outputWidth = findLongest(outputs).length
+  let { actions, consumes, provides } = stream
+  let inputWidth  = findLongest(Array.from(consumes)).length
+  let outputWidth = findLongest(Array.from(provides)).length
   let funcWidth   = findLongest(actions.map((x => x.handler.name))).length
   let lines = actions.reduce(((acc, action, idx) => {
 	let item = renderAction(action, funcWidth, inputWidth, outputWidth)
@@ -168,10 +168,10 @@ function renderActions(stream) {
 function renderStream(stream, level=1) {
   let str = ''
   let info = {
-	label:    stream.label(),
+	label:    stream.label,
 	summary:  stream.summary(),
 	requires: stream.requires,
-    subflows: stream.subflows.map(x => x.label()),
+    includes: stream.includes.map(x => x.label),
     actions:  stream.actions.map(x => FUNC + '(' + x.handler.name + ')'),
     '': null
   }
@@ -186,8 +186,8 @@ function renderStream(stream, level=1) {
 	}
   }
   str += tree(info, true)
-  for (let flow of stream.subflows) {
-    str += '   ├─ '+flow.label()+"\n"
+  for (let flow of stream.includes) {
+    str += '   ├─ '+flow.label+"\n"
     str += indent(renderStream(flow, level+1), 1, '   │  ') + "\n"
     str += "   │\n"
   }

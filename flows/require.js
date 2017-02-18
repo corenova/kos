@@ -2,13 +2,11 @@
 
 const kos = require('..')
 
-const NpmFlow = require('./npm')
-
-module.exports = kos.flow
-  .label('kos-flow-require')
+module.exports = kos.flow('kos-require')
   .summary("Provides external module loading via 'require'")
-  .use(NpmFlow)
   .default('pending', new Set)
+  .import('kos-npm')
+  // actions
   .in('require').out('module/*').bind(tryRequire)
   .in('require:error').out('npm/install').bind(autoFetchMissing)
   .in('require','npm/installed').out('require').bind(handleAutoFetch)

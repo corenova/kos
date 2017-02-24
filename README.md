@@ -3,7 +3,7 @@
 Simple, unopionated,
 [dataflow streaming](https://en.wikipedia.org/wiki/Dataflow) framework
 for creating **awesome** data pipelines and state machines for your
-app.
+apps.
 
 It's a **data-centric** paradigm for moving *objects* through a
 pipeline of computational actors that can execute
@@ -18,22 +18,22 @@ experiments, share your flows, and embrace KOS.
 
 ## Introduction
 
-A **Kinetic Object Stream** contains a **Flow** of **Action(s)**
-and/or **Stream(s)** that operates on one or more *named input*
-**Object(s)** to produce one or more *named output* **Object(s)**.
+A **Kinetic Object Stream** contains a set of **Action(s)** and/or
+**Stream(s)** that operates on one or more *named input* **Object(s)**
+to produce one or more *named output* **Object(s)**.
 
 ```
-├─ label: kos-flow-http
-├─ summary: Provides HTTP client and/or server flows
-├─ subflows
-│  ├─ kos-flow-http-client
-│  └─ kos-flow-http-server
+├─ label: kos-http
+├─ summary: Provides HTTP client and/or server transforms
+├─ includes
+│  ├─ kos-http-client
+│  └─ kos-http-server
 ├─ actions
 │  ├─ ƒ(simpleGet)
 │  ├─ ƒ(extractBody)
 │  └─ ƒ(proxy)
 └──┐
-   ├─ kos-flow-http-client
+   ├─ kos-http-client
    │  ├─ summary: Provides HTTP client flows utilizing 'superagent' module
    │  ├─ requires
    │  │  └─ module/superagent
@@ -52,7 +52,7 @@ and/or **Stream(s)** that operates on one or more *named input*
    │      ├╼ http/request/patch  ╾┤
    │      └╼ http/request/delete ╾┘
    │
-   ├─ kos-flow-http-server
+   ├─ kos-http-server
    │  ├─ summary: Provides HTTP server flows utilizing 'express' module
    │  ├─ requires
    │  │  └─ module/express
@@ -70,9 +70,9 @@ and/or **Stream(s)** that operates on one or more *named input*
     └╼ http/proxy           ╾┘
 ```
 
-The above render was generated for [kos-flow-http](./flows/http.md)
+The above render was generated for [kos-http](./streams/http.md)
 module via `kos show` using the included `kos` CLI utility. Please
-refer to [Managing Flows](./docs/CLI.md#managing-flows) documentation
+refer to [Managing Streams](./docs/cli.md#managing-streams) documentation
 for more info on utilizing the `kos` CLI utility.
 
 ## Installation
@@ -88,31 +88,31 @@ perfectly fine to install as a local dependency.
 ## Reference Guides
 
 - [Why embrace KOS?](./docs/benefits.md)
-- [Managing Flows with `kos` CLI](./docs/cli.md)
-- [Using Flows](./docs/usage.md)
-- [Creating Flows](./docs/developer.md)
+- [Managing Streams with `kos` CLI](./docs/cli.md)
+- [Using Streams](./docs/usage.md)
+- [Creating Streams](./docs/developer.md)
 - [Managing State](./docs/state-machine.md)
 - [Using KOS with React](./docs/react.md)
 
-## Available Flows
+## Available Streams
 
-The following flow modules are included inside the `kos` repository.
+The following stream modules are included inside the `kos` repository.
 
-- [kos-flow-function](./flows/function.md)
-- [kos-flow-http](./flows/http.md)
-- [kos-flow-mqtt](./flows/mqtt.md)
-- [kos-flow-npm](./flows/npm.md)
-- [kos-flow-react](./flows/react.md)
-- [kos-flow-require](./flows/require.md)
+- [kos-function](./streams/function.md)
+- [kos-http](./streams/http.md)
+- [kos-mqtt](./streams/mqtt.md)
+- [kos-npm](./streams/npm.md)
+- [kos-react](./streams/react.md)
+- [kos-require](./streams/require.md)
 - ... and many more coming soon!
 
 As discussed in
 [Managing Dependencies](./docs/usage.md#managing-dependencies) section
-of the [Using Flows](./docs/usage.md) guide, properly created KOS Flow
+of the [Using Streams](./docs/usage.md) guide, properly created KOS
 modules do NOT contain any *explicit* external module dependencies at
 the module-level but instead receive them via the stream from the
 upstream consumer. As such, maintaining `package.json` or publishing
-the flow modules to NPM is completely optional. 
+the KOS modules to NPM is completely optional.
 
 ## License
   [Apache 2.0](LICENSE)

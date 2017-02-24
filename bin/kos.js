@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict'
-let program = require('commander')
+
+const program = require('commander')
 
 program
   .version('1.0.0')
@@ -12,17 +13,16 @@ program
 
 program
   .command('list').alias('ls')
-  .description('List locally available flows')
+  .description('List locally available streams')
   .action( () => {} )
 
 program
-  .command('show [flow]', 'Show detailed information about a flow').alias('sh')
+  .command('show [streams]', 'Show detailed information about a stream').alias('sh')
   // .command('status',          'Display working core status').alias('stat')
-  // .command('bind [target]',   'Adds one or more targets as dependency').alias('b')
+  //.command('bind [streams]', 'Binds one or more targets as dependency')
   // .command('unbind [target]', 'Removes one or more targets as dependency').alias('u')
-  .command('pull [flow]', 'Fetch from and integrate with origin')
-  .command('push [flow]', 'Publish flow to origin')
-  // .command('push',            'Deploy to upstream nova')
-  // .command('run',           'Runs the experiment locally')
+  .command('pull [streams]', 'Fetch from and integrate with origin')
+  .command('push [streams]', 'Publish flow to origin')
+  .command('run [streams]',  'Runs one or more stream(s)')
 
 program.parse(process.argv)

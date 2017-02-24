@@ -1,7 +1,6 @@
 const kos = require('..')
 
-module.exports = kos.flow
-  .label('kos-flow-react')
+module.exports = kos.createStream('kos-react')
   .require('module/react')
   .in('module/react').out('react/element').bind(createElement)
   .in('react/components').out('react/component')
@@ -13,10 +12,10 @@ module.exports = kos.flow
   .in('react/component').out('*').bind(createComponent)
 
 function createElement(msg) {
-  let React = this.pull('module/react')
+  let React = this.fetch('module/react')
   let { createElement, createClass } = React
   React.createElement = (type, config={}, children) => {
-    let { wrap } = this.pull(type) || {}
+    let { wrap } = this.fetch(type) || {}
     if (!wrap) return createElement(...arguments)
     let props = Object.assign(config, wrap(config))
     let elem = createElement(type, props, children)
@@ -26,7 +25,7 @@ function createElement(msg) {
 }
 
 function createComponent(msg) {
-  let React = this.pull('module/react')
+  let React = this.fetch('module/react')
   let component = msg.value
   if (component instanceof React.Component) {
 

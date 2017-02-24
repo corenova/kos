@@ -1,12 +1,12 @@
-// HTTP transaction flow
+// Node Package Manager transaction stream
 //
-// NOTE: this flow REQUIREs the 'npm' module which is usually
+// NOTE: this stream REQUIREs the 'npm' module which is usually
 // available in a Node.js environment. Optionally, it can be fulfilled
 // by the upstream consumer.
 
 const kos = require('..')
 
-module.exports = kos.flow('kos-npm')
+module.exports = kos.create('kos-npm')
   .summary("Provides NPM registry transactions utilizing 'npm' module")
   .require('module/npm')
   .default('ready', false)
@@ -27,22 +27,22 @@ function triggerLoad(npm) {
 }
 
 function initialize(options) {
-  let npm = this.pull('module/npm')
+  let npm = this.fetch('module/npm')
   npm.load(options, (err, res) => {
     if (err) this.throw(err)
     else {
-      this.push('ready', true)
+      this.post('ready', true)
       this.send('npm/ready', true)      
     }
   })
 }
 
 function queueCommands(defer) {
-  this.push('pending', defer)
+  this.post('pending', defer)
 }
 
 function sendCommands() {
-  let pending = this.pull('pending')
+  let pending = this.fetch('pending')
   let install = new Set
   for (let cmd of pending) {
     let [ key, arg ] = cmd
@@ -59,7 +59,7 @@ function sendCommands() {
 }
 
 function install(pkgs) {
-  let [ npm, ready ] = this.pull('module/npm', 'ready')
+  let [ npm, ready ] = this.fetch('module/npm', 'ready')
   pkgs = [].concat(pkgs).filter(String)
   if (!ready) this.send('npm/defer', [ this.trigger, pkgs ])
   else {

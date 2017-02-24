@@ -3,16 +3,15 @@
 // NOTE: this flow REQUIREs the 'mqtt' module and will become
 // active once it receives it from the upstream (or fed by the user)
 //
-// Flows should actively AVOID requiring dependency modules at the
+// Streams should actively AVOID requiring dependency modules at the
 // module-level (unless part of Node.js runtime). It should be
-// declared at the flow-level so that the CONSUMER of the flow can
+// declared at the stream-level so that the CONSUMER of the stream can
 // decide how to fulfill the necessary dependency.
 
 const kos = require('..')
 
-module.exports = kos.flow
-  .label('kos:flow:mqtt')
-  .summary("Provides MQTT transaction flow utilizing 'mqtt' module")
+module.exports = kos.create('kos-mqtt')
+  .summary("Provides MQTT transaction transforms utilizing 'mqtt' module")
   .require('module/mqtt', 'module/url')
   .default('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
 
@@ -39,7 +38,7 @@ module.exports = kos.flow
   })
 
 function connect(opts) {
-  let [ mqtt, {parse}, protocols ] = this.pull('module/mqtt', 'module/url', 'protocols')
+  let [ mqtt, {parse}, protocols ] = this.fetch('module/mqtt', 'module/url', 'protocols')
   let { url, options } = opts
   try { url = parse(url) }
   catch (e) { return this.throw(e) }

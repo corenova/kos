@@ -1,33 +1,38 @@
+'use strict'
+
 const KineticObjectStream = require('./lib/stream')
+
 const path = require('path')
 
-const kos = new KineticObjectStream({ label: 'core' })
+const kos = {
+  // load an existing Stream or Flow from file
+  load(filename) {
+    let stream
+    try {
+	  stream = require(filename)
+    } catch (e) {
+	  stream = require(path.resolve(filename))
+    }
+    if (!(stream instanceof KineticObjectStream))
+      throw new Error("unable to load KOS from: " + filename)
+    return stream
+  },
 
-kos.load = function(flowfile) {
-  let flow
-  try {
-	flow = require(flowfile)
-  } catch (e) {
-	flow = require(path.resolve(flowfile))
-  }
-  if (!(flow instanceof KineticObjectStream))
-    throw new Error("kos.load should only load KineticObjectStream")
-  return flow
+  create(opts) { 
+    return new KineticObjectStream(opts) 
+  },
+
+  Stream: KineticStream
 }
 
-kos.Stream = KineticObjectStream
-kos.Object = require('./lib/object')
-kos.Action = require('./lib/action')
-kos.Transform = require('./lib/transform')
-
-exports = module.exports = kos['default'] = kos.kos = kos
+module.exports = kos['default'] = kos.kos = kos
 
 // for debugging, you can pipe your flow to this
 // ex. myFlow.pipe(kos.debug)
-try { var debug = require('debug')('kos/debug') }
-catch (e) { var debug = console.log }
+try { const debug = require('debug')('kos/debug') }
+catch (e) { const debug = console.log }
 
-kos.debug = (new kos.Action).in('*').bind(function log(msg) {
+kos.debug = (new KineticAction).in('*').bind(function log(msg) {
   debug(msg.key)
   debug(msg.value)
 })

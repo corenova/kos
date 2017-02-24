@@ -1,18 +1,23 @@
-// Module loader flow
+// Module loader stream
 
 const kos = require('..')
 
-module.exports = kos.flow('kos-require')
+module.exports = kos.create('kos-require')
   .summary("Provides external module loading via 'require'")
   .default('pending', new Set)
-  .import('kos-npm')
+
   // actions
+  .flow('require')
+  .sync('kos-npm')
+  .bind(requireModule)
+
+  // transforms
   .in('require').out('module/*').bind(tryRequire)
   .in('require:error').out('npm/install').bind(autoFetchMissing)
   .in('require','npm/installed').out('require').bind(handleAutoFetch)
 
 function tryRequire(opts) {
-  let pending = this.pull('pending')
+  let pending = this.fetch('pending')
   if (typeof opts === 'string') opts = { name: opts }
   let { name, path } = opts
   try {
@@ -27,16 +32,16 @@ function tryRequire(opts) {
 function autoFetchMissing(error) {
   let { target, code } = error
   if (target === 'npm') return this.throw("cannot auto-resolve npm")
-  if (code === 'MODULE_NOT_FOUND' && this.pull('module/npm')) {
-    let pending = this.pull('pending')
+  if (code === 'MODULE_NOT_FOUND' && this.fetch('module/npm')) {
+    let pending = this.fetch('pending')
     if (pending.has(target)) return
-    this.push('pending', target) // save at the flow-level
+    this.post('pending', target) // save at the flow-level
     this.send('npm/install', target)
   } else this.throw(error)
 }
 
 function handleAutoFetch() {
-  let pending = this.pull('pending')
+  let pending = this.fetch('pending')
   let pkgmap = this.get('npm/installed')
   for (let [pkg, path] of pkgmap) {
     let [ name, version ] = pkg.split('@')

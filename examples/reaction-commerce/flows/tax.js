@@ -1,16 +1,21 @@
-// Reaction Tax Calculation Flow
+// Reaction Tax Calculation Stream
 
 const kos = require('kos')
 
-module.exports = kos.flow('reaction-tax')
-  .require('reaction/cart')
-  .use('flow/taxcloud')
-  .use('flow/avalara')
+module.exports = kos.create('reaction-tax')
+
+// flow triggers
+  .flow('tax')
+  .sync('taxation-avalara')
+  .sync('taxation-taxcloud')
+  .bind(calculateTax)
+
+  .in('cart/items').out('cart/items/taxable').bind(filterTaxableGoods)
+
 
   // taxcloud request trigger
-  .in('cart/items/taxable').require('flow/taxcloud')
-  .out('taxcloud/taxes')
-  .bind(invokeTaxCloud)
+  .in('cart/items/taxable').out('taxcloud/request').bind(invokeTaxCloud)
+  .in('taxcloud/response/items').out('taxcloud/taxes').bind(invokeTaxCloud)
 
   // avalara request trigger
   .in('cart/items/taxable').require('flow/avalara')
@@ -18,16 +23,18 @@ module.exports = kos.flow('reaction-tax')
   .bind(invokeAvalara)
 
   // tax calculation from multiple possible triggers
-  .in('taxcloud/taxes')
-  .in('avalara/taxes')
-  .require('cart/items/taxable','reaction/cart')
-  .default('taxes', new Map)
-  .out('cart/taxes')
-  .bind(calculateTaxes)
+  .in('cart/items/taxable','taxcloud/taxes').out('cart/taxes').bind(calculateTaxes)
+  .in('cart/items/taxable','avalara/taxes').out('cart/taxes').bind(calculateTaxes)
+
 
 //--------------
-// FLOW ACTIONS
+// TRANSFORMS
 //--------------
+
+function filterTaxableGoods(shippables) {
+  let taxables = shippables.filter(x => x.taxable)
+  this.send('cart/items/taxable', taxables)
+}
 
 function invokeTaxCloud(items) {
   let cart = this.pull('reaction/cart')

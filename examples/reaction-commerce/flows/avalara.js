@@ -1,9 +1,8 @@
-// Avalara Tax Rates service flow
+// Avalara Tax Rate Stream
 
 const kos = require('kos')
 
-module.exports = kos.flow
-  .label('reaction-avalara')
+module.exports = kos.create('reaction-avalara')
   .require('module/avalara-taxrates','avalara/access/key')
   .in('avalara/request/address').out('avalara/response').bind(calculateTaxRates)
 

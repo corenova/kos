@@ -4,16 +4,16 @@
 // module and will become active once it receives it from the upstream
 // (or fed by the user)
 //
-// Flows should actively AVOID requiring dependency modules at the
+// Streams should actively AVOID requiring dependency modules at the
 // module-level (unless part of Node.js runtime). It should be
-// declared at the flow-level so that the CONSUMER of the flow can
+// declared at the stream-level so that the CONSUMER of the stream can
 // decide how to fulfill the necessary dependency.
 
 const kos = require('..')
 const http = require('http')
 
-const HttpClientFlow = kos.flow('kos-http-client')
-  .summary("Provides HTTP client flows utilizing 'superagent' module")
+const HttpClient = kos.create('kos-http-client')
+  .summary("Provides HTTP client transforms utilizing 'superagent' module")
   .require('module/superagent')
   .in('http/request')
   .out('http/request/get')
@@ -38,17 +38,17 @@ const HttpClientFlow = kos.flow('kos-http-client')
   .in('http/request/patch').out('http/response').bind(handleRequest)
   .in('http/request/delete').out('http/response').bind(handleRequest)
 
-const HttpServerFlow = kos.flow('kos-http-server')
-  .summary("Provides HTTP server flows utilizing 'express' module")
+const HttpServer = kos.create('kos-http-server')
+  .summary("Provides HTTP server transforms utilizing 'express' module")
   .require('module/express')
   .in('http/listen').out('http/server').bind(runServer)
   .in('http/server','http/route').out('http/server/request').bind(handleRoute)
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
-module.exports = kos.flow('kos-http')
-  .summary("Provides HTTP client and/or server flows")
-  .include(HttpClientFlow)
-  .include(HttpServerFlow)
+module.exports = kos.create('kos-http')
+  .summary("Provides HTTP client and/or server transforms")
+  .include(HttpClient)
+  .include(HttpServer)
   // actions
   .in('http/request/get/url').out('http/request/get')
   .bind(function simpleGet(url) {
@@ -61,7 +61,7 @@ module.exports = kos.flow('kos-http')
   .in('http/server/request','http/proxy').out('http/request').bind(proxy)
 
 function handleRequest(req) {
-  let agent = this.pull('module/superagent')
+  let agent = this.fetch('module/superagent')
   let method = this.trigger.replace(/\/(\w+)$/,'$1').toLowerCase()
   let { url, data } = req
 
@@ -85,7 +85,7 @@ function handleRequest(req) {
 }
 
 function runServer(listen) {
-  let express = this.pull('module/express')
+  let express = this.fetch('module/express')
   let app = express()
   
 }

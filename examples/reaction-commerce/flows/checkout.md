@@ -1,13 +1,5 @@
+# Reaction Checkout Flow
 
-const kos = require('kos')
-
-module.exports = kos.flow
-  .label('reaction-cart')
-  .use(ReactionTaxFlow)
-  .in('product').out('cart').bind(addProductToCart)
-  
-
-[ checkout workflow ]
 should be per customer + cart instance
 
 requires customer, cart

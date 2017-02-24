@@ -1,10 +1,9 @@
-// TaxCloud Tax Rate service flow
+// TaxCloud Tax Rate Stream
 
 const kos = require('kos')
 
-module.exports = kos.flow
-  .label('taxcloud')
-  .require('flow/http')
+module.exports = kos.create('reaction-taxcloud')
+  .import('kos-http')
   .require('taxcloud/access/id','taxcloud/access/key','taxcloud/access/url')
   .default('taxcloud/access/url', 'https://api.taxcloud.net/1.0/TaxCloud/Lookup')
   .default('requests', new Map)

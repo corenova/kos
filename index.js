@@ -22,7 +22,9 @@ const kos = {
     return new KineticObjectStream(opts) 
   },
 
-  Stream: KineticStream
+  Stream: KineticObjectStream,
+  Reactor: require('./lib/reactor'),
+  Trigger: require('./lib/trigger')
 }
 
 module.exports = kos['default'] = kos.kos = kos
@@ -32,7 +34,7 @@ module.exports = kos['default'] = kos.kos = kos
 try { const debug = require('debug')('kos/debug') }
 catch (e) { const debug = console.log }
 
-kos.debug = (new KineticAction).in('*').bind(function log(msg) {
+kos.debug = (new kos.Reactor).bind(function log(msg) {
   debug(msg.key)
   debug(msg.value)
 })

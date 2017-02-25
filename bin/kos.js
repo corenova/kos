@@ -1,28 +1,61 @@
 #!/usr/bin/env node
 'use strict'
 
+const kos = require('..')
 const program = require('commander')
+//const command = require('../flows/command')
 
 program
   .version('1.0.0')
-  .option('-c, --config <file>', 'use specified <file> to retrieve configuration data (default: uses "config" directory)')
   .option('-v, --verbose', 'enable more verbose output', ( (v, t) => t + 1), 0)
 
 program
-  .command('create [name]', 'Start a new dataflow project')
+  .command('create [name]')
+  .description('Start a new dataflow project')
+  .action(() => {})
 
 program
-  .command('list').alias('ls')
-  .description('List locally available streams')
-  .action( () => {} )
+  .command('list')
+  .alias('ls')
+  .description('List locally available flows')
+  .action(() => {})
 
 program
-  .command('show [streams]', 'Show detailed information about a stream').alias('sh')
-  // .command('status',          'Display working core status').alias('stat')
-  //.command('bind [streams]', 'Binds one or more targets as dependency')
-  // .command('unbind [target]', 'Removes one or more targets as dependency').alias('u')
-  .command('pull [streams]', 'Fetch from and integrate with origin')
-  .command('push [streams]', 'Publish flow to origin')
-  .command('run [streams]',  'Runs one or more stream(s)')
+  .command('run [flows...]')
+  .description('Runs one or more flow(s)')
+  .option('-h, --host', 'host to run the flows', '127.0.0.1')
+  .option('-p, --port', 'port to run the flows', 1505)
+  .action((streams, opts) => {
+    command
+      .invoke('run', opts)
+      .then(flow => {
+        
+      })
+  })
+
+program
+  .command('show [flows...]')
+  .alias('sh')
+  .description('Show detailed information about a flow')
+  .option('-o, --output ', 'output format', /^(json|yaml|tree)$/i, 'tree')
+  .action((streams, opts) => {
+
+  })
+
+
+program
+  .arguments('[flows...]')
+  .option('-i, --input ', 'input format', /^(json|yaml)$/i, 'json')
+  .option('-o, --output ', 'output format', /^(json|yaml)$/i, 'json')
+  .action((flows, opts) => {
+    let { input, output } = opts
+    flows = flows.filter(Boolean).map(flow => kos.load(flow))
+    if (!flows.length) process.exit(1)
+
+    let head = flows.shift()
+    let tail = flows.reduce(((a, b) => a.pipe(b)), head)
+    tail.pipe(head) // close the loop
+    process.stdin.pipe(head.io(input, output)).pipe(process.stdout)
+  })
 
 program.parse(process.argv)

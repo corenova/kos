@@ -10,10 +10,11 @@ module.exports = kos.create('kos-command')
   .include(render)
 
 // flow triggers
-  .on('run').bind(invokeRun)
+  .on('run').bind(startCore)
   .on('show').bind(showFlowDetails)
+  .on('bind').bind(connectFlowToCore)
 
-function invokeRun(opts) {
+function startCore(opts) {
   let { host, port, args } = opts
   
 

@@ -5,11 +5,7 @@ const kos = require('..')
 module.exports = kos.create('kos-require')
   .summary("Provides external module loading via 'require'")
   .default('pending', new Set)
-
-  // actions
-  .flow('require')
-  .sync('kos-npm')
-  .bind(requireModule)
+  .import('kos-npm')
 
   // transforms
   .in('require').out('module/*').bind(tryRequire)

@@ -54,15 +54,15 @@ module.exports = kos.create('kos-http')
   .bind(function simpleGet(url) {
     this.send('http/request/get', { url: url })
   })
-  .in('http/response').out('http/response/body')
+  .in('http/response').out('http/response/text')
   .bind(function extractBody(res) {
-    this.send('http/response/body', res.body)
+    this.send('http/response/text', res.text)
   })
   .in('http/server/request','http/proxy').out('http/request').bind(proxy)
 
 function handleRequest(req) {
   let agent = this.fetch('module/superagent')
-  let method = this.trigger.replace(/\/(\w+)$/,'$1').toLowerCase()
+  let method = this.trigger.replace(/.*\/(\w+)$/,'$1').toLowerCase()
   let { url, data } = req
 
   switch (method) {

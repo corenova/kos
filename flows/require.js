@@ -9,7 +9,7 @@ module.exports = kos.create('kos-require')
 
   // transforms
   .in('require').out('module/*').bind(tryRequire)
-  .in('require:error').out('npm/install').bind(autoFetchMissing)
+  .in('error').out('npm/install').bind(autoFetchMissing)
   .in('require','npm/installed').out('require').bind(handleAutoFetch)
 
 function tryRequire(opts) {
@@ -28,7 +28,7 @@ function tryRequire(opts) {
 function autoFetchMissing(error) {
   let { target, code } = error
   if (target === 'npm') return this.throw("cannot auto-resolve npm")
-  if (code === 'MODULE_NOT_FOUND' && this.fetch('module/npm')) {
+  if (code === 'MODULE_NOT_FOUND') {
     let pending = this.fetch('pending')
     if (pending.has(target)) return
     this.post('pending', target) // save at the flow-level
@@ -38,7 +38,7 @@ function autoFetchMissing(error) {
 
 function handleAutoFetch() {
   let pending = this.fetch('pending')
-  let pkgmap = this.get('npm/installed')
+  let pkgmap = new Map(this.get('npm/installed'))
   for (let [pkg, path] of pkgmap) {
     let [ name, version ] = pkg.split('@')
     if (pending.has(name)) {

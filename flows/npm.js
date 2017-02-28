@@ -54,6 +54,7 @@ function sendCommands() {
     }
   }
   pending.clear()
+  this.debug(install)
   if (install.size)
     this.send('npm/install', Array.from(install))
 }
@@ -61,11 +62,13 @@ function sendCommands() {
 function install(pkgs) {
   let [ npm, ready ] = this.fetch('module/npm', 'ready')
   pkgs = [].concat(pkgs).filter(String)
+  this.debug(pkgs)
+  this.debug("install", ready)
   if (!ready) this.send('npm/defer', [ this.trigger, pkgs ])
   else {
     npm.commands.install(pkgs, (err, res) => {
       if (err) this.throw(err)
-      else this.send('npm/installed', new Map(res))
+      else this.send('npm/installed', res)
     })
   }
 }

@@ -21,27 +21,26 @@ program
   .action(() => {})
 
 program
+  .command('show <flow>')
+  .alias('sh')
+  .description('Show detailed information about a flow')
+  .option('-o, --output ', 'output format', /^(json|yaml|tree)$/i, 'tree')
+  .action((flow, opts) => {
+
+  })
+
+program
   .command('run [flows...]')
   .description('Runs one or more flow(s)')
   .option('-h, --host', 'host to run the flows', '127.0.0.1')
   .option('-p, --port', 'port to run the flows', 1505)
-  .action((streams, opts) => {
+  .action((flows, opts) => {
     command
-      .invoke('run', opts)
+      .feed('run', opts)
       .then(flow => {
         
       })
   })
-
-program
-  .command('show [flows...]')
-  .alias('sh')
-  .description('Show detailed information about a flow')
-  .option('-o, --output ', 'output format', /^(json|yaml|tree)$/i, 'tree')
-  .action((streams, opts) => {
-
-  })
-
 
 program
   .arguments('[flows...]')
@@ -50,11 +49,9 @@ program
   .action((flows, opts) => {
     let { input, output } = opts
     flows = flows.filter(Boolean).map(flow => kos.load(flow))
-    if (!flows.length) process.exit(1)
-
-    let head = flows.shift()
-    let tail = flows.reduce(((a, b) => a.pipe(b)), head)
-    tail.pipe(head) // close the loop
+    let [ head, tail ] = kos.chain(...flows)
+    if (!head) process.exit(1)
+    if (tail) tail.pipe(head) // close loop
     process.stdin.pipe(head.io(input, output)).pipe(process.stdout)
   })
 

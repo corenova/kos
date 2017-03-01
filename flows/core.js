@@ -1,8 +1,8 @@
 
 const kos = require('..')
-const net = require('net')
 
 module.exports = kos.create('kos-core')
+  .require('module/net')
   .in('kos/load').out('stream/*').bind(loadStream)
   .in('kos/run').out('kos/server','kos/client').bind(runInstance)
   .in('kos/link').bind(linkFlow)
@@ -15,6 +15,7 @@ function loadStream(file) {
 }
 
 function runInstance(opts) {
+  let net = this.fetch('module/net')
   let { port=1505, host='127.0.0.1' } = opts
   let server = net.createServer(this.send.bind(this, 'kos/client'))
   server

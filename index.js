@@ -1,30 +1,39 @@
 'use strict'
 
 const KineticObjectStream = require('./lib/stream')
+const KineticReactor = require('./lib/reactor')
+const KineticTrigger = require('./lib/trigger')
 
 const path = require('path')
 
 const kos = {
-  // load an existing Stream or Flow from file
+  // load an existing Flow or Flow from file
   load(filename) {
-    let stream
+    let flow
     try {
-	  stream = require(filename)
+	  flow = require(filename)
     } catch (e) {
-	  stream = require(path.resolve(filename))
+	  flow = require(path.resolve(filename))
     }
-    if (!(stream instanceof KineticObjectStream))
+    if (!(flow instanceof KineticObjectStream))
       throw new Error("unable to load KOS from: " + filename)
-    return stream
+    return flow
   },
 
   create(opts) { 
     return new KineticObjectStream(opts) 
   },
 
+  chain(...flows) {
+    flows = flows.filter(flow => flow instanceof KineticObjectStream)
+    let head = flows.shift()
+    let tail = flows.reduce(((a, b) => a.pipe(b)), head)
+    return [ head, tail ]
+  },
+
   Stream: KineticObjectStream,
-  Reactor: require('./lib/reactor'),
-  Trigger: require('./lib/trigger')
+  Reactor: KineticReactor,
+  Trigger: KineticTrigger
 }
 
 module.exports = kos['default'] = kos.kos = kos

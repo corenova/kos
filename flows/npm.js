@@ -9,16 +9,16 @@ const kos = require('..')
 module.exports = kos.create('kos-npm')
   .summary("Provides NPM registry transactions utilizing 'npm' module")
   .require('module/npm')
-  .default('ready', false)
+  .default('loaded', false)
   .default('pending', new Set)
 
   .in('module/npm').out('npm/load').bind(triggerLoad)
-  .in('npm/load').out('npm/ready').bind(initialize)
+  .in('npm/load').out('npm/loaded').bind(initialize)
 
   .in('npm/install').out('npm/defer','npm/installed').bind(install)
 
   .in('npm/defer').bind(queueCommands)
-  .in('npm/ready').out('npm/install','npm/uninstall').bind(sendCommands)
+  .in('npm/loaded').out('npm/install','npm/uninstall').bind(sendCommands)
 
 //--- Kinetic Actions Handlers
 
@@ -31,8 +31,8 @@ function initialize(options) {
   npm.load(options, (err, res) => {
     if (err) this.throw(err)
     else {
-      this.post('ready', true)
-      this.send('npm/ready', true)      
+      this.post('loaded', true)
+      this.send('npm/loaded', true)      
     }
   })
 }
@@ -54,17 +54,14 @@ function sendCommands() {
     }
   }
   pending.clear()
-  this.debug(install)
   if (install.size)
     this.send('npm/install', Array.from(install))
 }
 
 function install(pkgs) {
-  let [ npm, ready ] = this.fetch('module/npm', 'ready')
+  let [ npm, loaded ] = this.fetch('module/npm', 'loaded')
   pkgs = [].concat(pkgs).filter(String)
-  this.debug(pkgs)
-  this.debug("install", ready)
-  if (!ready) this.send('npm/defer', [ this.trigger, pkgs ])
+  if (!loaded) this.send('npm/defer', [ this.trigger, pkgs ])
   else {
     npm.commands.install(pkgs, (err, res) => {
       if (err) this.throw(err)

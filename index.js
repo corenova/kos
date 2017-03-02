@@ -37,13 +37,3 @@ const kos = {
 }
 
 module.exports = kos['default'] = kos.kos = kos
-
-// for debugging, you can pipe your flow to this
-// ex. myFlow.pipe(kos.debug)
-try { const debug = require('debug')('kos/debug') }
-catch (e) { const debug = console.log }
-
-kos.debug = (new kos.Reactor).bind(function log(msg) {
-  debug(msg.key)
-  debug(msg.value)
-})

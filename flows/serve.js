@@ -1,7 +1,8 @@
 
 const kos = require('..')
 
-module.exports = kos.create('kos-core')
+module.exports = kos.create('kos-serve')
+  .summary('Provide dataflow as a service for on-demand interactions')
   .require('module/net')
   .in('kos/load').out('stream/*').bind(loadStream)
   .in('kos/run').out('kos/server','kos/client').bind(runInstance)

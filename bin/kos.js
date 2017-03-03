@@ -3,7 +3,6 @@
 
 const kos = require('..')
 const program = require('commander')
-//const command = require('../flows/command')
 
 program
   .version('1.0.0')
@@ -31,28 +30,32 @@ program
 
 program
   .command('run [flows...]')
-  .description('Runs one or more flow(s)')
-  .option('-h, --host', 'host to run the flows', '127.0.0.1')
-  .option('-p, --port', 'port to run the flows', 1505)
+  .description('Runs one or more flow(s) with built-in core flows: require, net, push, pull, sync')
+  .option('-h, --host', 'host to run the flows', kos.DEFAULT_HOST)
+  .option('-p, --port', 'port to run the flows', kos.DEFAULT_PORT)
   .action((flows, opts) => {
-    command
-      .feed('run', opts)
-      .then(flow => {
-        
-      })
+    flows = [].concat('require', 'net', 'push', 'pull', 'sync', flows)
+    flows = flows.filter(Boolean).map(kos.load)
+    let [ head, tail ] = kos.chain(...flows)
+    head || process.exit(1)
+    tail && tail.pipe(head) // close loop
+    // default state initialization
+    head.feed('require', 'net')
+    head.feed('require', 'url')
+    process.stdin.pipe(head.io(opts)).pipe(process.stdout)
   })
 
 program
   .arguments('[flows...]')
-  .option('-i, --input ', 'input format', /^(json|yaml)$/i, 'json')
-  .option('-o, --output ', 'output format', /^(json|yaml)$/i, 'json')
+  .option('-i, --input <format>', 'data format of STDIN', /^(json|yaml)$/i, 'json')
+  .option('-o, --output <format>', 'data format of STDOUT', /^(json|yaml)$/i, 'json')
+  .option('-p, --passthrough', 'allow STDIN to passthrough to STDOUT')
   .action((flows, opts) => {
-    let { input, output } = opts
-    flows = flows.filter(Boolean).map(flow => kos.load(flow))
+    flows = flows.filter(Boolean).map(kos.load)
     let [ head, tail ] = kos.chain(...flows)
-    if (!head) process.exit(1)
-    if (tail) tail.pipe(head) // close loop
-    process.stdin.pipe(head.io(input, output)).pipe(process.stdout)
+    head || process.exit(1)
+    tail && tail.pipe(head) // close loop
+    process.stdin.pipe(head.io(opts)).pipe(process.stdout)
   })
 
 program.parse(process.argv)

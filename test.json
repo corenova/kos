@@ -1,3 +1,6 @@
+{ "require": "net" }
+{ "require": "url" }
+{ "sync/listen": "localhost" }
 { "require": "npm" }
 { "require": "superagent" }
 { "http/request/get/url": "www.google.com" }

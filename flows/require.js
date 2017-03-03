@@ -8,8 +8,8 @@ module.exports = kos.create('kos-require')
   .import('kos-npm')
 
   // transforms
-  .in('require').out('module/*').bind(tryRequire)
-  .in('error').out('npm/install').bind(autoFetchMissing)
+  .in('require').out('module/*', 'require/error').bind(tryRequire)
+  .in('require/error').out('npm/install').bind(autoFetchMissing)
   .in('require','npm/installed').out('require').bind(handleAutoFetch)
 
 function tryRequire(opts) {
@@ -21,7 +21,7 @@ function tryRequire(opts) {
     pending.delete(name)
   } catch (e) {
     e.target = name
-    this.throw(e)
+    this.send('require/error', e)
   }
 }
 

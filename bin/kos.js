@@ -2,6 +2,7 @@
 'use strict'
 
 const kos = require('..')
+const colors = require('colors')
 const program = require('commander')
 
 program
@@ -46,16 +47,39 @@ program
   })
 
 program
-  .arguments('[flows...]')
-  .option('-i, --input <format>', 'data format of STDIN', /^(json|yaml)$/i, 'json')
-  .option('-o, --output <format>', 'data format of STDOUT', /^(json|yaml)$/i, 'json')
-  .option('-p, --passthrough', 'allow STDIN to passthrough to STDOUT')
+  .arguments('<flows...>')
+  .option('-p, --passthrough', 'allow STDIN to passthrough to STDOUT (use for shell pipelines)', false)
+  .option('-s, --silent', 'suppress all debug/info/error messages')
   .action((flows, opts) => {
     flows = flows.filter(Boolean).map(kos.load)
     let [ head, tail ] = kos.chain(...flows)
     head || process.exit(1)
     tail && tail.pipe(head) // close loop
-    process.stdin.pipe(head.io(opts)).pipe(process.stdout)
+
+    // let io = head.io(opts)
+    // process.stdin.pipe(io).pipe(process.stdout)
+    // io.err.pipe(process.stderr)
+
+    let io = head.io(opts)
+    opts.silent || head.on('data', ko => {
+      // check if externally provided ko was accepted by the internal flow
+      if (io.seen(ko) && !ko.accepted)
+        console.error('error:'.red, 'no matching flow for:', ko.key)
+
+      switch (ko.key) {
+      case 'kos':   console.error('info:'.cyan, ko.value.identity, 'ready'); break;
+      case 'info':  console.error('info:'.cyan, ko.value); break
+      case 'error': console.error('error:'.red, ko.value.message); break;
+      case 'debug': opts.verbose && console.error('debug:'.grey, ko.value); break
+      }
+    })
+    console.error('kos begins...'.grey)
+    process.stdin.pipe(io).pipe(process.stdout)
   })
 
 program.parse(process.argv)
+
+function collect(val, keys) {
+  keys.push(val)
+  return keys
+}

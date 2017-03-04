@@ -23,7 +23,7 @@ module.exports = kos.create('kos-npm')
 //--- Kinetic Actions Handlers
 
 function triggerLoad(npm) {
-  this.send('npm/load', { loglevel: 'silent', loaded: false })
+  this.send('npm/load', { loglevel: 'silent', progress: false, loaded: false })
 }
 
 function initialize(options) {

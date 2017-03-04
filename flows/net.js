@@ -24,7 +24,7 @@ function connect(opts) {
   let sock = new net.Socket
   sock.setNoDelay()
   sock.on('connect', () => {
-    this.debug("connect", addr)
+    this.info("connected to", addr)
     this.send('net/socket', sock)
     this.send('net/link', { 
       addr: addr,
@@ -66,7 +66,7 @@ function listen(opts) {
     })
   })
   server.on('listening', () => {
-    this.debug('listening', host, port)
+    this.info('listening', host, port)
     this.send('net/server', server)
   })
   server.on('error', this.throw.bind(this))
@@ -87,10 +87,10 @@ function listenByUrl(dest) {
 }
 
 function createStream(link) {
-  let { addr, socket, encoding } = link
+  let { addr, socket } = link
   let streams = this.get('streams')
-  let stream = streams.has(addr) ? streams.get(addr) : kos.create(addr)
-  let io = stream.io(encoding)
+  let stream = streams.has(addr) ? streams.get(addr) : kos.create('link/' + addr)
+  let io = stream.io()
   socket.on('error', this.throw.bind(this))
   socket.on('close', () => {
     io.unpipe(socket)

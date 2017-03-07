@@ -9,19 +9,21 @@ const path = require('path')
 
 const kos = {
   load(name) {
-    let flow
+    let flow = {}
     let search = [ 
       path.resolve(name),
       path.resolve(path.join('flows', name)),
-      path.join('kos/flows', name),
+      path.resolve(__dirname, path.join('flows', name)),
       name
     ]
     for (let name of search) {
       try { flow = require(name); break }
-      catch (e) { continue }
+      catch (e) { 
+        if (e.code !== 'MODULE_NOT_FOUND') throw e
+      }
     }
-    if (!(flow instanceof KineticObjectStream))
-      throw new Error("unable to load KOS for " + name + " in " + search)
+    if (flow.type !== 'KineticObjectStream')
+      throw new Error("unable to load KOS for " + name + " from " + search)
     return flow
   },
   create(opts) { 
@@ -29,7 +31,7 @@ const kos = {
   },
   chain(...flows) {
     let map = {}
-    flows = flows.filter(flow => flow instanceof KineticObjectStream)
+    flows = flows.filter(flow => flow.type === 'KineticObjectStream')
     for (let flow of flows) map[flow.label] = flow
     flows = Object.keys(map).map(key => map[key])
     let head = flows.shift()

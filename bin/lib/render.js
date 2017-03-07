@@ -45,7 +45,7 @@ function findLongest(a) {
 	  l = i; c = d;
 	}
   }
-  return a[l]
+  return a[l] || ''
 }
 
 function renderListItem(item, i, options={}) {
@@ -72,8 +72,8 @@ function renderListItem(item, i, options={}) {
   return str
 }
 
-function renderAction(action, funcWidth, inputWidth, outputWidth) {
-  let { inputs, outputs, handler={} } = action
+function renderReactor(reactor, funcWidth, inputWidth, outputWidth) {
+  let { inputs, outputs, handler={} } = reactor
   // BOX for consumed inputs
   let inbox = {
 	height: inputs.length,
@@ -137,14 +137,14 @@ function renderAction(action, funcWidth, inputWidth, outputWidth) {
   return block
 }
 
-function renderActions(stream) {
-  let { actions, consumes, provides } = stream
-  let inputWidth  = findLongest(Array.from(consumes)).length
-  let outputWidth = findLongest(Array.from(provides)).length
-  let funcWidth   = findLongest(actions.map((x => x.handler.name))).length
-  let lines = actions.reduce(((acc, action, idx) => {
-	let item = renderAction(action, funcWidth, inputWidth, outputWidth)
-	let last = idx == (actions.length - 1)
+function renderReactors(stream) {
+  let { reactors, inputs, outputs } = stream
+  let inputWidth  = findLongest(Array.from(inputs)).length
+  let outputWidth = findLongest(Array.from(outputs)).length
+  let funcWidth   = findLongest(reactors.map((x => x.handler.name))).length
+  let lines = reactors.reduce(((acc, reactor, idx) => {
+	let item = renderReactor(reactor, funcWidth, inputWidth, outputWidth)
+	let last = idx == (reactors.length - 1)
 	for (let i=0; i < item.lines.length; i++) {
 	  let line = item.lines[i]
 	  if (i < item.middle)
@@ -162,6 +162,7 @@ function renderActions(stream) {
 	}
 	return acc
   }), [])
+  if (!lines.length) lines.push(BOX.last + BOX.L.dash + 'no reactors')
   return lines.join("\n")
 }
 
@@ -171,8 +172,8 @@ function renderStream(stream, level=1) {
 	label:    stream.label,
 	summary:  stream.summary(),
 	requires: stream.requires,
-    includes: stream.includes.map(x => x.label),
-    actions:  stream.actions.map(x => FUNC + '(' + x.handler.name + ')'),
+    subflows: stream.subflows.map(x => x.label),
+    reactors: stream.reactors.map(x => FUNC + '(' + x.handler.name + ')'),
     '': null
   }
   if (level > 1) delete info.label
@@ -186,12 +187,12 @@ function renderStream(stream, level=1) {
 	}
   }
   str += tree(info, true)
-  for (let flow of stream.includes) {
+  for (let flow of stream.subflows) {
     str += '   ├─ '+flow.label+"\n"
     str += indent(renderStream(flow, level+1), 1, '   │  ') + "\n"
     str += "   │\n"
   }
-  str += indent(renderActions(stream), 3)
+  str += indent(renderReactors(stream), 3)
   return str
 }
 

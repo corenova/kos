@@ -54,10 +54,6 @@ module.exports = kos.create('kos-http')
   .bind(function simpleGet(url) {
     this.send('http/request/get', { url: url })
   })
-  .in('http/response').out('http/response/text')
-  .bind(function extractBody(res) {
-    this.send('http/response/text', res.text)
-  })
   .in('http/server/request','http/proxy').out('http/request').bind(proxy)
 
 function handleRequest(req) {

@@ -64,15 +64,14 @@ to produce one or more *named output* **Object(s)**.
    │     └┬╼ http/server    ╾┬╼ ƒ(handleRoute) ╾─╼ http/server/request
    │      └╼ http/route     ╾┘
    │
-   ├─╼ http/request/get/url ╾─╼ ƒ(simpleGet)   ╾─╼ http/request/get
    ├─╼ http/response        ╾─╼ ƒ(extractBody) ╾─╼ http/response/body
    └┬╼ http/server/request  ╾┬╼ ƒ(proxy)       ╾─╼ http/request
     └╼ http/proxy           ╾┘
 ```
 
-The above render was generated for [kos-http](./streams/http.md)
+The above render was generated for [kos-http](./flows/http.md)
 module via `kos show` using the included `kos` CLI utility. Please
-refer to [Managing Streams](./docs/cli.md#managing-streams) documentation
+refer to [Managing Flows](./docs/cli.md#managing-flows) documentation
 for more info on utilizing the `kos` CLI utility.
 
 ## Installation
@@ -88,27 +87,31 @@ perfectly fine to install as a local dependency.
 ## Reference Guides
 
 - [Why embrace KOS?](./docs/benefits.md)
-- [Managing Streams with `kos` CLI](./docs/cli.md)
-- [Using Streams](./docs/usage.md)
-- [Creating Streams](./docs/developer.md)
+- [Managing Flows with `kos` CLI](./docs/cli.md)
+- [Using Flows](./docs/usage.md)
+- [Creating Flows](./docs/developer.md)
 - [Managing State](./docs/state-machine.md)
 - [Using KOS with React](./docs/react.md)
 
-## Available Streams
+## Available Flows
 
-The following stream modules are included inside the `kos` repository.
+The following flow modules are included inside the `kos` repository.
 
-- [kos-function](./streams/function.md)
-- [kos-http](./streams/http.md)
-- [kos-mqtt](./streams/mqtt.md)
-- [kos-npm](./streams/npm.md)
-- [kos-react](./streams/react.md)
-- [kos-require](./streams/require.md)
+- [kos-function](./flows/function.md)
+- [kos-require](./flows/require.md)
+- [kos-net](./flows/net.js)
+- [kos-pull](./flows/pull.js)
+- [kos-push](./flows/push.js)
+- [kos-sync](./flows/sync.js)
+- [kos-http](./flows/http.md)
+- [kos-mqtt](./flows/mqtt.md)
+- [kos-npm](./flows/npm.md)
+- [kos-react](./flows/react.md)
 - ... and many more coming soon!
 
 As discussed in
 [Managing Dependencies](./docs/usage.md#managing-dependencies) section
-of the [Using Streams](./docs/usage.md) guide, properly created KOS
+of the [Using Flows](./docs/usage.md) guide, properly created KOS
 modules do NOT contain any *explicit* external module dependencies at
 the module-level but instead receive them via the stream from the
 upstream consumer. As such, maintaining `package.json` or publishing

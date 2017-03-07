@@ -4,6 +4,7 @@
 const kos = require('..')
 const colors = require('colors')
 const program = require('commander')
+const render = require('./lib/render') // TOOD - for now...
 
 program
   .version('1.0.0')
@@ -24,26 +25,8 @@ program
   .command('show <flow>')
   .alias('sh')
   .description('Show detailed information about a flow')
-  .option('-o, --output ', 'output format', /^(json|yaml|tree)$/i, 'tree')
   .action((flow, opts) => {
-
-  })
-
-program
-  .command('run [flows...]')
-  .description('Runs one or more flow(s) with built-in core flows: require, net, push, pull, sync')
-  .option('-h, --host', 'host to run the flows', kos.DEFAULT_HOST)
-  .option('-p, --port', 'port to run the flows', kos.DEFAULT_PORT)
-  .action((flows, opts) => {
-    flows = [].concat('require', 'net', 'push', 'pull', 'sync', flows)
-    flows = flows.filter(Boolean).map(kos.load)
-    let [ head, tail ] = kos.chain(...flows)
-    head || process.exit(1)
-    tail && tail.pipe(head) // close loop
-    // default state initialization
-    head.feed('require', 'net')
-    head.feed('require', 'url')
-    process.stdin.pipe(head.io(opts)).pipe(process.stdout)
+    console.log(render(kos.load(flow)))
   })
 
 program
@@ -54,11 +37,7 @@ program
     flows = flows.filter(Boolean).map(kos.load)
     let [ head, tail ] = kos.chain(...flows)
     head || process.exit(1)
-    tail && tail.pipe(head) // close loop
-
-    // let io = head.io(opts)
-    // process.stdin.pipe(io).pipe(process.stdout)
-    // io.err.pipe(process.stderr)
+    tail && tail.pipe(head) // close loop if more than one flow
 
     let io = head.io(opts)
     opts.silent || head.on('data', ko => {

@@ -3,6 +3,7 @@
 const kos = require('kos')
 
 module.exports = kos.create('reaction-discount')
+  .summary('Provides reaction commerce discount management workflow')
   // KOS prevents looping of self-generated output from triggering itself
   .in('cart/items','reaction/discount').out('cart/items').bind(applyDiscount)
 
@@ -10,7 +11,8 @@ module.exports = kos.create('reaction-discount')
 // Reactors
 //----------
 
-function applyDiscount(items, discount) {
+function applyDiscount(items=[], discount={}) {
+  let { rate = 0 } = discount
   this.send('cart/items', items.map(x => {
     if (!x.discountable) return x
     return Object.assign({}, x, {

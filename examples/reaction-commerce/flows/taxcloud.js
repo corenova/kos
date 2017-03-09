@@ -1,6 +1,6 @@
 // TaxCloud Tax Rate Stream
 
-const kos = require('kos')
+const { kos = require('kos') } = global
 
 // TaxCloud service subflow (should be defined as a separate flow module)
 const TaxCloud = kos.create('taxcloud')

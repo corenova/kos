@@ -1,6 +1,6 @@
 // Reaction Tax Calculation Stream
 
-const kos = require('kos')
+const { kos = require('kos') } = global
 
 module.exports = kos.create('reaction-tax')
   .summary('Provides reaction commerce tax calculation workflow')

@@ -77,13 +77,17 @@ function listen(opts) {
 
 function connectByUrl(dest) {
   let url = this.fetch('module/url')
+  if (!dest.includes('://'))
+    dest = 'kos://' + dest
   let opts = url.parse(url.resolve('kos://', dest), true)
   this.send('net/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
   let url = this.fetch('module/url')
-  let opts = url.parse(url.resolve('kos://', dest), true)
+  if (!dest.includes('://'))
+    dest = 'kos://' + dest
+  let opts = url.parse(dest, true)
   this.send('net/listen', Object.assign(opts, opts.query))
 }
 
@@ -116,7 +120,7 @@ function normalizeOptions(opts) {
   return {
     protocol: opts.protocol || 'kos',
     port:     parseInt(opts.port, 10) || 12345,
-    host:     opts.host || '0.0.0.0',
+    host:     opts.hostname || opts.host || '0.0.0.0',
     retry:    parseInt(opts.retry, 10) || 100,
     max:      parseInt(opts.max, 10) || 5000
   }

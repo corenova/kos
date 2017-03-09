@@ -6,7 +6,12 @@ const { kos = require('kos') } = global
 // XXX - just for demo purposes
 const defaultShop = {
   addressBook: [
-    
+    {
+      address1: '202 Bicknell Avenue',
+      city: 'Santa Monica',
+      region: 'CA',
+      postal: 90405
+    }
   ]
 }
 

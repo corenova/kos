@@ -4,6 +4,7 @@
 const kos = require('..')
 const fs = require('fs')
 const colors = require('colors')
+const pretty = require('prettyjson')
 const program = require('commander')
 const render = require('./lib/render') // TOOD - for now...
 
@@ -52,6 +53,14 @@ program
       case 'info':  opts.verbose && console.error('info:'.cyan, ko.value); break
       case 'error': console.error('error:'.red, ko.value.message); break;
       case 'debug': opts.verbose > 1 && console.error('debug:'.grey, ko.value); break
+      default: 
+        if (opts.verbose > 1) {
+          try { 
+            let json = ko.toJSON()
+            console.error(pretty.renderString(json))
+          } catch (e) { }
+        }
+        break;
       }
     })
     head.feed('init', process.argv)

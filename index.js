@@ -58,3 +58,4 @@ const kos = {
 }
 
 global.kos = module.exports = kos['default'] = kos.kos = kos
+

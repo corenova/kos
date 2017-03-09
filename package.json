@@ -36,7 +36,6 @@
     "commander": "^2.9.0",
     "debug": "^2.6.0",
     "delegates": "^1.0.0",
-    "prettyjson": "^1.2.1",
     "treeify": "^1.0.1",
     "uuid": "^3.0.1"
   },

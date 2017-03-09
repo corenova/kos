@@ -3,8 +3,8 @@
 
 const kos = require('..')
 const fs = require('fs')
+const debug = require('debug')
 const colors = require('colors')
-const pretty = require('prettyjson')
 const program = require('commander')
 const render = require('./lib/render') // TOOD - for now...
 
@@ -44,26 +44,8 @@ program
     head || process.exit(1)
 
     let io = head.io(opts)
-    opts.silent || tail.on('data', ko => {
-      // check if externally provided ko was accepted by the internal flow
-      if (io.seen(ko) && !ko.accepted && opts.verbose)
-        console.error('info:'.cyan, 'no local flow reactor for:', ko.key)
+    opts.silent || tail.pipe(logger(io, opts.verbose))
 
-      switch (ko.key) {
-      case 'info':  opts.verbose && console.error('info:'.cyan, ko.value); break
-      case 'error': console.error('error:'.red, ko.value.message); break;
-      case 'debug': opts.verbose > 1 && console.error('debug:'.grey, ko.value); break
-      default: 
-        if (opts.verbose > 1) {
-          try { 
-            let json = ko.toJSON()
-            console.error(pretty.renderString(json))
-          } catch (e) { }
-        }
-        break;
-      }
-    })
-    head.feed('init', process.argv)
     for (let trigger of opts.trigger)
       io.write(trigger + "\n")
     for (let input of opts.input)
@@ -76,4 +58,43 @@ program.parse(process.argv)
 function collect(val, keys) {
   keys.push(val)
   return keys
+}
+
+function logger(io, verbosity=0) {
+  let namespaces = [ 'kos:error', 'kos:warn' ]
+  if (verbosity)     namespaces.push('kos:info')
+  if (verbosity > 1) namespaces.push('kos:debug')
+  if (verbosity > 2) namespaces.push('kos:trace')
+  debug.enable(namespaces.join(','))
+
+  let trace = debug('kos:trace')
+  let log   = debug('kos:debug')
+  let info  = debug('kos:info')
+  let warn  = debug('kos:warn')
+  let error = debug('kos:error')
+
+  return new kos.Essence({
+    transform(ko, enc, cb) {
+      if (!ko) return cb()
+      if (io.seen(ko) && !ko.accepted)
+        warn('no local flow reactor to handle "%s"', ko.key)
+      switch (ko.key) {
+      case 'error': 
+        if (verbosity > 1) error(ko.value)
+        else error(ko.value.message)
+        break
+      case 'warn':  warn(ko.value); break
+      case 'info':  info(ko.value); break
+      case 'debug': log(ko.value); break
+      default:
+        if (ko.key === 'kos')
+          trace(render(ko.value))
+        else if (typeof ko.value === 'object')
+          trace('%s\n%O', ko.key.cyan, ko.value)
+        else
+          trace('%s %o', ko.key.cyan, ko.value)
+      }
+      cb()
+    }
+  })
 }

@@ -2,6 +2,7 @@
 'use strict'
 
 const kos = require('..')
+const fs = require('fs')
 const colors = require('colors')
 const program = require('commander')
 const render = require('./lib/render') // TOOD - for now...
@@ -31,28 +32,33 @@ program
 
 program
   .arguments('<flows...>')
+  .option('-i, --input <file>', 'load KSON file(s) as initial input(s)', collect, [])
+  .option('-t, --trigger <kson>', 'feed arbitrary KSON trigger(s)', collect, [])
   .option('-p, --passthrough', 'allow STDIN to passthrough to STDOUT (use for shell pipelines)', false)
   .option('-s, --silent', 'suppress all debug/info/error messages')
+  .allowUnknownOption(true)
   .action((flows, opts) => {
     flows = flows.filter(Boolean).map(kos.load)
     let [ head, tail ] = kos.chain(...flows)
     head || process.exit(1)
-    tail && tail.pipe(head) // close loop if more than one flow
 
     let io = head.io(opts)
-    opts.silent || head.on('data', ko => {
+    opts.silent || tail.on('data', ko => {
       // check if externally provided ko was accepted by the internal flow
-      if (io.seen(ko) && !ko.accepted)
-        console.error('error:'.red, 'no matching flow for:', ko.key)
+      if (io.seen(ko) && !ko.accepted && opts.verbose)
+        console.error('info:'.cyan, 'no local flow reactor for:', ko.key)
 
       switch (ko.key) {
-      case 'kos':   console.error('info:'.cyan, ko.value.identity, 'ready'); break;
-      case 'info':  console.error('info:'.cyan, ko.value); break
+      case 'info':  opts.verbose && console.error('info:'.cyan, ko.value); break
       case 'error': console.error('error:'.red, ko.value.message); break;
-      case 'debug': opts.verbose && console.error('debug:'.grey, ko.value); break
+      case 'debug': opts.verbose > 1 && console.error('debug:'.grey, ko.value); break
       }
     })
-    console.error('kos begins...'.grey)
+    head.feed('init', process.argv)
+    for (let trigger of opts.trigger)
+      io.write(trigger + "\n")
+    for (let input of opts.input)
+      fs.createReadStream(input).pipe(io, { end: false })
     process.stdin.pipe(io).pipe(process.stdout)
   })
 

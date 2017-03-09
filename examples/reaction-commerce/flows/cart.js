@@ -1,18 +1,27 @@
+// Reaction Cart Management Flow
+'use strict'
 
-const kos = require('kos')
+const { kos = require('kos') } = global
+
+// XXX - just for demo purposes
+const defaultShop = {
+  addressBook: [
+    
+  ]
+}
 
 module.exports = kos.create('reaction-cart')
   .summary('Provides reaction commerce cart management workflow')
-  .import('reaction-shop')
+  .default('reaction/shop/default', defaultShop)
 
-// flow reactors
+  // flow reactors
   .in('reaction/shop').bind(collectShops)
-  .in('reaction/item').out('reaction/cart').default('items', new Set).bind(addItemToCart)
+  .in('reaction/item').out('reaction/cart').default('items', new Map).bind(addItemToCart)
   .in('reaction/cart').out('cart/items').bind(itemizeReactionCart)
 
-//----------
-// Reactors
-//----------
+//-------------------
+// Reactor Functions
+//-------------------
 
 function collectShops(shop) {
   this.post('reaction/shop/'+shop.id, shop)
@@ -20,22 +29,22 @@ function collectShops(shop) {
 
 function addItemToCart(item) {
   let items = this.get('items')
-  items.add(item)
+  items.set(item.id, item)
   this.send('reaction/cart', {
-    items: Array.from(items)
+    items: Array.from(items.values())
   })
 }
 
 function itemizeReactionCart(cart={ items: [] }) {
   this.send('cart/items', cart.items.map(x => {
-    let shop = this.fetch('reaction/shop/'+x.shopId)
-    return {
-      id: x.variants._id,
-      price: x.variants.price,
-      quantity: x.quantity,
-      taxable: x.taxable,
+    let shopId = x.shopId || 'default'
+    let shop = this.fetch('reaction/shop/' + shopId)
+    return Object.assign({
+      taxable: true,
+      discountable: true
+    }, x, {
       origin: shop.addressBook[0] // TODO should try to find which address has the item
-    }
+    })
   }))
 }
 

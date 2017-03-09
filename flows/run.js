@@ -1,19 +1,14 @@
 'use strict'
 
 const kos = require('..')
-const runtimeFlows = [
-  require('./require'),
-  require('./net'),
-  require('./push'),
-  require('./pull'),
-  require('./sync')
-]
 
 module.exports = kos.create('kos-run')
-  .summary('Provides common runtime flows')
-  .include(...runtimeFlows)
-  .on('ready', run => {
-    run
-      .feed('require', 'net')
-      .feed('require', 'url')
-  })
+  .summary('Provides common runtime flows as a chained pipeline')
+  .chain(
+    require('./require'),
+    require('./function'),
+    require('./net'),
+    require('./push'),
+    require('./pull'),
+    require('./sync')
+  )

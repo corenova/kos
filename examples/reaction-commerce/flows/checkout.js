@@ -1,32 +1,10 @@
 // Reaction Cart Checkout Flow
 'use strict'
 
-const kos = require('kos')
+const { kos = require('kos') } = global
 
 module.exports = kos.create('reaction-checkout')
   .summary('Provides reaction commerce checkout workflow')
-  .import('reaction-cart')
-  .import('reaction-discount')
-  .import('reaction-shipping')
-  .import('reaction-tax')
-
-// flow triggers
-  .on('discount')
-  .pull('reaction-cart')
-  .push('reaction-discount')
-  .bind(applyDiscountToCart)
-
-  .on('shipping')
-  .pull('reaction-cart')
-  .push('reaction-shipping')
-  .bind(applyShippingToCart)
-
-  .on('calculate')
-  .pull('reaction-cart')
-  .pull('reaction-discount')
-  .pull('reaction-shipping')
-  .sync('reaction-tax')
-  .bind(calculateCartTotal)
 
 // flow reactors
   .in('cart/items').out('cart/subtotal').bind(calculateSubTotal)
@@ -35,6 +13,7 @@ module.exports = kos.create('reaction-checkout')
 function calculateSubTotal(items) {
   let subTotal = items.reduce(((total, item) => {
     total += item.price * item.quantity
+    return total
   }), 0)
   this.send('cart/subtotal', subTotal)
 }  

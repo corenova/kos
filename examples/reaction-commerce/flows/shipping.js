@@ -1,13 +1,16 @@
 'use strict'
 
-const kos = require('kos')
+const { kos = require('kos') } = global
 
 module.exports = kos.create('reaction-shipping')
+  .summary('Provides reaction commerce shipping workflow')
+  // flow reactors
   .in('cart/items','reaction/shipping').out('cart/items/shippable').bind(itemizeShippableGoods)
+  .in('reaction/shipping').out('reaction/shipping/address').bind(extractShippingAddress)
 
-//----------
-// Reactors
-//----------
+//-------------------
+// Reactor Functions
+//-------------------
 
 function itemizeShippableGoods(items, shipping) {
   let shippables = []
@@ -19,3 +22,6 @@ function itemizeShippableGoods(items, shipping) {
   }))
 }
   
+function extractShippingAddress(shipping) {
+  this.send('reaction/shipping/address', shipping.address)
+}

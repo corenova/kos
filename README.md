@@ -18,7 +18,7 @@ experiments, share your flows, and embrace KOS.
 
 ## Introduction
 
-A **Kinetic Object Stream** contains a set of **Action(s)** and/or
+A **Kinetic Object Stream** contains a set of **Reactor(s)** and/or
 **Stream(s)** that operates on one or more *named input* **Object(s)**
 to produce one or more *named output* **Object(s)**.
 

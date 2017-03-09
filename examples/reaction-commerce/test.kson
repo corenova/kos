@@ -1,0 +1,3 @@
+reaction/item { "id": 1, "price": 0.99, "quantity": 2 }
+reaction/discount { "rate": 20 }
+reaction/shipping { "address": { "address1": "202 Bicknell Ave.", "city": "Santa Monica", "region": "CA", "country": "US", "postal": 90405 } }

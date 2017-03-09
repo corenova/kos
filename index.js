@@ -36,6 +36,7 @@ const kos = {
     flows = Object.keys(map).map(key => map[key])
     let head = flows.shift()
     let tail = flows.reduce(((a, b) => a.pipe(b)), head)
+    head && tail && tail.pipe(head)
     return [ head, tail ]
   },
   filter(...keys) {
@@ -56,4 +57,4 @@ const kos = {
   DEFAULT_PORT: process.env.KOS_PORT || 12345
 }
 
-module.exports = kos['default'] = kos.kos = kos
+global.kos = module.exports = kos['default'] = kos.kos = kos

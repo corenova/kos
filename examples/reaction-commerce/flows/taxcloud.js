@@ -29,10 +29,10 @@ const TaxCloud = kos.create('service-taxcloud')
 module.exports = kos.create('reaction-taxcloud')
   .import(TaxCloud)
   .require('taxcloud/access/id','taxcloud/access/key')
-  .in('reaction/shipping/address').out('taxcloud/address').bind(normalizeAddress)
+  .in('reaction/shipping/address').out('taxcloud/destination').bind(normalizeDestination)
   .in('cart/items/taxable').out('taxcloud/items').bind(normalizeCartItems)
 
-  .in('taxcloud/items','taxcloud/address','reaction/customer/id')
+  .in('taxcloud/items','taxcloud/destination','reaction/customer/id')
   .out('taxcloud/request')
   .bind(invokeTaxCloud)
 
@@ -42,31 +42,39 @@ module.exports = kos.create('reaction-taxcloud')
   .bind(calculateTaxes)
   
 function normalizeAddress(addr) {
-  this.send('taxcloud/address', {
+  return {
     Address1: addr.address1,
     City:     addr.city,
     State:    addr.region,
     Zip5:     addr.postal
-  })
+  }
+}
+
+function normalizeDestination(addr) {
+  this.send('taxcloud/destination', normalizeAddress(addr))
 }
 
 function normalizeCartItems(items) {
+  this.debug(items)
   this.send('taxcloud/items', items.map((x, idx) => ({
     Index: idx,
     ItemID: x.id,
-    TIC: 11010,
+    TIC: '00000',
     Price: x.price,
-    Qty: x.quantity
+    Qty: x.quantity,
+    Origin: normalizeAddress(x.origin)
   })))
 }
 
 function invokeTaxCloud(items, destination, customer) {
   // need to handle different origins on a per item basis
+  let origin = items[0].Origin
+  
   this.send('taxcloud/request', {
     customerID: customer,
     cartID: 'foo-bar',
     destination: destination,
-    origin: destination,
+    origin: origin,
     cartItems: items
   })
 }
@@ -89,6 +97,7 @@ function calculateTaxes(items, results) {
 
 function invokeRequest(req) {
   let [ url, login, key ] = this.fetch('taxcloud/access/url', 'taxcloud/access/id', 'taxcloud/access/key')
+  this.debug(req)
   this.send('http/request/post', {
     url: url,
     data: Object.assign({}, req, {

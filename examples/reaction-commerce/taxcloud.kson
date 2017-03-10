@@ -1,5 +1,5 @@
 taxcloud/access/id "F9AE750"
 taxcloud/access/key "F3A67251-B29F-4802-BCAF-0665437211CA"
-cart/items [ { "id": 1, "price": 10.0, "quantity": 3, "taxable": true } ]
+cart/items [ { "id": 1, "price": 10.0, "quantity": 3, "taxable": true, "origin": { "address1": "202 Bicknell Avenue", "city": "Santa Monica", "region": "CA", "postal": 90405 } } ]
 reaction/shipping/address { "address1": "162 East Avenue", "city": "Norwalk", "region": "CT", "postal": "06851" }
 reaction/customer/id "1234567890"

@@ -1,15 +1,18 @@
 #!/usr/bin/env node
 'use strict'
 
-const kos = require('..')
 const fs = require('fs')
 const debug = require('debug')
-const colors = require('colors')
+const colors = require('colors/safe')
 const program = require('commander')
+const readline = require('readline')
+
+const kos = require('..')
+const pkginfo = require('../package.json')
 const render = require('./lib/render') // TOOD - for now...
 
 program
-  .version('1.0.0')
+  .version(pkginfo.version)
   .option('-v, --verbose', 'enable more verbose output', ( (v, t) => t + 1), 0)
 
 program
@@ -37,7 +40,6 @@ program
   .option('-t, --trigger <kson>', 'feed arbitrary KSON trigger(s)', collect, [])
   .option('-p, --passthrough', 'allow STDIN to passthrough to STDOUT (use for shell pipelines)', false)
   .option('-s, --silent', 'suppress all debug/info/error messages')
-  .allowUnknownOption(true)
   .action((flows, opts) => {
     flows = flows.filter(Boolean).map(kos.load)
     let [ head, tail ] = kos.chain(...flows)
@@ -46,11 +48,33 @@ program
     let io = head.io(opts)
     opts.silent || tail.pipe(logger(io, opts.verbose))
 
+    if (process.stdin.isTTY) {
+      const cmd = readline.createInterface({ 
+        input:  process.stdin, 
+        output: process.stderr,
+        prompt: colors.grey('kos> ')
+      })
+      cmd.on('line', (input) => {
+        io.write(input + "\n")
+        cmd.prompt()
+      })
+      cmd.prompt()
+      // catch before IO is about to write to stdout
+      io.on('data', ko => {
+        readline.clearLine(process.stderr, -1)
+        readline.cursorTo(process.stderr, 0)
+      })
+    }
+
+    process.stdout.isTTY && io.pipe(process.stdout)
+    process.stdin.isTTY  || process.stdin.pipe(io)
+
+    //head.feed('init', process.argv)
+
     for (let trigger of opts.trigger)
       io.write(trigger + "\n")
     for (let input of opts.input)
       fs.createReadStream(input).pipe(io, { end: false })
-    process.stdin.pipe(io).pipe(process.stdout)
   })
 
 program.parse(process.argv)
@@ -90,9 +114,9 @@ function logger(io, verbosity=0) {
         if (ko.key === 'kos')
           trace(render(ko.value)+"\n")
         else if (typeof ko.value === 'object')
-          trace('%s\n%O\n', ko.key.cyan, ko.value)
+          trace('%s\n%O\n', colors.cyan(ko.key), ko.value)
         else
-          trace('%s %o', ko.key.cyan, ko.value)
+          trace('%s %o', colors.cyan(ko.key), ko.value)
       }
       cb()
     }

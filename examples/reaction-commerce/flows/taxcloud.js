@@ -28,7 +28,6 @@ const TaxCloud = kos.create('service-taxcloud')
 // Reaction Commerce TaxCloud flow
 module.exports = kos.create('reaction-taxcloud')
   .import(TaxCloud)
-  .require('taxcloud/access/id','taxcloud/access/key')
   .in('reaction/shipping/address').out('taxcloud/destination').bind(normalizeDestination)
   .in('cart/items/taxable').out('taxcloud/items').bind(normalizeCartItems)
 

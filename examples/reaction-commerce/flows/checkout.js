@@ -8,7 +8,7 @@ module.exports = kos.create('reaction-checkout')
 
 // flow reactors
   .in('cart/items').out('cart/subtotal').bind(calculateSubTotal)
-  .in('cart/subtotal','cart/taxes').out('cart/total','cart/taxrate').bind(calculateTotal)
+  .in('cart/subtotal','cart/tax').out('cart/total','cart/taxrate').bind(calculateTotal)
 
 function calculateSubTotal(items) {
   let subTotal = items.reduce(((total, item) => {

@@ -3,9 +3,8 @@
 const { kos = require('kos') } = global
 
 // TaxCloud service subflow (should be defined as a separate flow module)
-const TaxCloud = kos.create('taxcloud')
-  //.import(kos.load('http'))
-  .import('foo-bar')
+const TaxCloud = kos.create('service-taxcloud')
+  .import(kos.load('http'))
   .require('taxcloud/access/id','taxcloud/access/key','taxcloud/access/url')
   .default('taxcloud/access/url', 'https://api.taxcloud.net/1.0/TaxCloud/Lookup')
   .default('requests', new Map)
@@ -15,8 +14,6 @@ const TaxCloud = kos.create('taxcloud')
 
   .in('taxcloud/response').out('taxcloud/response/items')
   .bind(function extractItems(data) {
-    // need to map request -> response
-
     this.send('taxcloud/response/items', data.CartItemsResponse)
   })
 
@@ -35,9 +32,61 @@ module.exports = kos.create('reaction-taxcloud')
   .in('reaction/shipping/address').out('taxcloud/address').bind(normalizeAddress)
   .in('cart/items/taxable').out('taxcloud/items').bind(normalizeCartItems)
 
-  .in('taxcloud/items','taxcloud/address').out('taxcloud/request').bind(invokeTaxCloud)
-  .in('taxcloud/response/items').out('cart/taxes').bind(calculateTaxes)
+  .in('taxcloud/items','taxcloud/address','reaction/customer/id')
+  .out('taxcloud/request')
+  .bind(invokeTaxCloud)
+
+  .in('taxcloud/items','taxcloud/response/items')
+  .out('cart/items/tax')
+  .default('taxes', new Map)
+  .bind(calculateTaxes)
   
+function normalizeAddress(addr) {
+  this.send('taxcloud/address', {
+    Address1: addr.address1,
+    City:     addr.city,
+    State:    addr.region,
+    Zip5:     addr.postal
+  })
+}
+
+function normalizeCartItems(items) {
+  this.send('taxcloud/items', items.map((x, idx) => ({
+    Index: idx,
+    ItemID: x.id,
+    TIC: 11010,
+    Price: x.price,
+    Qty: x.quantity
+  })))
+}
+
+function invokeTaxCloud(items, destination, customer) {
+  // need to handle different origins on a per item basis
+  this.send('taxcloud/request', {
+    customerID: customer,
+    cartID: 'foo-bar',
+    destination: destination,
+    origin: destination,
+    cartItems: items
+  })
+}
+
+function calculateTaxes(items, results) {
+  let map = this.get('taxes')
+  this.debug(results)
+  results.forEach(x => map.set(x.CartItemIndex, x.TaxAmount))
+  if (items.every(x => map.has(x.Index))) {
+    let taxes = items.map(x => ({ 
+      id:  x.ItemID, 
+      tax: map.get(x.Index)
+    }))
+    this.send('cart/items/tax', taxes)
+    map.clear() // clear the mapping table
+  }
+}
+
+// Reactors for taxcloud native flow
+
 function invokeRequest(req) {
   let [ url, login, key ] = this.fetch('taxcloud/access/url', 'taxcloud/access/id', 'taxcloud/access/key')
   this.send('http/request/post', {
@@ -57,47 +106,3 @@ function handleResponse(res) {
   } else this.throw(data.Messages[0].Message)
 }
 
-function normalizeAddress(addr) {
-  this.send('taxcloud/address', {
-    Address1: addr.address1,
-    City:     addr.city,
-    State:    addr.region,
-    Zip5:     addr.postal
-  })
-}
-
-function normalizeCartItems(items) {
-  this.send('taxcloud/items', items.map((x, idx) => ({
-    Index: idx,
-    ItemID: x.id,
-    TIC: "00000",
-    Price: x.price,
-    Qty: x.quantity
-  })))
-}
-
-function invokeTaxCloud(items, destination) {
-  // we need to find common origin/destination pairs and issue one or more taxcloud/request(s)
-  // let origins = new Map
-  // for (const item of items) {
-  //   let destinations = origins.get(item.origin)
-  //   if (origins.has(item.origin)) {
-  //     destinations = origins.get(item.origin)
-  //     destinations.set(item.destination)
-  //   } else {
-  //     let destinations = new Map
-  //     destinations.set(item.destination, item)
-  //     origins.set(item.origin, destinations)
-  //   }
-  // }
-  this.send('taxcloud/request', {
-    cartID: 'foo-bar',
-    destination: destination,
-    origin: destination,
-    cartItems: items
-  })
-}
-
-function calculateTaxes() {
-
-}

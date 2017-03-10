@@ -83,14 +83,14 @@ function logger(io, verbosity=0) {
         if (verbosity > 1) error(ko.value)
         else error(ko.value.message)
         break
-      case 'warn':  warn(ko.value); break
-      case 'info':  info(ko.value); break
-      case 'debug': log(ko.value); break
+      case 'warn':  warn(...ko.value); break
+      case 'info':  info(...ko.value); break
+      case 'debug': log(...ko.value); break
       default:
         if (ko.key === 'kos')
-          trace(render(ko.value))
+          trace(render(ko.value)+"\n")
         else if (typeof ko.value === 'object')
-          trace('%s\n%O', ko.key.cyan, ko.value)
+          trace('%s\n%O\n', ko.key.cyan, ko.value)
         else
           trace('%s %o', ko.key.cyan, ko.value)
       }

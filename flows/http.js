@@ -72,7 +72,7 @@ function handleRequest(req) {
   case 'post':
   case 'put':
   case 'patch':
-    agent[method](url).data(data).end((err, res) => { 
+    agent[method](url).send(data).end((err, res) => { 
       if (err) this.throw(err)
       else this.send('http/response', res) 
     })

@@ -3,7 +3,7 @@
 
 const fs = require('fs')
 const debug = require('debug')
-const colors = require('colors/safe')
+const colors = require('colors')
 const program = require('commander')
 const readline = require('readline')
 
@@ -38,8 +38,7 @@ program
   .arguments('<flows...>')
   .option('-i, --input <file>', 'load KSON file(s) as initial input(s)', collect, [])
   .option('-t, --trigger <kson>', 'feed arbitrary KSON trigger(s)', collect, [])
-  .option('-p, --passthrough', 'allow STDIN to passthrough to STDOUT (use for shell pipelines)', false)
-  .option('-s, --silent', 'suppress all debug/info/error messages')
+  .option('-s, --silent', 'suppress all debug/info/warn/error messages')
   .action((flows, opts) => {
     flows = flows.filter(Boolean).map(kos.load)
     let [ head, tail ] = kos.chain(...flows)
@@ -47,41 +46,68 @@ program
 
     let io = head.io(opts)
     opts.silent || tail.pipe(logger(io, opts.verbose))
+    
+    // provide interactive command prompt if tied to TTY
+    process.stdin.isTTY && commander(io, flows)
 
-    if (process.stdin.isTTY) {
-      const cmd = readline.createInterface({ 
-        input:  process.stdin, 
-        output: process.stderr,
-        prompt: colors.grey('kos> ')
-      })
-      cmd.on('line', (input) => {
-        io.write(input + "\n")
-        cmd.prompt()
-      })
-      cmd.prompt()
-      // catch before IO is about to write to stdout
-      io.on('data', ko => {
-        readline.clearLine(process.stderr, -1)
-        readline.cursorTo(process.stderr, 0)
-      })
-    }
+    // 1. send io to stdout
+    io.pipe(process.stdout)
+    // 2. send triggers
+    opts.trigger.forEach(x => io.write(x + "\n"))
+    // 3. send contents of input files
+    opts.input.forEach(x => fs.createReadStream(input).pipe(io, { end: false }))
+    // 4. send piped stdin
+    process.stdin.isTTY || process.stdin.pipe(io, { end: false })
 
-    process.stdout.isTTY && io.pipe(process.stdout)
-    process.stdin.isTTY  || process.stdin.pipe(io)
-
-    //head.feed('init', process.argv)
-
-    for (let trigger of opts.trigger)
-      io.write(trigger + "\n")
-    for (let input of opts.input)
-      fs.createReadStream(input).pipe(io, { end: false })
   })
 
 program.parse(process.argv)
 
+// KOS utility helper functions
+
 function collect(val, keys) {
   keys.push(val)
   return keys
+}
+
+function commander(io, flows) {
+  const inputs = new Set([].concat(...flows.map(x => x.inputs)))
+  const triggers = Array.from(inputs).concat('help','quit')
+  const cmd = readline.createInterface({ 
+    input:  process.stdin, 
+    output: process.stderr,
+    prompt: colors.grey('kos> '),
+    completer: (line) => {
+      let completions = triggers
+      const hits = completions.filter(c => c.indexOf(line) === 0)
+      if (/\s+$/.test(line)) completions = []
+      return [hits.length ? hits : completions, line]
+    }
+  })
+  cmd.on('line', (line) => {
+    const input = line.trim()
+    switch (input) {
+    case '': break;
+    case 'help':
+      console.error("sorry, unable offer any help at the moment")
+      break;
+    case 'quit':
+      process.exit(0)
+      break;
+    default:
+      let [ key, obj ] = input.split(/\s+(.+)/)
+      if (key && obj) io.write(input + "\n")
+      else console.error(key + ' requires JSON argument')
+    }
+    cmd.prompt()
+  })
+  // catch before IO is about to write to stdout
+  io.on('data', ko => {
+    readline.clearLine(process.stderr, -1)
+    readline.cursorTo(process.stderr, 0)
+  })
+  io.write("init true\n")
+  cmd.prompt()
 }
 
 function logger(io, verbosity=0) {
@@ -100,7 +126,7 @@ function logger(io, verbosity=0) {
   return new kos.Essence({
     transform(ko, enc, cb) {
       if (!ko) return cb()
-      if (io.seen(ko) && !ko.accepted)
+      if (io.seen(ko) && !ko.accepted && ko.key !== 'init')
         warn('no local flow reactor to handle "%s"', ko.key)
       switch (ko.key) {
       case 'error': 

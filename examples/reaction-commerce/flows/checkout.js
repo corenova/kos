@@ -18,8 +18,7 @@ function calculateSubTotal(items) {
   this.send('cart/subtotal', subTotal)
 }  
 
-function calculateTotal(sub, taxes) {
-  let totalTax = taxes.reduce(((a,b) => a += b), 0)
-  this.send('cart/total', sub + totalTax)
-  this.send('cart/taxrate', totalTax / sub)
+function calculateTotal(sub, tax) {
+  this.send('cart/total', sub + tax)
+  this.send('cart/taxrate', tax / sub)
 }

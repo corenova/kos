@@ -1,12 +1,15 @@
 // MQTT transaction flow
 //
-// NOTE: this flow REQUIREs the 'mqtt' module and will become
-// active once it receives it from the upstream (or fed by the user)
+// NOTE: this flow REQUIREs the 'mqtt' module and will become active
+// if already present locally, receives it from the upstream, or fed
+// by the user directly.
 //
 // Streams should actively AVOID requiring dependency modules at the
 // module-level (unless part of Node.js runtime). It should be
 // declared at the stream-level so that the CONSUMER of the stream can
 // decide how to fulfill the necessary dependency.
+
+'use strict'
 
 const kos = require('..')
 
@@ -38,7 +41,7 @@ module.exports = kos.create('kos-mqtt')
   })
 
 function connect(opts) {
-  let [ mqtt, {parse}, protocols ] = this.fetch('module/mqtt', 'module/url', 'protocols')
+  const [ mqtt, {parse}, protocols ] = this.fetch('module/mqtt', 'module/url', 'protocols')
   let { url, options } = opts
   try { url = parse(url) }
   catch (e) { return this.throw(e) }
@@ -46,7 +49,7 @@ function connect(opts) {
   if (protocols.includes(url.protocol)) {
     let client = mqtt.connect(url)
     mq.on('connect', () => this.send('mqtt/client', client))
-    mq.on('error', e => this.throw(e))
+    mq.on('error', this.error.bind(this))
   }
 }
 
@@ -66,7 +69,7 @@ function subscribe() {
     })
     client.on('error', err => this.throw(err))
     client.subscribe(Array.from(topics), null, (err, granted) => {
-      if (err) this.throw(err)
+      if (err) this.error(err)
       else granted.forEach(x => this.send('mqtt/subscription', x))
     })
   }
@@ -74,7 +77,7 @@ function subscribe() {
     // brand new topic
     topics.add(topic)
     client.subscribe(topic, null, (err, granted) => {
-      if (err) this.throw(err)
+      if (err) this.error(err)
       else granted.forEach(x => this.send('mqtt/subscription', x))
     })
   }

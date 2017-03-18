@@ -29,6 +29,8 @@
   },
   "homepage": "https://github.com/corenova/kos#readme",
   "scripts": {
+    "build:min": "browserify index.js -o bundle.js -t [ babelify --presets [ es2015 ] ] -p [ minifyify --no-map ]",
+    "build": "browserify index.js -o bundle.js -t [ babelify --presets [ es2015 ] ]",
     "test": "mocha"
   },
   "dependencies": {
@@ -45,7 +47,13 @@
     "ws": "^2.2.1"
   },
   "devDependencies": {
+    "array.from": "^1.0.3",
+    "babel-preset-es2015": "^6.24.0",
+    "babelify": "^7.3.0",
+    "browserify": "^14.1.0",
+    "minifyify": "^7.3.5",
     "mocha": "^3.2.0",
+    "object.assign": "^4.0.4",
     "should": "^11.2.0"
   }
 }

@@ -55,7 +55,27 @@ function connect(opts) {
 }
 
 function listen(opts) {
+  const WebSocket = this.fetch('module/ws')
+  const protocols = this.fetch('protocols')
 
+  let { protocol, hostname, port, path, retry, max } = normalizeOptions(opts)
+  if (!protocols.includes(protocol)) 
+    return this.error('unsupported protocol', protocol)
+
+  let server = new WebSocket.Server({ host: hostname, port: port, path: path })
+  server.on('listening', () => {
+    this.info('listening', hostname, port, path)
+    this.send('ws/server', server)
+  })
+  server.on('connection', wsock => {
+    let sock = wsock._socket
+    let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
+    this.info('accept', addr)
+    this.send('ws/socket', wsock)
+    this.send('ws/link', { addr: addr, socket: wsock })
+    wsock.emit('active')
+  })
+  server.on('error', this.error.bind(this))
 }
 
 function connectByUrl(dest) {

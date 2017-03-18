@@ -1,9 +1,11 @@
 'use strict'
 
+Object.assign || require('object.assign').shim()
+Array.from || require('array.from').shim()
+
 const KineticObjectStream = require('./lib/stream')
 const KineticReactor = require('./lib/reactor')
 const KineticEssence = require('./lib/essence')
-const KineticTrigger = require('./lib/trigger')
 
 const path = require('path')
 
@@ -40,10 +42,10 @@ const kos = {
     return [ head, tail ]
   },
   filter(...keys) {
-    let trigger = new KineticTrigger(keys)
+    let triggers = new Set(keys)
     return new KineticEssence({
       transform(ko, enc, cb) {
-        ko && trigger.has(ko.key) ? cb(null, ko) : cb()
+        ko && ko.match(triggers) ? cb(null, ko) : cb()
       }
     })
   },
@@ -51,7 +53,6 @@ const kos = {
   Stream: KineticObjectStream,
   Reactor: KineticReactor,
   Essence: KineticEssence,
-  Trigger: KineticTrigger,
   
   DEFAULT_HOST: process.env.KOS_HOST || '127.0.0.1',
   DEFAULT_PORT: process.env.KOS_PORT || 12345

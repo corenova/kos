@@ -57,24 +57,21 @@ function connect(opts) {
 }
 
 function listen(opts) {
-  let net = this.fetch('module/net')
-  let { protocol, port, host, retry, max } = normalizeOptions(opts)
+  const net = this.fetch('module/net')
+  let { protocol, hostname, port, retry, max } = normalizeOptions(opts)
 
   let server = net.createServer(sock => {
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
-    this.info("accept", addr)
+    this.info('accept', addr)
     this.send('net/socket', sock)
-    this.send('net/link', {
-      addr: addr,
-      socket: sock
-    })
+    this.send('net/link', { addr: addr, socket: sock })
     sock.emit('active')
   })
   server.on('listening', () => {
-    this.info('listening', host, port)
+    this.info('listening', hostname, port)
     this.send('net/server', server)
   })
-  server.on('error', this.throw.bind(this))
+  server.on('error', this.error.bind(this))
   this.debug("attempt", host, port)
   server.listen(port, host)
 }

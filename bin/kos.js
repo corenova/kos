@@ -70,6 +70,7 @@ function collect(val, keys) {
   return keys
 }
 
+// should be a flow?
 function commander(io, flows) {
   const inputs = new Set([].concat(...flows.map(x => x.inputs)))
   const triggers = Array.from(inputs).concat('help','quit')
@@ -106,10 +107,13 @@ function commander(io, flows) {
     readline.clearLine(process.stderr, -1)
     readline.cursorTo(process.stderr, 0)
   })
-  io.write("init true\n")
+  // TODO: need to catch before any other output to stderr....
+
+  io.write("command true\n")
   cmd.prompt()
 }
 
+// should be a flow?
 function logger(io, verbosity=0) {
   let namespaces = [ 'kos:error', 'kos:warn' ]
   if (verbosity)     namespaces.push('kos:info')
@@ -126,7 +130,7 @@ function logger(io, verbosity=0) {
   return new kos.Essence({
     transform(ko, enc, cb) {
       if (!ko) return cb()
-      if (io.seen(ko) && !ko.accepted && ko.key !== 'init')
+      if (io.seen(ko) && !ko.accepted && ko.key !== 'command')
         warn('no local flow reactor to handle "%s"', ko.key)
       switch (ko.key) {
       case 'error': 

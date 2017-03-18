@@ -101,6 +101,7 @@ function createWebSocketStream(link) {
   let stream = streams.has(addr) ? streams.get(addr) : new kos.Essence
 
   socket.on('active', () => {
+    // TODO: for now KSON text based exchange. should explore binary encoding
     let io = stream.io()
     socket.on('message', io.write.bind(io))
     io.on('data', socket.send.bind(socket))

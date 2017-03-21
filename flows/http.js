@@ -80,7 +80,7 @@ function handleRequest(req) {
   }
 }
 
-function createServer(port) {
+function createServer(opts) {
   let http = this.fetch('module/http')
   let { protocol, hostname, port, retry, max } = normalizeOptions(opts)
 

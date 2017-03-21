@@ -1,8 +1,5 @@
 'use strict'
 
-Object.assign || require('object.assign').shim()
-Array.from || require('array.from').shim()
-
 const KineticObjectStream = require('./lib/stream')
 const KineticReactor = require('./lib/reactor')
 const KineticEssence = require('./lib/essence')

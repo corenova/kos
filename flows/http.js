@@ -10,10 +10,10 @@
 // decide how to fulfill the necessary dependency.
 
 const kos = require('..')
-const http = require('http')
 
 const HttpClient = kos.create('kos-http-client')
   .summary("Provides HTTP client transforms utilizing 'superagent' module")
+  .require('module/http')
   .require('module/superagent')
   .in('http/request')
   .out('http/request/get')
@@ -39,9 +39,9 @@ const HttpClient = kos.create('kos-http-client')
   .in('http/request/delete').out('http/response').bind(handleRequest)
 
 const HttpServer = kos.create('kos-http-server')
-  .summary("Provides HTTP server transforms utilizing 'express' module")
-  .require('module/express')
-  .in('http/listen').out('http/server').bind(runServer)
+  .summary("Provides HTTP server transactions")
+  .require('module/http')
+  .in('http/listen').out('http/server').bind(createServer)
   .in('http/server','http/route').out('http/server/request').bind(handleRoute)
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
@@ -80,10 +80,27 @@ function handleRequest(req) {
   }
 }
 
-function runServer(listen) {
-  let express = this.fetch('module/express')
-  let app = express()
-  
+function createServer(port) {
+  let http = this.fetch('module/http')
+  let { protocol, hostname, port, retry, max } = normalizeOptions(opts)
+
+  let server = http.createServer((request, response) => {
+
+  })
+  server.on('connection', sock => {
+    let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
+    this.info('accept', addr)
+    this.send('http/socket', sock)
+    this.send('http/link', { addr: addr, socket: sock })
+    sock.emit('active')
+  })
+  server.on('listening', () => {
+    this.info('listening', hostname, port)
+    this.send('http/server', server)
+  })
+  server.on('error', this.error.bind(this))
+  this.debug('attempt', hostname, port)
+  server.listen(port, hostname)
 }
 
 function handleRoute(server, route) {

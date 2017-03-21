@@ -72,8 +72,8 @@ function listen(opts) {
     this.send('net/server', server)
   })
   server.on('error', this.error.bind(this))
-  this.debug("attempt", host, port)
-  server.listen(port, host)
+  this.debug('attempt', hostname, port)
+  server.listen(port, hostname)
 }
 
 function connectByUrl(dest) {

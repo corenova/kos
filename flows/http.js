@@ -28,7 +28,7 @@ const HttpClient = kos.create('kos-http-client')
     case 'POST':   this.send('http/request/post', req); break;
     case 'PUT':    this.send('http/request/put', req); break;
     case 'PATCH':  this.send('http/request/patch', req); break;
-    case 'DELETE': this.send('http/request/patch', req); break;
+    case 'DELETE': this.send('http/request/delete', req); break;
     }
   })
   // example of dynamic merge of common actions to share common state
@@ -41,7 +41,12 @@ const HttpClient = kos.create('kos-http-client')
 const HttpServer = kos.create('kos-http-server')
   .summary("Provides HTTP server transactions")
   .require('module/http')
-  .in('http/listen').out('http/server').bind(createServer)
+  .require('module/url')
+
+  .in('http/listen')
+  .out('http/server','http/socket','http/link','http/server/request')
+  .bind(createServer)
+
   .in('http/server','http/route').out('http/server/request').bind(handleRoute)
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
@@ -82,10 +87,10 @@ function handleRequest(req) {
 
 function createServer(opts) {
   let http = this.fetch('module/http')
-  let { protocol, hostname, port, retry, max } = normalizeOptions(opts)
+  let { protocol, hostname, port } = normalizeOptions.call(this, opts)
 
   let server = http.createServer((request, response) => {
-
+    this.send('http/server/request', { req: request, res: response })
   })
   server.on('connection', sock => {
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
@@ -103,13 +108,25 @@ function createServer(opts) {
   server.listen(port, hostname)
 }
 
+function normalizeOptions(opts) {
+  if (typeof opts === 'string') {
+    let url = this.fetch('module/url')
+    if (!opts.includes('://'))
+      opts = 'http://' + opts
+    opts = url.parse(opts, true)
+  }
+  return {
+    protocol: opts.protocol || 'http:',
+    hostname: opts.hostname || '0.0.0.0',
+    port:     parseInt(opts.port, 10) || 80
+  }
+}
+
 function handleRoute(server, route) {
 
 }
 
 function proxy(req, proxy) {
-  if (msg.key === 'http/server/request') {
-    req.host = proxy.host
-    this.send('http/request', req)
-  }
+  req.host = proxy.host
+  this.send('http/request', req)
 }

@@ -35,15 +35,15 @@ program
   })
 
 // convenience execution of an interactive "run" flow with command-line options
-program
-  .command('run [flows...]')
-  .description('Starts an interactive web server with optional flows')
-  .option('-p, --port <number>', 'local port to listen for web requests', 3000)
-  .action((flows, opts) => {
-    kos.load('run')
-      .feed('run', opts)
-      .feed('run/load', flows)
-  })
+// program
+//   .command('run [flows...]')
+//   .description('Starts an interactive web server with optional flows')
+//   .option('-p, --port <number>', 'local port to listen for web requests', 3000)
+//   .action((flows, opts) => {
+//     kos.load('run')
+//       .feed('run', opts)
+//       .feed('run/load', flows)
+//   })
 
 program
   .arguments('<flows...>')

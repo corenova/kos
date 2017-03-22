@@ -22,7 +22,7 @@ module.exports = kos.create('kos-net')
 function connect(opts) {
   const [ net, protocols ] = this.fetch('module/net', 'protocols')
 
-  let { protocol, hostname, port, retry, max } = normalizeOptions(opts)
+  let { protocol, hostname, port, retry, max } = normalizeOptions.call(this, opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 

@@ -110,9 +110,9 @@ function commander(io) {
       break;
     default:
       let [ key, obj ] = input.split(/\s+(.+)/)
-      if (!kos.consumes.includes(key))
-        console.error(colors.red('unrecognized input trigger for:', key))
-      else if (key && obj) io.write(input + "\n")
+      // if (!kos.consumes.includes(key))
+      //   console.error(colors.red('unrecognized input trigger for:', key))
+      if (key && obj) io.write(input + "\n")
       else console.error(colors.red('please provide JSON argument for:', key))
     }
     cmd.prompt()

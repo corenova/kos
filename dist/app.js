@@ -668,7 +668,7 @@ var KineticEssence = require('./lib/essence');
 var debug = require('debug');
 var path = require('path');
 
-var kos = new KineticObjectStream('core').summary('Provides KOS flow loading & logging facility').in('load').out('kos').bind(loadFlow).in('log').bind(setupLogger);
+var kos = new KineticObjectStream('core').summary('Provides KOS flow loading & logging facility').in('load').out('flow').bind(loadFlow).in('log').bind(setupLogger);
 
 function loadFlow(name) {
   var flow = {};
@@ -682,7 +682,7 @@ function loadFlow(name) {
       var _name = _step.value;
 
       try {
-        flow = require(_name)(kos);break;
+        flow = require(_name);break;
       } catch (e) {
         if (e.code !== 'MODULE_NOT_FOUND') throw e;
       }
@@ -705,7 +705,7 @@ function loadFlow(name) {
   if (flow.type !== 'KineticObjectStream') throw new Error("unable to load KOS for " + name + " from " + search);
 
   this.stream.include(flow);
-  this.send('kos', flow);
+  this.send('flow', flow);
 }
 
 function setupLogger(_ref) {
@@ -759,51 +759,6 @@ kos.Reactor = KineticReactor;
 kos.Essence = KineticEssence;
 
 global.kos = module.exports = kos['default'] = kos.kos = kos;
-
-// don't need this?
-function chain() {
-  for (var _len = arguments.length, flows = Array(_len), _key = 0; _key < _len; _key++) {
-    flows[_key] = arguments[_key];
-  }
-
-  var map = {};
-  flows = flows.filter(function (flow) {
-    return flow.type === 'KineticObjectStream';
-  });
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
-
-  try {
-    for (var _iterator2 = flows[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-      var flow = _step2.value;
-      map[flow.label] = flow;
-    }
-  } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-        _iterator2.return();
-      }
-    } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
-      }
-    }
-  }
-
-  flows = Object.keys(map).map(function (key) {
-    return map[key];
-  });
-  var head = flows.shift();
-  var tail = flows.reduce(function (a, b) {
-    return a.pipe(b);
-  }, head);
-  head && tail && tail.pipe(head);
-  return [head, tail];
-}
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/")
 },{"./lib/essence":14,"./lib/reactor":16,"./lib/stream":17,"debug":24,"path":57}],13:[function(require,module,exports){
@@ -1003,7 +958,7 @@ var KineticEssence = function (_Transform) {
       });
       this.on('data', function (ko) {
         if (!passthrough && wrapper.seen(ko)) return;
-        if (/^module\//.test(ko.key) || ['kos', 'error', 'warn', 'info', 'debug'].includes(ko.key)) return;
+        if (/^module\//.test(ko.key) || ['flow', 'error', 'warn', 'info', 'debug'].includes(ko.key)) return;
         debug('io:push', ko.key);
         wrapper.push(ko.toKSON() + "\n");
       });
@@ -1784,7 +1739,6 @@ var KineticObjectStream = function (_KineticEssence) {
         this.state.set('ready', true);
         this.info(this.id, 'ready');
         this.emit('ready', this);
-        //this.send('kos', this)
       }
       return this.ready;
     }
@@ -1795,7 +1749,7 @@ var KineticObjectStream = function (_KineticEssence) {
     key: 'consume',
     value: function consume(ko) {
       var consumes = this.state.get('consumes');
-      if (ko.key === 'kos' && this._imports.size) {
+      if (ko.key === 'flow' && this._imports.size) {
         var flow = ko.value;
         if (this._imports.has(flow.label)) {
           debug(this.identity, '<<<', flow.label);

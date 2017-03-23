@@ -9,7 +9,7 @@ const path = require('path')
 
 const kos = new KineticObjectStream('core')
   .summary('Provides KOS flow loading & logging facility')
-  .in('load').out('kos').bind(loadFlow)
+  .in('load').out('flow').bind(loadFlow)
   .in('log').bind(setupLogger)
 
 function loadFlow(name) {
@@ -21,7 +21,7 @@ function loadFlow(name) {
     name
   ]
   for (let name of search) {
-    try { flow = require(name)(kos); break }
+    try { flow = require(name); break }
     catch (e) { 
       if (e.code !== 'MODULE_NOT_FOUND') throw e
     }
@@ -30,7 +30,7 @@ function loadFlow(name) {
     throw new Error("unable to load KOS for " + name + " from " + search)
 
   this.stream.include(flow)
-  this.send('kos', flow)
+  this.send('flow', flow)
 }
 
 function setupLogger({ verbose=0, silent=false }) {
@@ -77,17 +77,3 @@ kos.Reactor = KineticReactor
 kos.Essence = KineticEssence
 
 global.kos = module.exports = kos['default'] = kos.kos = kos
-
-// don't need this?
-function chain(...flows) {
-  let map = {}
-  flows = flows.filter(flow => flow.type === 'KineticObjectStream')
-  for (let flow of flows) map[flow.label] = flow
-  flows = Object.keys(map).map(key => map[key])
-  let head = flows.shift()
-  let tail = flows.reduce(((a, b) => a.pipe(b)), head)
-  head && tail && tail.pipe(head)
-  return [ head, tail ]
-}
-
-

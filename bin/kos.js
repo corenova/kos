@@ -27,11 +27,12 @@ program
   .action(() => {})
 
 program
-  .command('show <flow>')
+  .command('show <flows...>')
   .alias('sh')
   .description('Show detailed information about a flow')
-  .action((flow, opts) => {
-    console.log(render(kos.load(flow)))
+  .action((flows, opts) => {
+    kos.feed('load', ...flows)
+    console.log(render(kos))
   })
 
 // convenience execution of an interactive "run" flow with command-line options

@@ -6,15 +6,15 @@
 
 'use strict'
 
-const { kos = require('..') } = global
+const { kos = require('../..') } = global
 
 module.exports = kos.create('kos-link')
   .summary("Provides dynamic client/server communication flows for various protocols")
   .require('module/url')
   .default('streams', new Map)
 
-  .import(require('./net')) // supports kos, tcp, unix protocols
-  .import(require('./ws'))  // supports ws, wss protocols
+  .import(require('../net')) // supports kos, tcp, unix protocols
+  .import(require('../ws'))  // supports ws, wss protocols
 
   .in('link/connect').out('net/connect','ws/connect').bind(connect)
   .in('link/listen').out('net/listen','ws/listen').bind(listen)

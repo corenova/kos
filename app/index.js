@@ -1,17 +1,17 @@
 //import 'jointjs'
 import kos from '..'
-import { sync, debug } from '../flows'
+import { sync } from '../flows'
 
 import React from 'react'
 import { render } from 'react-dom'
 //import { Router, Route, IndexRoute, browserHistory } from 'react-router'
 
 // setup KOS data pipeline
-kos.pipe(sync).pipe(debug).pipe(kos)
+kos.pipe(sync).pipe(kos)
 
 // initialize KOS triggers
 kos
-  .feed('debug/level', 3)
+  .feed('log', { verbose: 3 })
   .feed('sync/connect', 'localhost')
 
 render((

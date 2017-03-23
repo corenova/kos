@@ -52,7 +52,7 @@ program
   .option('-s, --silent', 'suppress all debug/info/warn/error log messages')
   .action((flows, opts) => {
     let { input, trigger, silent, verbose } = opts
-    kos.feed('log', { verbose, silent })
+    kos.feed('log', { silent, verbose })
     kos.feed('load', ...flows)
 
     let io = kos.io(opts)

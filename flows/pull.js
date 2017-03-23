@@ -14,5 +14,5 @@ module.exports = kos.create('kos-pull')
   )
   .in('link/stream').bind(
     function pullKineticObjects(stream) { stream.pipe(this.stream) }
-  }
+  )
 

@@ -1,6 +1,6 @@
 // Module loader stream
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-require')
   .summary("Provides external module loading via 'require'")

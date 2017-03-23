@@ -11,7 +11,7 @@
 
 'use strict'
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-mqtt')
   .summary("Provides MQTT transaction transforms utilizing 'mqtt' module")

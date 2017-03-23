@@ -4,7 +4,7 @@
 // available in a Node.js environment. Optionally, it can be fulfilled
 // by the upstream consumer.
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-npm')
   .summary("Provides NPM registry transactions utilizing 'npm' module")

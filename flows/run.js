@@ -1,17 +1,18 @@
 'use strict'
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-run')
-  .summary('Provides runtime instance management flows')
-  .import(kos.load('require'))
-  .import(kos.load('npm'))
-  .import(kos.load('net'))
-  .import(kos.load('http'))
+  .summary('Provides runtime flow state management')
+  .import(require('./require'))
+  .import(require('./http'))
+  .import(require('./ws'))
+  .import(require('./link'))
 
   .default('base', '/')
 
   .in('run').out('http/listen','http/route').bind(runInstance)
+  .in('http/server').out('ws/listen').bind(runWebSocketServer)
 
   .in('http/server/request/get').out('http/server/response').bind(getFlowState)
   .in('http/server/request/put').out('http/server/response').bind(putFlowState)
@@ -23,6 +24,10 @@ function runInstance(opts) {
   // Note: for now tap into the stream and "publish" every kinetic
   // object into runtime state. Should make this hierarchical...
   this.stream.on('data', ko => this.post(ko.key, ko.value))
+}
+
+function runWebSocketServer(server) {
+  this.send('ws/listen', { server })
 }
 
 function getFlowState({ req, res }) {

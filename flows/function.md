@@ -16,9 +16,6 @@ Source code is available [here](./function.js).
 
 ```js
 const FunctionFlow = require('kos/flows/function')
-// or
-const kos = require('kos')
-const FunctionFlow = kos.load('kos-flow-function')
 FunctionFlow
   .on('return', x => console.log(x))
   .feed('function', x => x+1)

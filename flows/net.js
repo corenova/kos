@@ -6,7 +6,7 @@
 
 'use strict'
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-net')
   .summary("Provides network client/server communication flows")

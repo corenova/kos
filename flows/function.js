@@ -1,6 +1,6 @@
 // Function execution flow
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-function')
   .summary("Provides dynamic function exeuction transforms via messages")

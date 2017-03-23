@@ -12,9 +12,6 @@ Source code is [here](./npm.js).
 
 ```js
 const NpmFlow = require('kos/flows/npm')
-// or
-const kos = require('kos')
-const NpmFlow = kos.load('kos/flows/npm')
 ```
 
 Simple example:

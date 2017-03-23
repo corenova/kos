@@ -16,9 +16,6 @@ Source code is [here](./require.js).
 
 ```js
 const RequireFlow = require('kos/flows/require')
-// or
-const kos = require('kos')
-const RequireFlow = kos.load('kos/flows/require')
 ```
 
 Simple example:

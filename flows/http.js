@@ -4,13 +4,13 @@
 // become active if already present locally, receives it from the
 // upstream, or fed by the user directly.
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
 module.exports = kos.create('kos-http')
   .summary("Provides HTTP client and/or server transforms")
-  .include(kos.load('http-client'))
-  .include(kos.load('http-server'))
+  .include(require('./http-client'))
+  .include(require('./http-server'))
   // actions
   .in('http/request/get/url').out('http/request/get')
   .bind(function simpleGet(url) {

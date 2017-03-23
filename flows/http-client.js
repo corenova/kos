@@ -4,7 +4,7 @@
 // will become active if already present locally, receives it from the
 // upstream, or fed by the user directly.
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-http-client')
   .summary("Provides HTTP client transforms utilizing 'superagent' module")

@@ -1,10 +1,10 @@
 'use strict'
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-pull')
   .summary('Provide dataflow stream pull from remote flow(s)')
-  .import(kos.load('link'))
+  .import(require('./link'))
 
   .in('pull/connect').out('link/connect/url').bind(
     function pullConnect(url) { this.send('link/connect/url', url) }

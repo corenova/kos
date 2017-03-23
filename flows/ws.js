@@ -6,7 +6,7 @@
 
 'use strict'
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-ws')
   .summary("Provides WebSocket transactions utilizing 'ws' module")
@@ -58,15 +58,21 @@ function listen(opts) {
   const WebSocket = this.fetch('module/ws')
   const protocols = this.fetch('protocols')
 
-  let { protocol, hostname, port, path, retry, max } = normalizeOptions(opts)
+  let { protocol, hostname, port, path, server } = normalizeOptions(opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
-  let server = new WebSocket.Server({ host: hostname, port: port, path: path })
-  server.on('listening', () => {
-    this.info('listening', hostname, port, path)
+  if (server) {
+    server = new WebSocket.Server({ server })
+    this.info('listening on existing server instance')
     this.send('ws/server', server)
-  })
+  } else {
+    server = new WebSocket.Server({ host: hostname, port: port, path: path })
+    server.on('listening', () => {
+      this.info('listening', hostname, port, path)
+      this.send('ws/server', server)
+    })
+  }
   server.on('connection', wsock => {
     let sock = wsock._socket
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
@@ -100,6 +106,7 @@ function normalizeOptions(opts) {
     hostname: opts.hostname || '0.0.0.0',
     port:     parseInt(opts.port, 10) || 80,
     path:     opts.path || '',
+    server:   opts.server,
     retry:    parseInt(opts.retry, 10) || 100,
     max:      parseInt(opts.max, 10) || 5000
   }

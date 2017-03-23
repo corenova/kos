@@ -1,6 +1,6 @@
 'use strict'
 
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.create('kos-joint')
   .require('module/jointjs')

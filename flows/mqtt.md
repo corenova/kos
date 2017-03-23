@@ -13,9 +13,6 @@ Source code is available [here](./mqtt.js).
 
 ```js
 const MqttFlow = require('kos/flows/mqtt')
-// or
-const kos = require('kos')
-const MqttFlow = kos.load('kos-flow-mqtt')
 ```
 
 Enabling the flow:

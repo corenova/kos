@@ -9,9 +9,6 @@ Source code is available [here](./http.js).
 
 ```js
 const HttpFlow = require('kos/flows/http')
-// or
-const kos = require('kos')
-const HttpFlow = kos.load('kos/flows/http')
 ```
 
 ## kos show

@@ -1,4 +1,4 @@
-const kos = require('..')
+const { kos = require('..') } = global
 
 module.exports = kos.createStream('kos-react')
   .require('module/react')

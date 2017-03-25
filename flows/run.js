@@ -2,7 +2,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-run')
+module.exports = kos.create('run')
   .summary('Provides runtime flow state management')
   .import(require('./require'))
   .import(require('./http'))

@@ -6,7 +6,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-http-client')
+module.exports = kos.create('http-client')
   .summary("Provides HTTP client transforms utilizing 'superagent' module")
   .require('module/http')
   .require('module/superagent')

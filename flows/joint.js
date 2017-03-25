@@ -2,7 +2,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-joint')
+module.exports = kos.create('joint')
   .require('module/jointjs')
   .default('flows', new Map)
 

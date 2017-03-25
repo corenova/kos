@@ -6,7 +6,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-npm')
+module.exports = kos.create('npm')
   .summary("Provides NPM registry transactions utilizing 'npm' module")
   .require('module/npm')
   .default('loaded', false)

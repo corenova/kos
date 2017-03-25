@@ -7,7 +7,7 @@
 const { kos = require('..') } = global
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
-module.exports = kos.create('kos-http')
+module.exports = kos.create('http')
   .summary("Provides HTTP client and/or server transforms")
   .include(require('./http-client'))
   .include(require('./http-server'))

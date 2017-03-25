@@ -2,7 +2,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-require')
+module.exports = kos.create('require')
   .summary("Provides external module loading via 'require'")
   .default('pending', new Set)
   .import('kos-npm')

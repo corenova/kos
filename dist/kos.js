@@ -1,19 +1,575 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-(function (global,__dirname){
+(function (global){
+'use strict';
+
+// HTTP client transaction flow
+//
+// NOTE: this flow REQUIREs the 'superagent' and 'http' modules and
+// will become active if already present locally, receives it from the
+// upstream, or fed by the user directly.
+
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
+
+
+module.exports = kos.create('http-client').summary("Provides HTTP client transforms utilizing 'superagent' module").require('module/http').require('module/superagent').in('http/request').out('http/request/get').out('http/request/post').out('http/request/put').out('http/request/patch').out('http/request/delete').bind(classifyRequest)
+// example of dynamic merge of common actions to share common state
+.in('http/request/get').out('http/response').bind(handleRequest).in('http/request/post').out('http/response').bind(handleRequest).in('http/request/put').out('http/response').bind(handleRequest).in('http/request/patch').out('http/response').bind(handleRequest).in('http/request/delete').out('http/response').bind(handleRequest);
+
+function classifyRequest(req) {
+  if (!req.method) return this.throw('invalid METHOD');
+  switch (req.method.toUpperCase()) {
+    case 'GET':
+      this.send('http/request/get', req);break;
+    case 'POST':
+      this.send('http/request/post', req);break;
+    case 'PUT':
+      this.send('http/request/put', req);break;
+    case 'PATCH':
+      this.send('http/request/patch', req);break;
+    case 'DELETE':
+      this.send('http/request/delete', req);break;
+  }
+}
+
+function handleRequest(req) {
+  var _this = this;
+
+  var agent = this.fetch('module/superagent');
+  var method = this.trigger.replace(/.*\/(\w+)$/, '$1').toLowerCase();
+  var url = req.url,
+      data = req.data;
+
+
+  switch (method) {
+    case 'get':
+    case 'delete':
+      agent[method](url).end(function (err, res) {
+        if (err) _this.throw(err);else _this.send('http/response', res);
+      });
+      break;
+    case 'post':
+    case 'put':
+    case 'patch':
+      agent[method](url).send(data).end(function (err, res) {
+        if (err) _this.throw(err);else _this.send('http/response', res);
+      });
+      break;
+  }
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"..":undefined}],2:[function(require,module,exports){
+(function (global){
+'use strict';
+
+// HTTP client transaction flow
+//
+// NOTE: this flow REQUIREs the 'http' and 'url' modules and will
+// become active if already present locally, receives it from the
+// upstream, or fed by the user directly.
+
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
+
+
+module.exports = kos.create('http-server').summary("Provides HTTP server transactions").require('module/http').require('module/url').in('http/listen').out('http/server', 'http/socket', 'http/link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
+
+function createServer(opts) {
+  var _this = this;
+
+  var http = this.fetch('module/http');
+
+  var _normalizeOptions$cal = normalizeOptions.call(this, opts),
+      protocol = _normalizeOptions$cal.protocol,
+      hostname = _normalizeOptions$cal.hostname,
+      port = _normalizeOptions$cal.port;
+
+  var server = http.createServer(function (request, response) {
+    _this.send('http/server/request', { req: request, res: response });
+  });
+  server.on('connection', function (sock) {
+    var addr = protocol + '//' + sock.remoteAddress + ':' + sock.remotePort;
+    _this.info('accept', addr);
+    _this.send('http/socket', sock);
+    _this.send('http/link', { addr: addr, socket: sock });
+    sock.emit('active');
+  });
+  server.on('listening', function () {
+    _this.info('listening', hostname, port);
+    _this.send('http/server', server);
+  });
+  server.on('error', this.error.bind(this));
+  this.debug('attempt', hostname, port);
+  server.listen(port, hostname);
+}
+
+function classifyServerTransaction(session) {
+  var req = session.req,
+      res = session.res;
+
+  var method = req.method.toLowerCase();
+  this.send('http/server/request/' + method, session);
+}
+
+function normalizeOptions(opts) {
+  if (typeof opts === 'string') {
+    var url = this.fetch('module/url');
+    if (!opts.includes('://')) opts = 'http://' + opts;
+    opts = url.parse(opts, true);
+  }
+  return {
+    protocol: opts.protocol || 'http:',
+    hostname: opts.hostname || '0.0.0.0',
+    port: parseInt(opts.port, 10) || 80
+  };
+}
+
+function handleRoute(server, route) {}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"..":undefined}],3:[function(require,module,exports){
+(function (global){
+'use strict';
+
+// HTTP transaction flow
+//
+// NOTE: this flow REQUIREs the 'superagent' or 'http' module and will
+// become active if already present locally, receives it from the
+// upstream, or fed by the user directly.
+
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
+
+// Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
+
+module.exports = kos.create('http').summary("Provides HTTP client and/or server transforms").include(require('./http-client')).include(require('./http-server'))
+// actions
+.in('http/request/get/url').out('http/request/get').bind(function simpleGet(url) {
+  this.send('http/request/get', { url: url });
+})
+// TODO: future
+.in('http/server/request', 'http/proxy').out('http/request').bind(proxy);
+
+function proxy(req, proxy) {
+  req.host = proxy.host;
+  this.send('http/request', req);
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"..":undefined,"./http-client":1,"./http-server":2}],4:[function(require,module,exports){
+(function (global){
+// Link transaction flow
+//
+// NOTE: this flow REQUIREs the 'url' module and will become active
+// if already present locally, receives it from the upstream, or fed
+// by the user directly.
+
+'use strict';
+
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
+
+
+module.exports = kos.create('link').summary("Provides dynamic client/server communication flows for various protocols").require('module/url').default('streams', new Map()).import(require('./net')) // supports kos, tcp, unix protocols
+.import(require('./ws')) // supports ws, wss protocols
+
+.in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).in('link/connect/url').out('link/connect').bind(connectByUrl).in('link/listen/url').out('link/listen').bind(listenByUrl).in('net/link').out('link/stream').bind(createNetStream).in('ws/link').out('link/stream').bind(createWebSocketStream);
+
+function connect(opts) {
+  switch (opts.protocol) {
+    case 'ws:':
+    case 'wss:':
+      this.send('ws/connect', opts);
+      break;
+    case 'tcp:':
+    case 'udp:':
+    case undefined:
+      this.send('net/connect', opts);
+      break;
+    default:
+      this.warn('unsupported protocol', opts.protocol);
+  }
+}
+
+function listen(opts) {
+  switch (opts.protocol) {
+    case 'ws:':
+    case 'wss:':
+      this.send('ws/listen', opts);
+      break;
+    case 'tcp:':
+    case 'udp:':
+    case undefined:
+      this.send('net/listen', opts);
+      break;
+    default:
+      this.warn('unsupported protocol', opts.protocol);
+  }
+}
+
+function connectByUrl(dest) {
+  var url = this.fetch('module/url');
+  var opts = url.parse(dest, true);
+  if (!opts.protocol) opts = url.parse('tcp:' + dest, true);
+  this.send('link/connect', Object.assign(opts, opts.query));
+}
+
+function listenByUrl(dest) {
+  var url = this.fetch('module/url');
+  var opts = url.parse(dest, true);
+  if (!opts.protocol) opts = url.parse('tcp:' + dest, true);
+  this.send('link/listen', Object.assign(opts, opts.query));
+}
+
+function createNetStream(link) {
+  var _this = this;
+
+  var addr = link.addr,
+      socket = link.socket;
+
+  var streams = this.fetch('streams');
+  var stream = streams.has(addr) ? streams.get(addr) : new kos.Essence();
+
+  socket.on('active', function () {
+    var io = stream.io();
+    socket.pipe(io, { end: false }).pipe(socket);
+    socket.on('close', function () {
+      io.unpipe(socket);
+      socket.destroy();
+    });
+  });
+  if (!streams.has(addr)) {
+    stream.on('ready', function () {
+      return _this.debug("ready now!");
+    });
+    streams.set(addr, stream);
+    this.send('link/stream', stream);
+  }
+}
+
+function createWebSocketStream(link) {
+  var _this2 = this;
+
+  var addr = link.addr,
+      socket = link.socket;
+
+  var streams = this.fetch('streams');
+  var stream = streams.has(addr) ? streams.get(addr) : new kos.Essence();
+
+  socket.on('active', function () {
+    // TODO: for now KSON text based exchange. should explore binary encoding
+    var io = stream.io();
+    socket.pipe(io, { end: false }).pipe(socket);
+    //socket.on('message', io.write.bind(io))
+    //io.on('data', socket.send.bind(socket))
+    socket.on('close', io.unpipe.bind(io, socket));
+  });
+
+  if (!streams.has(addr)) {
+    stream.on('ready', function () {
+      return _this2.debug("ready now!");
+    });
+    streams.set(addr, stream);
+    this.send('link/stream', stream);
+  }
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"..":undefined,"./net":5,"./ws":7}],5:[function(require,module,exports){
+(function (global){
+// Network transaction flow
+//
+// NOTE: this flow REQUIREs the 'net' and 'url' modules and will
+// become active if already present locally, receives it from the
+// upstream, or fed by the user directly.
+
+'use strict';
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
+
+
+module.exports = kos.create('net').summary("Provides network client/server communication flows").require('module/net', 'module/url').default('protocols', ['tcp:', 'udp:']).in('module/net', 'module/url').bind(ready).in('net/connect').out('net/socket', 'net/link').bind(connect).in('net/listen').out('net/server', 'net/socket', 'net/link').bind(listen).in('net/connect/url').out('net/connect').bind(connectByUrl).in('net/listen/url').out('net/listen').bind(listenByUrl);
+
+function ready(net, url) {
+  // should add verification logic...
+}
+
+function connect(opts) {
+  var _this = this;
+
+  var _fetch = this.fetch('module/net', 'protocols'),
+      _fetch2 = _slicedToArray(_fetch, 2),
+      net = _fetch2[0],
+      protocols = _fetch2[1];
+
+  var _normalizeOptions$cal = normalizeOptions.call(this, opts),
+      protocol = _normalizeOptions$cal.protocol,
+      hostname = _normalizeOptions$cal.hostname,
+      port = _normalizeOptions$cal.port,
+      retry = _normalizeOptions$cal.retry,
+      max = _normalizeOptions$cal.max;
+
+  if (!protocols.includes(protocol)) return this.error('unsupported protocol', protocol);
+
+  var addr = protocol + '//' + hostname + ':' + port;
+  var sock = new net.Socket();
+
+  this.send('net/link', { addr: addr, socket: sock });
+
+  sock.setNoDelay();
+  sock.on('connect', function () {
+    _this.info("connected to", addr);
+    _this.send('net/socket', sock);
+    sock.emit('active');
+    if (retry) retry = 100;
+  });
+  sock.on('close', function () {
+    if (sock.closing) return;
+    retry && setTimeout(function () {
+      _this.debug("attempt reconnect", addr);
+      // NOTE: we don't use this.send here because self-generated
+      // KOs that can trigger itself are filtered to prevent
+      // infinite loops
+      _this.feed('net/connect', Object.assign({}, opts, {
+        retry: Math.round(Math.min(max, retry * 1.5))
+      }));
+    }, retry);
+  });
+  sock.on('error', this.error.bind(this));
+
+  this.debug("attempt", addr);
+  sock.connect(port, hostname);
+}
+
+function listen(opts) {
+  var _this2 = this;
+
+  var net = this.fetch('module/net');
+
+  var _normalizeOptions = normalizeOptions(opts),
+      protocol = _normalizeOptions.protocol,
+      hostname = _normalizeOptions.hostname,
+      port = _normalizeOptions.port,
+      retry = _normalizeOptions.retry,
+      max = _normalizeOptions.max;
+
+  var server = net.createServer(function (sock) {
+    var addr = protocol + '//' + sock.remoteAddress + ':' + sock.remotePort;
+    _this2.info('accept', addr);
+    _this2.send('net/socket', sock);
+    _this2.send('net/link', { addr: addr, socket: sock });
+    sock.emit('active');
+  });
+  server.on('listening', function () {
+    _this2.info('listening', hostname, port);
+    _this2.send('net/server', server);
+  });
+  server.on('error', this.error.bind(this));
+  this.debug('attempt', hostname, port);
+  server.listen(port, hostname);
+}
+
+function connectByUrl(dest) {
+  var url = this.fetch('module/url');
+  if (!dest.includes('://')) dest = 'tcp://' + dest;
+  var opts = url.parse(dest, true);
+  this.send('net/connect', Object.assign(opts, opts.query));
+}
+
+function listenByUrl(dest) {
+  var url = this.fetch('module/url');
+  if (!dest.includes('://')) dest = 'tcp://' + dest;
+  var opts = url.parse(dest, true);
+  this.send('net/listen', Object.assign(opts, opts.query));
+}
+
+function normalizeOptions(opts) {
+  return {
+    protocol: opts.protocol || 'tcp:',
+    hostname: opts.hostname || '0.0.0.0',
+    port: parseInt(opts.port, 10) || 12345,
+    retry: parseInt(opts.retry, 10) || 100,
+    max: parseInt(opts.max, 10) || 5000
+  };
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"..":undefined}],6:[function(require,module,exports){
+(function (global){
+'use strict';
+
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
+
+
+module.exports = kos.create('sync').summary('Provide dataflow stream pull/push to a remote flow').import(require('./link')).in('sync/connect').out('link/connect/url').bind(function syncConnect(url) {
+  this.send('link/connect/url', url);
+}).in('sync/listen').out('link/listen/url').bind(function syncListen(url) {
+  this.send('link/listen/url', url);
+}).in('link/stream').bind(function syncKineticObjects(stream) {
+  stream.pipe(this.stream).pipe(stream);
+});
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"..":undefined,"./link":4}],7:[function(require,module,exports){
+(function (global){
+// WebSocket transaction flow
+//
+// NOTE: this flow REQUIREs the 'ws' and 'url' module and will become
+// active if already present locally, receives it from the upstream,
+// or fed by the user directly.
+
+'use strict';
+
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
+
+
+var clientFlow = kos.create('client').require('module/simple-websocket').in('ws/connect').out('ws/socket', 'ws/link').bind(connect);
+
+var serverFlow = kos.create('server').require('module/simple-websocket/server').in('ws/listen').out('ws/server', 'ws/socket', 'ws/link').bind(listen);
+
+module.exports = kos.create('ws').summary("Provides WebSocket transactions utilizing 'ws' module").require('module/url').default('protocols', ['ws:', 'wss:']).include(clientFlow, serverFlow).in('ws/connect/url').out('ws/connect').bind(connectByUrl).in('ws/listen/url').out('ws/listen').bind(listenByUrl);
+
+function connect(opts) {
+  var _this = this;
+
+  var WebSocket = this.fetch('module/simple-websocket');
+  var protocols = this.fetch('protocols');
+
+  var _normalizeOptions = normalizeOptions(opts),
+      protocol = _normalizeOptions.protocol,
+      hostname = _normalizeOptions.hostname,
+      port = _normalizeOptions.port,
+      path = _normalizeOptions.path,
+      retry = _normalizeOptions.retry,
+      max = _normalizeOptions.max;
+
+  if (!protocols.includes(protocol)) return this.error('unsupported protocol', protocol);
+
+  var addr = protocol + '//' + hostname + ':' + port + '/' + path;
+  var wsock = new WebSocket(addr);
+  this.send('ws/link', { addr: addr, socket: wsock });
+
+  wsock.on('connect', function () {
+    _this.info("connected to", addr);
+    _this.send('ws/socket', wsock);
+    wsock.emit('active');
+    if (retry) retry = 100;
+  });
+  wsock.on('close', function () {
+    // find out if explicitly being closed?
+    retry && setTimeout(function () {
+      _this.debug("attempt reconnect", addr);
+      // NOTE: we don't use this.send here because self-generated
+      // KOs that can trigger itself are filtered to prevent
+      // infinite loops
+      _this.feed('ws/connect', Object.assign({}, opts, {
+        retry: Math.round(Math.min(max, retry * 1.5))
+      }));
+    }, retry);
+  });
+  wsock.on('error', this.error.bind(this));
+}
+
+function listen(opts) {
+  var _this2 = this;
+
+  var Server = this.fetch('module/simple-websocket/server');
+  var protocols = this.fetch('protocols');
+
+  var _normalizeOptions2 = normalizeOptions(opts),
+      protocol = _normalizeOptions2.protocol,
+      hostname = _normalizeOptions2.hostname,
+      port = _normalizeOptions2.port,
+      path = _normalizeOptions2.path,
+      server = _normalizeOptions2.server;
+
+  if (!protocols.includes(protocol)) return this.error('unsupported protocol', protocol);
+
+  if (server) {
+    server = new Server({ server: server });
+    this.info('listening on existing server instance');
+    this.send('ws/server', server);
+  } else {
+    server = new Server({ host: hostname, port: port, path: path });
+    server.on('listening', function () {
+      _this2.info('listening', hostname, port, path);
+      _this2.send('ws/server', server);
+    });
+  }
+  server.on('connection', function (wsock) {
+    var sock = wsock._ws._socket;
+    var addr = protocol + '//' + sock.remoteAddress + ':' + sock.remotePort;
+    _this2.info('accept', addr);
+    _this2.send('ws/socket', wsock);
+    _this2.send('ws/link', { addr: addr, socket: wsock });
+    wsock.emit('active');
+  });
+  server.on('error', this.error.bind(this));
+}
+
+function connectByUrl(dest) {
+  var url = this.fetch('module/url');
+  if (!dest.includes('://')) dest = 'ws://' + dest;
+  var opts = url.parse(dest, true);
+  this.send('ws/connect', Object.assign(opts, opts.query));
+}
+
+function listenByUrl(dest) {
+  var url = this.fetch('module/url');
+  if (!dest.includes('://')) dest = 'ws://' + dest;
+  var opts = url.parse(dest, true);
+  this.send('ws/listen', Object.assign(opts, opts.query));
+}
+
+function normalizeOptions(opts) {
+  return {
+    protocol: opts.protocol || 'ws:',
+    hostname: opts.hostname || '0.0.0.0',
+    port: parseInt(opts.port, 10) || 80,
+    path: opts.path || '',
+    server: opts.server,
+    retry: parseInt(opts.retry, 10) || 100,
+    max: parseInt(opts.max, 10) || 5000
+  };
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"..":undefined}],8:[function(require,module,exports){
+'use strict';
+
+var delegate = require('delegates');
+
+var proto = module.exports = {};
+
+delegate(proto, 'reactor').getter('state').getter('inputs').getter('outputs').getter('stream').method('fetch').method('post').method('send').method('feed').method('debug').method('info').method('warn').method('error').method('throw');
+
+delegate(proto, 'state').method('clear').method('delete').method('entries').method('forEach').method('get').method('has').method('set').method('keys').method('set').method('values');
+
+},{"delegates":23}],9:[function(require,module,exports){
+(function (__dirname){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-var KineticObjectStream = require('./lib/stream');
-var KineticReactor = require('./lib/reactor');
-var KineticEssence = require('./lib/essence');
-
 var debug = require('debug');
 var path = require('path');
 
-var kos = new KineticObjectStream('core').summary('Provides KOS flow loading & logging facility').in('load').out('flow').bind(loadFlow).in('log').bind(setupLogger);
+var KineticObjectStream = require('./stream');
+
+module.exports = new KineticObjectStream('core').summary('Provides KOS flow loading & logging facility').in('load').out('flow').bind(loadFlow).in('flow').out('load').bind(includeFlow).in('log').bind(setupLogger);
 
 function loadFlow(name) {
   var flow = {};
@@ -49,8 +605,11 @@ function loadFlow(name) {
 
   if (flow.type !== 'KineticObjectStream') throw new Error("unable to load KOS for " + name + " from " + search);
 
-  this.stream.include(flow);
   this.send('flow', flow);
+}
+
+function includeFlow(flow) {
+  this.stream.include(flow);
 }
 
 function setupLogger(_ref) {
@@ -83,41 +642,30 @@ function setupLogger(_ref) {
           if (verbose > 1) error(value);else error(value.message);
           break;
         case 'warn':
-          warn.apply(undefined, _toConsumableArray(value));break;
+          warn(value.join(' '));break;
         case 'info':
-          info.apply(undefined, _toConsumableArray(value));break;
+          info(value.join(' '));break;
         case 'debug':
-          log.apply(undefined, _toConsumableArray(value));break;
+          log(value.join(' '));break;
         default:
           // if (key === 'kos')
           //   trace(render(value)+"\n")
-          if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') trace('%s\n%O\n', key, value);else trace('%s %o', key, value);
+          switch (typeof value === 'undefined' ? 'undefined' : _typeof(value)) {
+            case 'function':
+            case 'object':
+              trace('%s\n%O\n', key, value);
+              break;
+            default:
+              trace('%s %o', key, value);
+          }
       }
     });
     this.set('initialized', true);
   }
 }
 
-// expose class definitions
-kos.Stream = KineticObjectStream;
-kos.Reactor = KineticReactor;
-kos.Essence = KineticEssence;
-
-global.kos = module.exports = kos['default'] = kos.kos = kos;
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/")
-},{"./lib/essence":3,"./lib/reactor":5,"./lib/stream":6,"debug":13,"path":22}],2:[function(require,module,exports){
-'use strict';
-
-var delegate = require('delegates');
-
-var proto = module.exports = {};
-
-delegate(proto, 'reactor').getter('state').getter('inputs').getter('outputs').getter('stream').method('fetch').method('post').method('send').method('feed').method('debug').method('info').method('warn').method('error').method('throw');
-
-delegate(proto, 'state').method('clear').method('delete').method('entries').method('forEach').method('get').method('has').method('set').method('keys').method('set').method('values');
-
-},{"delegates":15}],3:[function(require,module,exports){
+}).call(this,"/lib")
+},{"./stream":13,"debug":21,"path":30}],10:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -148,7 +696,18 @@ var KineticObject = require('./object');
 var KineticEssence = function (_Transform) {
   _inherits(KineticEssence, _Transform);
 
-  _createClass(KineticEssence, null, [{
+  _createClass(KineticEssence, [{
+    key: Symbol.toStringTag,
+    get: function get() {
+      return 'KineticEssence';
+    }
+
+    // TODO: use Symbol to override instanceof behavior
+    // static [Symbol.hasInstance](lho) {
+    //   return true
+    // }
+
+  }], [{
     key: 'Object',
     get: function get() {
       return KineticObject;
@@ -161,12 +720,6 @@ var KineticEssence = function (_Transform) {
     get: function get() {
       return Symbol.for('kinetic.essence');
     }
-
-    // TODO: use Symbol to override instanceof behavior
-    // static [Symbol.hasInstance](lho) {
-    //   return true
-    // }
-
   }]);
 
   function KineticEssence() {
@@ -405,43 +958,6 @@ var KineticEssence = function (_Transform) {
       return this;
     }
 
-    // Convenience function for injecting KineticObject into Writable stream
-
-  }, {
-    key: 'send',
-    value: function send(key) {
-      for (var _len4 = arguments.length, values = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
-        values[_key4 - 1] = arguments[_key4];
-      }
-
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = values[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var value = _step3.value;
-
-          this.push(new KineticObject(key, value));
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
-      }
-
-      return this;
-    }
-
     //
     // Inspection and Logging
     //
@@ -449,8 +965,8 @@ var KineticEssence = function (_Transform) {
   }, {
     key: 'log',
     value: function log(type) {
-      for (var _len5 = arguments.length, args = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
-        args[_key5 - 1] = arguments[_key5];
+      for (var _len4 = arguments.length, args = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+        args[_key4 - 1] = arguments[_key4];
       }
 
       this.push(new KineticObject(type, [this.identity].concat(args), this.id));
@@ -476,8 +992,8 @@ var KineticEssence = function (_Transform) {
   }, {
     key: 'error',
     value: function error(err) {
-      for (var _len6 = arguments.length, rest = Array(_len6 > 1 ? _len6 - 1 : 0), _key6 = 1; _key6 < _len6; _key6++) {
-        rest[_key6 - 1] = arguments[_key6];
+      for (var _len5 = arguments.length, rest = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
+        rest[_key5 - 1] = arguments[_key5];
       }
 
       if (!(err instanceof Error)) err = new Error([err].concat(rest).join(' '));
@@ -527,7 +1043,7 @@ var KineticEssence = function (_Transform) {
 
 module.exports = KineticEssence;
 
-},{"./object":4,"debug":13,"stream":36,"uuid":39}],4:[function(require,module,exports){
+},{"./object":11,"debug":21,"stream":44,"uuid":47}],11:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -666,7 +1182,7 @@ var KineticObject = function () {
 
 module.exports = KineticObject;
 
-},{"circular-json":11}],5:[function(require,module,exports){
+},{"circular-json":19}],12:[function(require,module,exports){
 'use strict';
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -691,7 +1207,12 @@ var KineticContext = require('./context');
 var KineticReactor = function (_KineticEssence) {
   _inherits(KineticReactor, _KineticEssence);
 
-  _createClass(KineticReactor, null, [{
+  _createClass(KineticReactor, [{
+    key: Symbol.toStringTag,
+    get: function get() {
+      return 'KineticReactor';
+    }
+  }], [{
     key: 'none',
     value: function none() {}
   }]);
@@ -930,14 +1451,14 @@ var KineticReactor = function (_KineticEssence) {
 
 module.exports = KineticReactor;
 
-},{"./context":2,"./essence":3,"debug":13}],6:[function(require,module,exports){
+},{"./context":8,"./essence":10,"debug":21}],13:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
@@ -961,9 +1482,14 @@ var KINETIC_CORE_MAX = 30;
 var KineticObjectStream = function (_KineticEssence) {
   _inherits(KineticObjectStream, _KineticEssence);
 
-  function KineticObjectStream(options) {
-    var _ret;
+  _createClass(KineticObjectStream, [{
+    key: Symbol.toStringTag,
+    get: function get() {
+      return 'KineticObjectStream' + ':' + this.label;
+    }
+  }]);
 
+  function KineticObjectStream(options) {
     _classCallCheck(this, KineticObjectStream);
 
     if (options instanceof KineticObjectStream) {
@@ -1034,11 +1560,12 @@ var KineticObjectStream = function (_KineticEssence) {
     _this.state.set('ready', false);
     debug(_this.identity, 'new', _this.id);
 
-    var self = _this;
-    function kinetic() {
-      return new KineticObjectStream(self);
-    }
-    return _ret = Object.setPrototypeOf(kinetic, _this), _possibleConstructorReturn(_this, _ret);
+    // const self = this
+    // function kinetic() {
+    //   return new KineticObjectStream(self)
+    // }
+    // return Object.setPrototypeOf(kinetic, this)
+    return _this;
   }
 
   _createClass(KineticObjectStream, [{
@@ -1228,13 +1755,14 @@ var KineticObjectStream = function (_KineticEssence) {
           var flow = _step2.value;
 
           if (flow instanceof KineticObjectStream) {
-            flow = new KineticObjectStream(flow).join(this);
             var exists = this._imports.get(flow.label);
             if (exists) {
-              continue; // TODO: handle inline upgrade
+              continue;
+              // TODO: handle inline upgrade
               //this.exclude(exists)
               //exists.core.pipe(flow.core)
             }
+            flow = new KineticObjectStream(flow).join(this);
             this._imports.set(flow.label, flow);
             this.core.pipe(flow).pipe(this.core);
           } else {
@@ -1378,6 +1906,9 @@ var KineticObjectStream = function (_KineticEssence) {
       tail && tail.pipe(this);
       return this;
     }
+
+    // TODO: this is ugly
+
   }, {
     key: 'updateState',
     value: function updateState() {
@@ -1399,14 +1930,12 @@ var KineticObjectStream = function (_KineticEssence) {
       var _iteratorError5 = undefined;
 
       try {
-        for (var _iterator5 = this._imports[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-          var _step5$value = _slicedToArray(_step5.value, 2),
-              k = _step5$value[0],
-              flow = _step5$value[1];
+        for (var _iterator5 = this._imports.values()[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+          var flow = _step5.value;
 
           if (!flow) continue;
-          consumes.push.apply(consumes, _toConsumableArray(flow.requires));
           absorbs.push.apply(absorbs, _toConsumableArray(flow.consumes));
+          consumes.push.apply(consumes, _toConsumableArray(flow.requiresAll));
         }
       } catch (err) {
         _didIteratorError5 = true;
@@ -1585,6 +2114,45 @@ var KineticObjectStream = function (_KineticEssence) {
       }))));
       return Array.from(keys);
     }
+
+    // TODO: this is ugly
+
+  }, {
+    key: 'requiresAll',
+    get: function get() {
+      var _ref8;
+
+      var requires = (_ref8 = []).concat.apply(_ref8, [this.requires].concat(_toConsumableArray(this.subflows.map(function (x) {
+        return x.requiresAll;
+      }))));
+      var _iteratorNormalCompletion6 = true;
+      var _didIteratorError6 = false;
+      var _iteratorError6 = undefined;
+
+      try {
+        for (var _iterator6 = this._imports.values()[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+          var flow = _step6.value;
+
+          if (!flow) continue;
+          requires.push.apply(requires, _toConsumableArray(flow.requiresAll));
+        }
+      } catch (err) {
+        _didIteratorError6 = true;
+        _iteratorError6 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion6 && _iterator6.return) {
+            _iterator6.return();
+          }
+        } finally {
+          if (_didIteratorError6) {
+            throw _iteratorError6;
+          }
+        }
+      }
+
+      return Array.from(new Set(requires));
+    }
   }]);
 
   return KineticObjectStream;
@@ -1592,7 +2160,21 @@ var KineticObjectStream = function (_KineticEssence) {
 
 module.exports = KineticObjectStream;
 
-},{"./essence":3,"./reactor":5,"debug":13}],7:[function(require,module,exports){
+},{"./essence":10,"./reactor":12,"debug":21}],14:[function(require,module,exports){
+(function (global){
+'use strict';
+
+var kos = require('./lib/core');
+
+// expose class definitions
+kos.Stream = require('./lib/stream');
+kos.Reactor = require('./lib/reactor');
+kos.Essence = require('./lib/essence');
+
+global.kos = module.exports = kos['default'] = kos.kos = kos;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./lib/core":9,"./lib/essence":10,"./lib/reactor":12,"./lib/stream":13}],15:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -1708,9 +2290,9 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],8:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 
-},{}],9:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1822,7 +2404,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":10}],10:[function(require,module,exports){
+},{"buffer":18}],18:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
@@ -3530,7 +4112,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":7,"ieee754":17}],11:[function(require,module,exports){
+},{"base64-js":15,"ieee754":25}],19:[function(require,module,exports){
 /*!
 Copyright (C) 2013 by WebReflection
 
@@ -3716,7 +4298,7 @@ function parseRecursion(text, reviver) {
 }
 this.stringify = stringifyRecursion;
 this.parse = parseRecursion;
-},{}],12:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -3827,7 +4409,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":19}],13:[function(require,module,exports){
+},{"../../is-buffer/index.js":27}],21:[function(require,module,exports){
 (function (process){
 /**
  * This is the web browser implementation of `debug()`.
@@ -4016,7 +4598,7 @@ function localstorage() {
 }
 
 }).call(this,require('_process'))
-},{"./debug":14,"_process":24}],14:[function(require,module,exports){
+},{"./debug":22,"_process":32}],22:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -4220,7 +4802,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":21}],15:[function(require,module,exports){
+},{"ms":29}],23:[function(require,module,exports){
 
 /**
  * Expose `Delegator`.
@@ -4343,7 +4925,7 @@ Delegator.prototype.fluent = function (name) {
   return this;
 };
 
-},{}],16:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4647,7 +5229,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],17:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -4733,7 +5315,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],18:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -4758,7 +5340,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],19:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -4781,14 +5363,14 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],20:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],21:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -4939,7 +5521,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's'
 }
 
-},{}],22:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -5167,7 +5749,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":24}],23:[function(require,module,exports){
+},{"_process":32}],31:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -5214,7 +5796,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":24}],24:[function(require,module,exports){
+},{"_process":32}],32:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -5396,10 +5978,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],25:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":26}],26:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":34}],34:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -5475,7 +6057,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":28,"./_stream_writable":30,"core-util-is":12,"inherits":18,"process-nextick-args":23}],27:[function(require,module,exports){
+},{"./_stream_readable":36,"./_stream_writable":38,"core-util-is":20,"inherits":26,"process-nextick-args":31}],35:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -5502,7 +6084,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":29,"core-util-is":12,"inherits":18}],28:[function(require,module,exports){
+},{"./_stream_transform":37,"core-util-is":20,"inherits":26}],36:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6446,7 +7028,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":26,"./internal/streams/BufferList":31,"_process":24,"buffer":10,"buffer-shims":9,"core-util-is":12,"events":16,"inherits":18,"isarray":20,"process-nextick-args":23,"string_decoder/":37,"util":8}],29:[function(require,module,exports){
+},{"./_stream_duplex":34,"./internal/streams/BufferList":39,"_process":32,"buffer":18,"buffer-shims":17,"core-util-is":20,"events":24,"inherits":26,"isarray":28,"process-nextick-args":31,"string_decoder/":45,"util":16}],37:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -6629,7 +7211,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":26,"core-util-is":12,"inherits":18}],30:[function(require,module,exports){
+},{"./_stream_duplex":34,"core-util-is":20,"inherits":26}],38:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -7183,7 +7765,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":26,"_process":24,"buffer":10,"buffer-shims":9,"core-util-is":12,"events":16,"inherits":18,"process-nextick-args":23,"util-deprecate":38}],31:[function(require,module,exports){
+},{"./_stream_duplex":34,"_process":32,"buffer":18,"buffer-shims":17,"core-util-is":20,"events":24,"inherits":26,"process-nextick-args":31,"util-deprecate":46}],39:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -7248,10 +7830,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":10,"buffer-shims":9}],32:[function(require,module,exports){
+},{"buffer":18,"buffer-shims":17}],40:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":27}],33:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":35}],41:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -7271,13 +7853,13 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":26,"./lib/_stream_passthrough.js":27,"./lib/_stream_readable.js":28,"./lib/_stream_transform.js":29,"./lib/_stream_writable.js":30,"_process":24}],34:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":34,"./lib/_stream_passthrough.js":35,"./lib/_stream_readable.js":36,"./lib/_stream_transform.js":37,"./lib/_stream_writable.js":38,"_process":32}],42:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":29}],35:[function(require,module,exports){
+},{"./lib/_stream_transform.js":37}],43:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":30}],36:[function(require,module,exports){
+},{"./lib/_stream_writable.js":38}],44:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7406,7 +7988,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":16,"inherits":18,"readable-stream/duplex.js":25,"readable-stream/passthrough.js":32,"readable-stream/readable.js":33,"readable-stream/transform.js":34,"readable-stream/writable.js":35}],37:[function(require,module,exports){
+},{"events":24,"inherits":26,"readable-stream/duplex.js":33,"readable-stream/passthrough.js":40,"readable-stream/readable.js":41,"readable-stream/transform.js":42,"readable-stream/writable.js":43}],45:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7629,7 +8211,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":10}],38:[function(require,module,exports){
+},{"buffer":18}],46:[function(require,module,exports){
 (function (global){
 
 /**
@@ -7700,7 +8282,7 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],39:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
 var v1 = require('./v1');
 var v4 = require('./v4');
 
@@ -7710,7 +8292,7 @@ uuid.v4 = v4;
 
 module.exports = uuid;
 
-},{"./v1":42,"./v4":43}],40:[function(require,module,exports){
+},{"./v1":50,"./v4":51}],48:[function(require,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -7735,7 +8317,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],41:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 (function (global){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
@@ -7772,7 +8354,7 @@ if (!rng) {
 module.exports = rng;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],42:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
@@ -7877,7 +8459,7 @@ function v1(options, buf, offset) {
 
 module.exports = v1;
 
-},{"./lib/bytesToUuid":40,"./lib/rng":41}],43:[function(require,module,exports){
+},{"./lib/bytesToUuid":48,"./lib/rng":49}],51:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -7908,4 +8490,22 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":40,"./lib/rng":41}]},{},[1]);
+},{"./lib/bytesToUuid":48,"./lib/rng":49}],52:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var kos = require('./node');
+var link = require('./flows/link');
+var sync = require('./flows/sync');
+var http = require('./flows/http');
+var ws = require('./flows/ws');
+
+exports.default = kos;
+exports.link = link;
+exports.sync = sync;
+exports.http = http;
+exports.ws = ws;
+
+},{"./flows/http":3,"./flows/link":4,"./flows/sync":6,"./flows/ws":7,"./node":14}]},{},[52]);

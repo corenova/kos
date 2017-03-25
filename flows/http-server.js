@@ -6,7 +6,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-http-server')
+module.exports = kos.create('http-server')
   .summary("Provides HTTP server transactions")
   .require('module/http')
   .require('module/url')

@@ -8,16 +8,22 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-net')
+module.exports = kos.create('net')
   .summary("Provides network client/server communication flows")
   .require('module/net','module/url')
   .default('protocols', ['tcp:', 'udp:'])
+
+  .in('module/net','module/url').bind(ready)
 
   .in('net/connect').out('net/socket','net/link').bind(connect)
   .in('net/listen').out('net/server','net/socket','net/link').bind(listen)
 
   .in('net/connect/url').out('net/connect').bind(connectByUrl)
   .in('net/listen/url').out('net/listen').bind(listenByUrl)
+
+function ready(net, url) {
+  // should add verification logic...
+}
 
 function connect(opts) {
   const [ net, protocols ] = this.fetch('module/net', 'protocols')

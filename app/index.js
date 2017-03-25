@@ -1,18 +1,17 @@
 //import 'jointjs'
-import kos from '..'
-import { sync } from '../flows'
+import kos, { sync, link, http, ws } from '..'
 
 import React from 'react'
 import { render } from 'react-dom'
 //import { Router, Route, IndexRoute, browserHistory } from 'react-router'
 
-// setup KOS data pipeline
-kos.pipe(sync).pipe(kos)
-
 // initialize KOS triggers
 kos
   .feed('log', { verbose: 3 })
-  .feed('sync/connect', 'localhost')
+  .feed('flow', sync, link, http, ws)
+  .feed('module/url', require('url'))
+  .feed('module/simple-websocket', require('simple-websocket'))
+  .feed('sync/connect', 'ws:localhost:8080')
 
 render((
   <div>test</div>

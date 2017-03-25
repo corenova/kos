@@ -6,6 +6,7 @@
     "kos": "./bin/kos.js"
   },
   "main": "index.js",
+  "browser": "browser.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/corenova/kos.git"
@@ -29,8 +30,8 @@
   },
   "homepage": "https://github.com/corenova/kos#readme",
   "scripts": {
-    "build:min": "browserify index.js -o dist/kos.min.js -t [ babelify --presets [ es2015 ] ] -p [ minifyify --no-map ]",
-    "build:full": "browserify index.js -o dist/kos.js -t [ babelify --presets [ es2015 ] ]",
+    "build:min": "browserify . -o dist/kos.min.js -t [ babelify --presets [ es2015 ] ] -p [ minifyify --no-map ]",
+    "build:full": "browserify . -o dist/kos.js -t [ babelify --presets [ es2015 ] ]",
     "build:app": "browserify app/index.js -o dist/app.js -t [ babelify --presets [ es2015 react ] ]",
     "build": "npm run build:full && npm run build:min",
     "test": "mocha"
@@ -48,8 +49,8 @@
     "jointjs": "^1.0.3",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
-    "superagent": "^3.4.1",
-    "ws": "^2.2.1"
+    "simple-websocket": "^5.0.0",
+    "superagent": "^3.4.1"
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.24.0",

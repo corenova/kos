@@ -2,7 +2,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-function')
+module.exports = kos.create('function')
   .summary("Provides dynamic function exeuction transforms via messages")
   .require('function')
   .in('caller').bind(exec) // optional, but should be sent BEFORE arguments

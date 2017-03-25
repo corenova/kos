@@ -13,7 +13,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-mqtt')
+module.exports = kos.create('mqtt')
   .summary("Provides MQTT transaction transforms utilizing 'mqtt' module")
   .require('module/mqtt', 'module/url')
   .default('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])

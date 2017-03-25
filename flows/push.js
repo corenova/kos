@@ -2,7 +2,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('kos-push')
+module.exports = kos.create('push')
   .summary('Provide dataflow stream push to a remote flow')
   .import(require('./link'))
 

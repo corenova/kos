@@ -1,20 +1,20 @@
 // Link transaction flow
 //
-// NOTE: this flow REQUIREs the 'url' modules and will become active
+// NOTE: this flow REQUIREs the 'url' module and will become active
 // if already present locally, receives it from the upstream, or fed
 // by the user directly.
 
 'use strict'
 
-const { kos = require('../..') } = global
+const { kos = require('..') } = global
 
-module.exports = kos.create('kos-link')
+module.exports = kos.create('link')
   .summary("Provides dynamic client/server communication flows for various protocols")
   .require('module/url')
   .default('streams', new Map)
 
-  .import(require('../net')) // supports kos, tcp, unix protocols
-  .import(require('../ws'))  // supports ws, wss protocols
+  .import(require('./net'))  // supports kos, tcp, unix protocols
+  .import(require('./ws'))  // supports ws, wss protocols
 
   .in('link/connect').out('net/connect','ws/connect').bind(connect)
   .in('link/listen').out('net/listen','ws/listen').bind(listen)
@@ -60,18 +60,15 @@ function listen(opts) {
 
 function connectByUrl(dest) {
   const url = this.fetch('module/url')
-  if (!dest.includes('://'))
-    dest = 'tcp://' + dest
   let opts = url.parse(dest, true)
-  this.debug(opts)
+  if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
   this.send('link/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
   const url = this.fetch('module/url')
-  if (!dest.includes('://'))
-    dest = 'tcp://' + dest
   let opts = url.parse(dest, true)
+  if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
   this.send('link/listen', Object.assign(opts, opts.query))
 }
 
@@ -103,8 +100,9 @@ function createWebSocketStream(link) {
   socket.on('active', () => {
     // TODO: for now KSON text based exchange. should explore binary encoding
     let io = stream.io()
-    socket.on('message', io.write.bind(io))
-    io.on('data', socket.send.bind(socket))
+    socket.pipe(io, { end: false }).pipe(socket)
+    //socket.on('message', io.write.bind(io))
+    //io.on('data', socket.send.bind(socket))
     socket.on('close', io.unpipe.bind(io,socket))
   })
 

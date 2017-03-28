@@ -3,16 +3,9 @@ const { kos = require('..') } = global
 module.exports = kos.createStream('kos-react')
   .require('module/react')
   .in('module/react').out('react/element').bind(createElement)
-  .in('react/components').out('react/component')
-  .bind(function chunkify({ value }) {
-    let components = value || []
-    for (let c of components)
-      this.send('react/component', c)
-  })
-  .in('react/component').out('*').bind(createComponent)
+  .in('react/component').bind(registerComponent)
 
-function createElement(msg) {
-  let React = this.fetch('module/react')
+function createElement(React) {
   let { createElement, createClass } = React
   React.createElement = (type, config={}, children) => {
     let { wrap } = this.fetch(type) || {}
@@ -24,9 +17,8 @@ function createElement(msg) {
   }
 }
 
-function createComponent(msg) {
+function createComponent(component) {
   let React = this.fetch('module/react')
-  let component = msg.value
   if (component instanceof React.Component) {
 
   } else {

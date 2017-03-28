@@ -1,14 +1,33 @@
-//import 'jointjs'
-import kos, { sync, link, http, ws } from '..'
+import joint from 'jointjs'
+import kos, { sync, http, ws } from '..'
 
 import React from 'react'
 import { render } from 'react-dom'
 //import { Router, Route, IndexRoute, browserHistory } from 'react-router'
 
+const app = kos.create('inspector')
+  .in('joint/graph').bind(renderFlow)
+
+function renderFlow(json) {
+  let graph = new joint.dia.Graph
+  let paper = new joint.dia.Paper({
+    el: document.getElementById('main'),
+    gridSize: 10,
+    perpendicularLinks: true,
+    interactive: false,
+    model: graph
+  })
+  graph.fromJSON(json)
+  paper.fitToContent({
+    padding: 10
+  })
+  console.log("after component mount", json)
+}
+
 // initialize KOS triggers
 kos
   .feed('log', { verbose: 3 })
-  .feed('flow', sync, link, http, ws)
+  .feed('flow', sync, http, ws, app)
   .feed('module/url', require('url'))
   .feed('module/simple-websocket', require('simple-websocket'))
   .feed('sync/connect', 'ws:localhost:8080')

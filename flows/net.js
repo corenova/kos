@@ -15,8 +15,8 @@ module.exports = kos.create('net')
 
   .in('module/net','module/url').bind(ready)
 
-  .in('net/connect').out('net/socket','net/link').bind(connect)
-  .in('net/listen').out('net/server','net/socket','net/link').bind(listen)
+  .in('net/connect').out('net/socket','link','net/connect').bind(connect)
+  .in('net/listen').out('net/server','net/socket','link').bind(listen)
 
   .in('net/connect/url').out('net/connect').bind(connectByUrl)
   .in('net/listen/url').out('net/listen').bind(listenByUrl)
@@ -35,7 +35,7 @@ function connect(opts) {
   let addr = `${protocol}//${hostname}:${port}`
   let sock = new net.Socket
 
-  this.send('net/link', { addr: addr, socket: sock })
+  this.send('link', { addr: addr, socket: sock })
 
   sock.setNoDelay()
   sock.on('connect', () => {
@@ -48,12 +48,11 @@ function connect(opts) {
     if (sock.closing) return
     retry && setTimeout(() => {
       this.debug("attempt reconnect", addr)
-      // NOTE: we don't use this.send here because self-generated
-      // KOs that can trigger itself are filtered to prevent
-      // infinite loops
-      this.feed('net/connect', Object.assign({}, opts, {
+      // NOTE: we use send with id=null since KOs that can trigger
+      // itself are automatically filtered to prevent infinite loops
+      this.send('net/connect', Object.assign({}, opts, {
         retry: Math.round(Math.min(max, retry * 1.5))
-      }))
+      }), null)
     }, retry)
   })
   sock.on('error', this.error.bind(this))
@@ -70,7 +69,7 @@ function listen(opts) {
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
     this.info('accept', addr)
     this.send('net/socket', sock)
-    this.send('net/link', { addr: addr, socket: sock })
+    this.send('link', { addr: addr, socket: sock })
     sock.emit('active')
   })
   server.on('listening', () => {
@@ -84,17 +83,15 @@ function listen(opts) {
 
 function connectByUrl(dest) {
   let url = this.fetch('module/url')
-  if (!dest.includes('://'))
-    dest = 'tcp://' + dest
   let opts = url.parse(dest, true)
+  if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
   this.send('net/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
   let url = this.fetch('module/url')
-  if (!dest.includes('://'))
-    dest = 'tcp://' + dest
   let opts = url.parse(dest, true)
+  if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
   this.send('net/listen', Object.assign(opts, opts.query))
 }
 

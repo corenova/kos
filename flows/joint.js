@@ -4,11 +4,9 @@ const { kos = require('..') } = global
 
 module.exports = kos.create('joint')
   .require('module/jointjs')
-  .default('flows', new Map)
 
   .in('joint/create/flow').out('joint/flow').bind(locateFlowInstance)
   .in('joint/flow').out('joint/graph').bind(flowToJointDiagram)
-  .in('kos').bind(collectFlows)
 
 function locateFlowInstance(name) {
   let flows = this.fetch('flows')
@@ -34,44 +32,68 @@ function flowToJointDiagram(flow) {
     }
   })
 
-  let origin = p.clone().attr({ '.label': { text: flow.label } })
-  let input  = p.clone().attr({ '.label': { text: 'input' } })
-  let ready  = p.clone().attr({ '.label': { text: 'ready' } })
-  let output = p.clone().attr({ '.label': { text: 'output' } })
+  let PX = [ 50, 210, 400, 590, 760 ]
+  let TX = [ 150, 310, 510, 700 ]
 
-  let accept  = t.clone().attr({ '.label': { text: 'accept' } })
-  let consume = t.clone().attr({ '.label': { text: 'consume' } })
-  let produce = t.clone().attr({ '.label': { text: 'produce' } })
+  let origin = p.clone().attr({ '.label': { text: flow.label } }).position(PX[0], 100)
+  let ready  = p.clone().attr({ '.label': { text: 'ready' } }).position(PX[1], 50)
+  let input  = p.clone().attr({ '.label': { text: 'input' } }).position(PX[1], 150)
+  let output = p.clone().attr({ '.label': { text: 'output' } }).position(PX[4], 100)
 
-  graph.addCell([ origin, input, ready, output, accept, consume, produce ])
+  let accept  = t.clone().attr({ '.label': { text: 'accept' } }).position(TX[0], 100)
+  let consume = t.clone().attr({ '.label': { text: 'consume' } }).position(TX[1], 100)
+
+  graph.addCell([ origin, input, ready, output, accept, consume ])
   graph.addCell([
     link(origin, accept),
     link(accept, input),
     link(accept, ready),
     link(input, consume),
-    link(ready, consume),
-    link(consume, origin),
-    link(output, produce),
-    link(produce, input)
+    link(ready, consume)
   ])
 
-  for (const reactor of flow.reactors) {
-    let inputs = reactor.inputs.map((x, idx) => {
-      return p.clone().attr({ '.label': { text: x } })
-    })
-    let outputs = reactor.outputs.map((x, idx) => {
-      return p.clone().attr({ '.label': { text: x } })
-    })
-    let handler = t.clone().attr({ '.label': { text: reactor.label }})
+  let yoffset = 50
+  for (let { label, inputs, outputs } of flow.reactors) {
+    let coffset = yoffset, poffset = yoffset, hoffset = yoffset
+    if (inputs.length > outputs.length) {
+      poffset = yoffset + ((inputs.length - outputs.length) * 100 / 2)
+      yoffset += inputs.length * 100
+    }
+    else {
+      coffset = yoffset + ((outputs.length - inputs.length) * 100 / 2)
+      yoffset += outputs.length * 100
+    }
 
-    graph.addCells(...inputs, ...outputs, handler)
+    let handler = t.clone().attr({ '.label': { text: label }}).position(TX[2], hoffset)
 
-    inputs.forEach(x => graph.addCells(link(consume, x), link(x, handler)))
-    outputs.forEach(x => {
-      let send = t.clone().attr({ '.label': { text: 'send' } })
-      graph.addCells(link(x, send), link(send, output), link(handler, x))
+    let consumes = inputs.map((x, idx) => {
+      return p.clone().attr({ '.label': { text: x } }).position(PX[2], coffset + (100 * idx))
+    })
+    let produces = outputs.map((x, idx) => {
+      return p.clone().attr({ '.label': { text: x } }).position(PX[3], poffset + (100 * idx))
+    })
+
+    graph.addCells(...consumes, ...produces, handler)
+
+    consumes.forEach(x => graph.addCells(link(consume, x), link(x, handler)))
+    produces.forEach((x, idx) => {
+      let send = t.clone().attr({ '.label': { text: 'send' } }).position(TX[3], poffset + (100 * idx))
+      graph.addCells(send, link(x, send), link(send, output), link(handler, x))
     })
   }
+
+  // handle produce transition last
+  let produce = t.clone().attr({ '.label': { text: 'produce' } }).position(TX[1], yoffset-25)
+  graph.addCell([
+    produce,
+    link(produce, input).set('router', { name: 'orthogonal' }),
+    link(produce, origin).set('router', { name: 'orthogonal' }),
+    link(output, produce)
+      .set('router', { name: 'orthogonal' })
+      .set('vertices', [{ x: PX[4]+25, y: yoffset }])
+    // link(produce, input).set('vertices',  [{ x: PX[1]+25, y: yoffset }]),
+    // link(produce, origin).set('vertices', [{ x: PX[0]+25, y: yoffset }]),
+  ])
 
   this.send('joint/graph', graph)
 
@@ -85,12 +107,12 @@ function flowToJointDiagram(flow) {
           'stroke-linejoin': 'round',
           'stroke-width': '2',
           'stroke': '#4b4a67'
-        }
+        },
+        '.connection-wrap': { display: 'none' },
+        '.marker-vertices': { display: 'none' },
+        '.marker-arrowheads': { display: 'none' },
+        '.link-tools': { display: 'none' }
       }
     })
   }
-}
-
-function collectFlows(flow) {
-  this.fetch('flows').set(flow.label, flow)
 }

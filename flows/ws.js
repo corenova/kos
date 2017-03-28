@@ -10,11 +10,11 @@ const { kos = require('..') } = global
 
 const clientFlow = kos.create('client')
   .require('module/simple-websocket')
-  .in('ws/connect').out('ws/socket','ws/link').bind(connect)
+  .in('ws/connect').out('ws/socket','link','ws/connect').bind(connect)
 
 const serverFlow = kos.create('server')
   .require('module/simple-websocket/server')
-  .in('ws/listen').out('ws/server','ws/socket','ws/link').bind(listen)
+  .in('ws/listen').out('ws/server','ws/socket','link').bind(listen)
 
 module.exports = kos.create('ws')
   .summary("Provides WebSocket transactions utilizing 'ws' module")
@@ -35,7 +35,7 @@ function connect(opts) {
 
   let addr = `${protocol}//${hostname}:${port}/${path}`
   let wsock = new WebSocket(addr)
-  this.send('ws/link', { addr: addr, socket: wsock })
+  this.send('link', { addr: addr, socket: wsock })
 
   wsock.on('connect', () => {
     this.info("connected to", addr)
@@ -47,12 +47,11 @@ function connect(opts) {
     // find out if explicitly being closed?
     retry && setTimeout(() => {
       this.debug("attempt reconnect", addr)
-      // NOTE: we don't use this.send here because self-generated
-      // KOs that can trigger itself are filtered to prevent
-      // infinite loops
-      this.feed('ws/connect', Object.assign({}, opts, {
+      // NOTE: we use send with id=null since KOs that can trigger
+      // itself are automatically filtered to prevent infinite loops
+      this.send('ws/connect', Object.assign({}, opts, {
         retry: Math.round(Math.min(max, retry * 1.5))
-      }))
+      }), null)
     }, retry)
   })
   wsock.on('error', this.error.bind(this))
@@ -82,7 +81,7 @@ function listen(opts) {
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
     this.info('accept', addr)
     this.send('ws/socket', wsock)
-    this.send('ws/link', { addr: addr, socket: wsock })
+    this.send('link', { addr: addr, socket: wsock })
     wsock.emit('active')
   })
   server.on('error', this.error.bind(this))
@@ -90,17 +89,15 @@ function listen(opts) {
 
 function connectByUrl(dest) {
   let url = this.fetch('module/url')
-  if (!dest.includes('://'))
-    dest = 'ws://' + dest
   let opts = url.parse(dest, true)
+  if (!opts.protocol) opts = url.parse('ws:'+dest, true)
   this.send('ws/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
   let url = this.fetch('module/url')
-  if (!dest.includes('://'))
-    dest = 'ws://' + dest
   let opts = url.parse(dest, true)
+  if (!opts.protocol) opts = url.parse('ws:'+dest, true)
   this.send('ws/listen', Object.assign(opts, opts.query))
 }
 

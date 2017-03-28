@@ -12,7 +12,7 @@ export default class TodoFlow extends Component {
     }
     this.state.flow
       .feed('module/react', React)
-      .feed('react/components', [ FilterLink, AddTodo, TodoList ])
+      .feed('react/component', FilterLink, AddTodo, TodoList)
       .on('app/todos/filtered', todos => this.setState({ todos: todos }))
   }
   render() {
@@ -20,8 +20,7 @@ export default class TodoFlow extends Component {
   }
 }
 
-export const Flow = kos.flow
-  .label('kos-react-todo')
+export const Flow = kos.create('todo')
   .use(ReactFlow)
    // react component specific event handler
   .in(FilterLink).out('app/filter').with({ filter: 'SHOW_ALL' }).bind(onFilterLink)

@@ -57,10 +57,12 @@ function flowToJointDiagram(flow) {
     let coffset = yoffset, poffset = yoffset, hoffset = yoffset
     if (inputs.length > outputs.length) {
       poffset = yoffset + ((inputs.length - outputs.length) * 100 / 2)
+      hoffset = yoffset + (inputs.length - 1) * 100 / 2
       yoffset += inputs.length * 100
     }
     else {
       coffset = yoffset + ((outputs.length - inputs.length) * 100 / 2)
+      hoffset = yoffset + (outputs.length - 1) * 100 / 2
       yoffset += outputs.length * 100
     }
 

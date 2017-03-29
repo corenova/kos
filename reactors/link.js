@@ -7,20 +7,19 @@
 'use strict'
 
 const { kos = require('..') } = global
+const netReactor = require('./net')
+const wsReactor = require('./ws')
 
-module.exports = kos.create('link')
-  .summary("Provides dynamic client/server communication flows for various protocols")
-  .require('module/url')
-  .default('streams', new Map)
-
-  .import(require('./net')) // supports kos, tcp, unix protocols
-  .import(require('./ws'))  // supports ws, wss protocols
+module.exports = kos
+  .reactor('link', 'Provides dynamic client/server communication flows for various protocols')
+  .chain(netReactor, wsReactor)
+  .setState('streams', new Map)
 
   .in('link/connect').out('net/connect','ws/connect').bind(connect)
   .in('link/listen').out('net/listen','ws/listen').bind(listen)
 
-  .in('link/connect/url').out('link/connect').bind(connectByUrl)
-  .in('link/listen/url').out('link/listen').bind(listenByUrl)
+  .in('link/connect/url').out('link/connect').use('module/url').bind(connectByUrl)
+  .in('link/listen/url').out('link/listen').use('module/url').bind(listenByUrl)
 
   .in('link').out('link/stream').bind(createLinkStream)
 
@@ -58,14 +57,14 @@ function listen(opts) {
 }
 
 function connectByUrl(dest) {
-  const url = this.fetch('module/url')
+  const url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
   this.send('link/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
-  const url = this.fetch('module/url')
+  const url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
   this.send('link/listen', Object.assign(opts, opts.query))
@@ -74,7 +73,7 @@ function listenByUrl(dest) {
 function createLinkStream(link) {
   let { addr, socket } = link
   let streams = this.fetch('streams')
-  let stream = streams.has(addr) ? streams.get(addr) : new kos.Essence
+  let stream = streams.has(addr) ? streams.get(addr) : new kos.Stream
 
   socket.on('active', () => {
     let io = stream.io()

@@ -2,14 +2,20 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('joint')
-  .require('module/jointjs')
+module.exports = kos
+  .reactor('joint', 'Provides jointjs graph rendering... for now')
+  .setState('reactors', new Map)
 
+  .in('reactor').bind(collectReactors)
   .in('joint/create/flow').out('joint/flow').bind(locateFlowInstance)
-  .in('joint/flow').out('joint/graph').bind(flowToJointDiagram)
+  .in('joint/flow').out('joint/graph').use('module/jointjs').bind(flowToJointDiagram)
+
+function collectReactors(reactor) {
+  this.fetch('reactors').set(reactor.label, reactor)
+}
 
 function locateFlowInstance(name) {
-  let flows = this.fetch('flows')
+  let flows = this.fetch('reactors')
   if (flows.has(name)) this.send('joint/flow', flows.get(name))
   else this.warn('no such flow:', name)
 }

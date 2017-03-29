@@ -2,11 +2,10 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('function')
-  .summary("Provides dynamic function exeuction transforms via messages")
-  .require('function')
+module.exports = kos
+  .reactor('function', "Provides dynamic function exeuction transforms via messages")
   .in('caller').bind(exec) // optional, but should be sent BEFORE arguments
-  .in('arguments').out('return').bind(exec)
+  .in('arguments').out('return').use('function').bind(exec)
   
 function exec(args) {
   if (this.trigger === 'caller') return this.set('caller', args)

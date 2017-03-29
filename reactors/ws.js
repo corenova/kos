@@ -8,22 +8,21 @@
 
 const { kos = require('..') } = global
 
-const clientFlow = kos.create('client')
-  .require('module/simple-websocket')
-  .in('ws/connect').out('ws/socket','link','ws/connect').bind(connect)
+module.exports = kos
+  .reactor('ws', "Provides WebSocket transactions utilizing 'ws' module")
+  .setState('protocols', ['ws:', 'wss:'])
 
-const serverFlow = kos.create('server')
-  .require('module/simple-websocket/server')
-  .in('ws/listen').out('ws/server','ws/socket','link').bind(listen)
+  .in('ws/connect').out('ws/socket','link','ws/connect')
+  .use('module/simple-websocket').bind(connect)
 
-module.exports = kos.create('ws')
-  .summary("Provides WebSocket transactions utilizing 'ws' module")
-  .require('module/url')
-  .default('protocols', ['ws:', 'wss:'])
-  .include(clientFlow, serverFlow)
+  .in('ws/listen').out('ws/server','ws/socket','link')
+  .use('module/simple-websocket/server').bind(listen)
 
-  .in('ws/connect/url').out('ws/connect').bind(connectByUrl)
-  .in('ws/listen/url').out('ws/listen').bind(listenByUrl)
+  .in('ws/connect/url').out('ws/connect')
+  .use('module/url').bind(connectByUrl)
+
+  .in('ws/listen/url').out('ws/listen')
+  .use('module/url').bind(listenByUrl)
 
 function connect(opts) {
   const WebSocket = this.fetch('module/simple-websocket')

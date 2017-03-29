@@ -13,12 +13,12 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('mqtt')
-  .summary("Provides MQTT transaction transforms utilizing 'mqtt' module")
+module.exports = kos
+  .reactor('mqtt', "Provides MQTT transaction transforms utilizing 'mqtt' module")
   .require('module/mqtt', 'module/url')
-  .default('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
+  .setState('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
 
-  .in('mqtt/connect').out('mqtt/client').bind(connect)
+  .in('mqtt/connect').out('mqtt/client').use('module/mqtt').bind(connect)
 
   .in('mqtt/connect/url').out('mqtt/connect')
   .bind(function simpleConnect(url) {

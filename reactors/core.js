@@ -1,46 +1,46 @@
 'use strict'
 
-const debug = require('debug')
-const path = require('path')
+const kos = require('..')
 
-const KineticObjectStream = require('./stream')
+module.exports = kos
+  .reactor('core', 'Provides KOS reactor loading & logging facility')
+  .setState('reactors', new Map)
 
-module.exports = new KineticObjectStream('core')
-  .summary('Provides KOS flow loading & logging facility')
-  .default('flows', new Map)
-  .in('load').out('flow').bind(loadFlow)
-  .in('flow').out('load').bind(includeFlow)
-  .in('log').bind(setupLogger)
+  .in('load').out('reactor').use('module/path').bind(loadReactor)
+  .in('reactor').out('load').bind(chainReactor)
 
-function loadFlow(name) {
-  let flow = {}
+  .in('log').use('module/debug').bind(setupLogger)
+
+function loadReactor(name) {
+  let path = this.fetch('module/path')
+  let reactor = {}
   let search = [ 
     path.resolve(name),
-    path.resolve(path.join('flows', name)),
-    path.resolve(__dirname, path.join('flows', name)),
+    path.resolve(path.join('reactors', name)),
+    path.resolve(__dirname, path.join('reactors', name)),
     name
   ]
   for (let name of search) {
-    try { flow = require(name); break }
+    try { reactor = require(name); break }
     catch (e) { 
       if (e.code !== 'MODULE_NOT_FOUND') throw e
     }
   }
-  if (flow.type !== 'KineticObjectStream')
+  if (reactor.type !== Symbol.for('kinetic.reactor'))
     throw new Error("unable to load KOS for " + name + " from " + search)
 
-  this.send('flow', flow)
+  this.send('reactor', reactor)
 }
 
-function includeFlow(flow) { 
-  let flows = this.fetch('flows')
-  this.stream.include(flow)
-  flows.set(flow.label, flow)
+function chainReactor(reactor) { 
+  let reactors = this.fetch('reactors')
+  this.parent.pipe(reactor).pipe(this.parent)
+  reactors.set(reactor.label, reactor)
 }
 
 function setupLogger({ verbose=0, silent=false }) {
   if (silent) return
-
+  let debug = this.fetch('module/debug')
   let namespaces = [ 'kos:error', 'kos:warn' ]
   if (verbose)     namespaces.push('kos:info')
   if (verbose > 1) namespaces.push('kos:debug')
@@ -54,7 +54,7 @@ function setupLogger({ verbose=0, silent=false }) {
   let trace = debug('kos:trace')
 
   if (!this.get('initialized')) {
-    this.stream.on('data', ({ key, value }) => {
+    this.parent.on('data', ({ key, value }) => {
       switch (key) {
       case 'error':
         if (verbose > 1) error(value)

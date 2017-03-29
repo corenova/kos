@@ -8,18 +8,23 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('net')
-  .summary("Provides network client/server communication flows")
-  .require('module/net','module/url')
-  .default('protocols', ['tcp:', 'udp:'])
+module.exports = kos
+  .reactor('net', "Provides network client/server communication flows")
+  .setState('protocols', ['tcp:', 'udp:'])
 
   .in('module/net','module/url').bind(ready)
 
-  .in('net/connect').out('net/socket','link','net/connect').bind(connect)
-  .in('net/listen').out('net/server','net/socket','link').bind(listen)
+  .in('net/connect').out('net/socket','link','net/connect')
+  .use('module/net').bind(connect)
 
-  .in('net/connect/url').out('net/connect').bind(connectByUrl)
-  .in('net/listen/url').out('net/listen').bind(listenByUrl)
+  .in('net/listen').out('net/server','net/socket','link')
+  .use('module/net').bind(listen)
+
+  .in('net/connect/url').out('net/connect')
+  .use('module/url').bind(connectByUrl)
+
+  .in('net/listen/url').out('net/listen')
+  .use('module/url').bind(listenByUrl)
 
 function ready(net, url) {
   // should add verification logic...

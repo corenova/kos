@@ -1,10 +1,11 @@
 'use strict'
 
 const { kos = require('..') } = global
+const linkReactor = require('./link')
 
-module.exports = kos.create('push')
-  .summary('Provide dataflow stream push to a remote flow')
-  .import(require('./link'))
+module.exports = kos
+  .reactor('push', 'Provide dataflow stream push to a remote flow')
+  .chain(linkReactor)
 
   .in('push/connect').out('link/connect/url').bind(
     function pushConnect(url) { this.send('link/connect/url', url) }
@@ -13,5 +14,5 @@ module.exports = kos.create('push')
     function pushListen(url) { this.send('link/listen/url', url) }
   )
   .in('link/stream').bind(
-    function pushKineticObjects(stream) { this.stream.pipe(stream) }
+    function pushKineticObjects(stream) { this.parent.pipe(stream) }
   )

@@ -7,7 +7,7 @@ const colors = require('colors')
 const program = require('commander')
 const readline = require('readline')
 
-const kos = require('..')
+const core = require('../reactors/core')
 const pkginfo = require('../package.json')
 const render = require('./lib/render') // TOOD - for now...
 
@@ -27,12 +27,12 @@ program
   .action(() => {})
 
 program
-  .command('show <flows...>')
+  .command('show <reactors...>')
   .alias('sh')
-  .description('Show detailed information about a flow')
-  .action((flows, opts) => {
-    kos.feed('load', ...flows)
-    console.log(render(kos))
+  .description('Show detailed information about a reactor')
+  .action((reactors, opts) => {
+    core.on('reactor', render)
+    core.feed('load', ...reactors)
   })
 
 // convenience execution of an interactive "run" flow with command-line options
@@ -53,10 +53,10 @@ program
   .option('-s, --silent', 'suppress all debug/info/warn/error log messages')
   .action((flows, opts) => {
     let { input, trigger, silent, verbose } = opts
-    kos.feed('log', { silent, verbose })
-    kos.feed('load', ...flows)
+    core.feed('log', { silent, verbose })
+    core.feed('load', ...flows)
 
-    let io = kos.io(opts)
+    let io = core.io()
 
     // provide interactive command prompt if tied to TTY
     process.stdin.isTTY && commander(io)
@@ -87,12 +87,14 @@ function collect(val, keys) {
 
 // should be a flow?
 function commander(io) {
+  const reactors = core.fetch('reactors')
   const cmd = readline.createInterface({ 
     input:  process.stdin, 
     output: process.stderr,
     prompt: colors.grey('kos> '),
     completer: (line) => {
-      let completions = kos.consumes.sort().concat('help','quit')
+      let inputs = new Set([].concat(...Array.from(reactors.values()).map(x => x.inputs)))
+      let completions = Array.from(inputs).sort().concat('help','quit')
       const hits = completions.filter(c => c.indexOf(line) === 0)
       if (/\s+$/.test(line)) completions = []
       return [hits.length ? hits : completions, line]
@@ -103,7 +105,7 @@ function commander(io) {
     switch (input) {
     case '': break;
     case 'help':
-      console.error("sorry, unable offer any help at the moment")
+      console.error("sorry, you're on your own for now...")
       break;
     case 'quit':
       process.exit(0)

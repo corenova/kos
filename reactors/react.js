@@ -1,9 +1,9 @@
 const { kos = require('..') } = global
 
-module.exports = kos.createStream('kos-react')
-  .require('module/react')
+module.exports = kos
+  .reactor('react')
   .in('module/react').out('react/element').bind(createElement)
-  .in('react/component').bind(registerComponent)
+  .in('react/component').use('module/react').bind(registerComponent)
 
 function createElement(React) {
   let { createElement, createClass } = React

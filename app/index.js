@@ -1,14 +1,9 @@
-import joint from 'jointjs'
 import kos, { sync, http, ws } from '..'
 
-import React from 'react'
-import { render } from 'react-dom'
-//import { Router, Route, IndexRoute, browserHistory } from 'react-router'
-
 const app = kos.create('inspector')
-  .in('joint/graph').bind(renderFlow)
+  .in('joint/graph','joint/paper').bind(renderFlow)
 
-function renderFlow(json) {
+function renderFlow(graph, paper) {
   let graph = new joint.dia.Graph
   let paper = new joint.dia.Paper({
     el: document.getElementById('main'),
@@ -17,20 +12,26 @@ function renderFlow(json) {
     interactive: false,
     model: graph
   })
+  paper.on('cell:pointerclick', cellView => { cellView.highlight() })
   graph.fromJSON(json)
-  paper.fitToContent({
-    padding: 10
-  })
+  paper.fitToContent({ padding: 10 })
   console.log("after component mount", json)
 }
 
-// initialize KOS triggers
+// initialize KOS
 kos
   .feed('log', { verbose: 3 })
   .feed('flow', sync, http, ws, app)
   .feed('module/url', require('url'))
   .feed('module/simple-websocket', require('simple-websocket'))
+  .feed('module/jointjs', require('jointjs'))
   .feed('sync/connect', 'ws:localhost:8080')
+
+// Use React to provide layout
+
+import React from 'react'
+import { render } from 'react-dom'
+//import { Router, Route, IndexRoute, browserHistory } from 'react-router'
 
 render((
   <div>test</div>

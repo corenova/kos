@@ -1,15 +1,16 @@
 'use strict'
 
 const { kos = require('..') } = global
+const requireReactor = require('./require')
+const httpReactor = require('./http')
+const wsReactor = require('./ws')
+const linkReactor = require('./link')
 
-module.exports = kos.create('run')
-  .summary('Provides runtime flow state management')
-  .import(require('./require'))
-  .import(require('./http'))
-  .import(require('./ws'))
-  .import(require('./link'))
+module.exports = kos
+  .reactor('run', 'Provides runtime flow state management')
+  .chain(requireReactor, httpReactor, wsReactor, linkReactor)
 
-  .default('base', '/')
+  .setState('base', '/')
 
   .in('run').out('http/listen','http/route').bind(runInstance)
   .in('http/server').out('ws/listen').bind(runWebSocketServer)

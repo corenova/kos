@@ -1,11 +1,13 @@
 // Module loader stream
 
 const { kos = require('..') } = global
+const npmReactor = require('./npm')
 
-module.exports = kos.create('require')
-  .summary("Provides external module loading via 'require'")
-  .default('pending', new Set)
-  .import('kos-npm')
+module.exports = kos
+  .reactor('require', "Provides external module loading via 'require'")
+  .chain(npmReactor)
+
+  .setState('pending', new Set)
 
   // transforms
   .in('require').out('module/*', 'require/error').bind(tryRequire)

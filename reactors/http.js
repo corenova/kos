@@ -1,18 +1,21 @@
-// HTTP client transaction flow
+// HTTP transaction flow
 //
-// NOTE: this flow REQUIREs the 'http' and 'url' modules and will
+// NOTE: this flow REQUIREs the 'superagent' or 'http' module and will
 // become active if already present locally, receives it from the
 // upstream, or fed by the user directly.
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('http-server')
-  .summary("Provides HTTP server transactions")
-  .require('module/http')
-  .require('module/url')
+// Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
+module.exports = kos
+  .reactor('http', 'Provides HTTP client and server reactions')
+
+  .in('http/request').out('http/response').use('module/superagent').bind(clientRequest)
+  .in('http/request/get').out('http/request').bind(simpleGet)
 
   .in('http/listen')
-  .out('http/server','http/socket','http/link','http/server/request')
+  .out('http/server','http/socket','link','http/server/request')
+  .use('module/http')
   .bind(createServer)
 
   .in('http/server/request')
@@ -21,6 +24,34 @@ module.exports = kos.create('http-server')
 
   .in('http/server','http/route').out('http/server/request').bind(handleRoute)
 
+  // TODO: future
+  //.in('http/server/request','http/proxy').out('http/request').bind(proxy)
+
+function simpleGet(url) {
+  this.send('http/request', { url: url, method: 'GET' })
+}
+
+function clientRequest(req) {
+  let agent = this.fetch('module/superagent')
+  let { url, method, data } = req
+  switch (method.toLowerCase()) {
+  case 'get':
+  case 'delete':
+    agent[method](url).end((err, res) => { 
+      if (err) this.throw(err)
+      else this.send('http/response', res) 
+    })
+    break;
+  case 'post':
+  case 'put':
+  case 'patch':
+    agent[method](url).send(data).end((err, res) => { 
+      if (err) this.throw(err)
+      else this.send('http/response', res) 
+    })
+    break;
+  }
+}
 
 function createServer(opts) {
   let http = this.fetch('module/http')
@@ -69,3 +100,7 @@ function handleRoute(server, route) {
 
 }
 
+function proxy(req, proxy) {
+  req.host = proxy.host
+  this.send('http/request', req)
+}

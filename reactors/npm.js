@@ -6,19 +6,20 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('npm')
-  .summary("Provides NPM registry transactions utilizing 'npm' module")
-  .require('module/npm')
-  .default('loaded', false)
-  .default('pending', new Set)
+module.exports = kos
+  .reactor('npm', "Provides NPM registry transactions utilizing 'npm' module")
+  .setState({
+    loaded: false,
+    pending: new Set
+  })
 
   .in('module/npm').out('npm/load').bind(triggerLoad)
-  .in('npm/load').out('npm/loaded').bind(initialize)
+  .in('npm/load').out('npm/loaded').use('module/npm').bind(initialize)
 
   .in('npm/install').out('npm/defer','npm/installed').bind(install)
 
   .in('npm/defer').bind(queueCommands)
-  .in('npm/loaded').out('npm/install','npm/uninstall').bind(sendCommands)
+  .in('npm/loaded').out('npm/install','npm/uninstall').use('module/npm').bind(sendCommands)
 
 //--- Kinetic Actions Handlers
 

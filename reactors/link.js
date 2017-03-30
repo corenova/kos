@@ -12,7 +12,7 @@ const wsReactor = require('./ws')
 
 module.exports = kos
   .reactor('link', 'Provides dynamic client/server communication flows for various protocols')
-  .chain(netReactor, wsReactor)
+  .embed(netReactor, wsReactor)
   .setState('streams', new Map)
 
   .in('link/connect').out('net/connect','ws/connect').bind(connect)

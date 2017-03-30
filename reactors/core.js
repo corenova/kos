@@ -34,7 +34,7 @@ function loadReactor(name) {
 
 function chainReactor(reactor) { 
   let reactors = this.fetch('reactors')
-  this.parent.pipe(reactor).pipe(this.parent)
+  this.parent.chain(reactor)
   reactors.set(reactor.label, reactor)
 }
 

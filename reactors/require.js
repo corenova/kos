@@ -5,7 +5,7 @@ const npmReactor = require('./npm')
 
 module.exports = kos
   .reactor('require', "Provides external module loading via 'require'")
-  .chain(npmReactor)
+  .embed(npmReactor)
 
   .setState('pending', new Set)
 

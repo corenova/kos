@@ -5,7 +5,7 @@ const linkReactor = require('./link')
 
 module.exports = kos
   .reactor('push', 'Provide dataflow stream push to a remote flow')
-  .chain(linkReactor)
+  .embed(linkReactor)
 
   .in('push/connect').out('link/connect/url').bind(
     function pushConnect(url) { this.send('link/connect/url', url) }

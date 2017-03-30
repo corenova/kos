@@ -1,38 +1,36 @@
 'use strict'
 
 const { kos = require('..') } = global
-const requireReactor = require('./require')
+
 const httpReactor = require('./http')
 const wsReactor = require('./ws')
-const linkReactor = require('./link')
 
 module.exports = kos
-  .reactor('run', 'Provides runtime flow state management')
-  .chain(requireReactor, httpReactor, wsReactor, linkReactor)
+  .reactor('rest', 'Provides RElational State Transfer interactions with KOS reactors')
+  .embed(httpReactor, wsReactor)
+  .setState('basePath', '/')
 
-  .setState('base', '/')
-
-  .in('run').out('http/listen','http/route').bind(runInstance)
+  .in('rest/listen').out('http/listen','http/route').bind(runInstance)
   .in('http/server').out('ws/listen').bind(runWebSocketServer)
 
-  .in('http/server/request/get').out('http/server/response').bind(getFlowState)
-  .in('http/server/request/put').out('http/server/response').bind(putFlowState)
-  .in('http/server/request/delete').out('http/server/response').bind(deleteFlowState)
-  .in('http/server/request/post').out('http/server/response').bind(postFlowState)
+  .in('http/server/request/get').out('http/server/response').bind(getReactorState)
+  .in('http/server/request/put').out('http/server/response').bind(putReactortate)
+  .in('http/server/request/delete').out('http/server/response').bind(deleteReactortate)
+  .in('http/server/request/post').out('http/server/response').bind(postReactorState)
 
 function runInstance(opts) {
   this.send('http/listen', opts)
   // Note: for now tap into the stream and "publish" every kinetic
   // object into runtime state. Should make this hierarchical...
-  this.stream.on('data', ko => this.post(ko.key, ko.value))
+  this.parent.on('data', ko => this.post(ko.key, ko.value))
 }
 
 function runWebSocketServer(server) {
   this.send('ws/listen', { server })
 }
 
-function getFlowState({ req, res }) {
-  let key = url2key(req.url, this.fetch('base'))
+function getReactorState({ req, res }) {
+  let key = url2key(req.url, this.fetch('basePath'))
   let data = this.fetch(key)
   res.statusCode = data ? 200 : 404
   if (data) {
@@ -48,19 +46,19 @@ function getFlowState({ req, res }) {
   res.end()
 }
 
-function putFlowState({ req, res }) {
-  let key = url2key(req.url, this.fetch('base'))
+function putReactorState({ req, res }) {
+  let key = url2key(req.url, this.fetch('basePath'))
   this.warn('not yet supported')
 }
 
-function deleteFlowState({ req, res }) {
-  let key = url2key(req.url, this.fetch('base'))
+function deleteReactorState({ req, res }) {
+  let key = url2key(req.url, this.fetch('basePath'))
   this.warn('not yet supported')
 }
 
-function postFlowState({ req, res }) {
-  let key = url2key(req.url, this.fetch('base'))
-  let io = this.stream.io()
+function postReactorState({ req, res }) {
+  let key = url2key(req.url, this.fetch('basePath'))
+  let io = this.parent.io()
   io.write(key + ' ')
   req.pipe(io)
   res.statusCode = 203

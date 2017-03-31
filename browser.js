@@ -1,11 +1,12 @@
 'use strict'
 
-const kos  = require('./node')
-const core = require('./reactors/core')
-const link = require('./reactors/link')
-const sync = require('./reactors/sync')
-const http = require('./reactors/http')
-const ws   = require('./reactors/ws')
+const kos    = require('./node')
+const debug  = require('./reactors/debug')
+const sync   = require('./reactors/sync')
+const link   = require('./reactors/link')
+const http   = require('./reactors/http')
+const ws     = require('./reactors/ws')
+const render = require('./reactors/render')
 
 export default kos
-export { link, sync, http, ws }
+export { debug, sync, link, http, ws, render }

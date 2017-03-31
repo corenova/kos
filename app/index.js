@@ -1,41 +1,43 @@
-import kos, { sync, http, ws } from '..'
+import kos, { sync, link, ws, render, debug } from '..'
 
-const app = kos.create('inspector')
-  .in('joint/graph','joint/paper').bind(renderFlow)
+const app = kos
+  .reactor('demo', 'a demo app for visualizing KOS')
+  //.embed(render)
+  // fire once sync session established
 
-function renderFlow(graph, paper) {
-  let graph = new joint.dia.Graph
-  let paper = new joint.dia.Paper({
-    el: document.getElementById('main'),
-    gridSize: 10,
-    perpendicularLinks: true,
-    interactive: false,
-    model: graph
-  })
-  paper.on('cell:pointerclick', cellView => { cellView.highlight() })
-  graph.fromJSON(json)
-  paper.fitToContent({ padding: 10 })
-  console.log("after component mount", json)
+  //.in('sync/stream').out('render/reactor','joint/paper/config').bind(renderRemoteReactors)
+
+function renderRemoteReactors(stream) {
+  this.send('render/reactor', sync)
+  this.send('joint/paper/config', { target: 'main' })
 }
 
-// initialize KOS
-kos
-  .feed('log', { verbose: 3 })
-  .feed('flow', sync, http, ws, app)
+// setup the reactor chain
+app.chain(sync, render, debug)
+
+// feed the app with init tokens
+app
+  .feed('debug/config', { verbose: 3 })
+  .feed('browser/document', document) // we're running on a web browser
   .feed('module/url', require('url'))
   .feed('module/simple-websocket', require('simple-websocket'))
   .feed('module/jointjs', require('jointjs'))
-  .feed('sync/connect', 'ws:localhost:8080')
+  .feed('joint/paper/config', { target: 'main' })
+  .feed('render/reactor', sync, link, ws)
+  //.feed('sync/connect', 'ws:localhost:8080')
 
-// Use React to provide layout
+// NOTE: Once sync connects, everything you feed into the core will
+// go to every reactor
 
-import React from 'react'
-import { render } from 'react-dom'
-//import { Router, Route, IndexRoute, browserHistory } from 'react-router'
 
-render((
-  <div>test</div>
-), document.getElementById('main'))
+// TODO: use React to provide layout
+
+// import React from 'react'
+// import ReactDOM from 'react-dom'
+// // import { Router, Route, IndexRoute, browserHistory } from 'react-router'
+// ReactDOM.render((
+//   <div>test</div>
+// ), document.getElementById('main'))
 
 //import 'bootstrap-loader'
 //import 'styles/corenova.scss'

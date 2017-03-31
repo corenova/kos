@@ -1,15 +1,19 @@
 // TaxCloud Tax Rate Stream
 
 const { kos = require('kos') } = global
+const httpReactor = require('kos/reactors/http')
 
 // TaxCloud service subflow (should be defined as a separate flow module)
-const TaxCloud = kos.create('service-taxcloud')
-  .import(kos.load('http'))
-  .require('taxcloud/access/id','taxcloud/access/key','taxcloud/access/url')
-  .default('taxcloud/access/url', 'https://api.taxcloud.net/1.0/TaxCloud/Lookup')
-  .default('requests', new Map)
+const TaxCloud = kos
+  .reactor('service-taxcloud')
+  .embed(httpReactor)
+  .setState('taxcloud/access/url', 'https://api.taxcloud.net/1.0/TaxCloud/Lookup')
+  .setState('requests', new Map)
 
-  .in('taxcloud/request').out('http/request/post').bind(invokeRequest)
+  .in('taxcloud/request').out('http/request/post')
+  .use('taxcloud/access/id','taxcloud/access/key','taxcloud/access/url')
+  .bind(invokeRequest)
+
   .in('http/response').out('taxcloud/response').bind(handleResponse)
 
   .in('taxcloud/response').out('taxcloud/response/items')
@@ -26,8 +30,10 @@ const TaxCloud = kos.create('service-taxcloud')
   })
 
 // Reaction Commerce TaxCloud flow
-module.exports = kos.create('reaction-taxcloud')
-  .import(TaxCloud)
+module.exports = kos
+  .reactor('reaction-taxcloud')
+  .embed(TaxCloud)
+
   .in('reaction/shipping/address').out('taxcloud/destination').bind(normalizeDestination)
   .in('cart/items/taxable').out('taxcloud/items').bind(normalizeCartItems)
 
@@ -37,7 +43,7 @@ module.exports = kos.create('reaction-taxcloud')
 
   .in('taxcloud/items','taxcloud/response/items')
   .out('cart/items/tax')
-  .default('taxes', new Map)
+  .setState('taxes', new Map)
   .bind(calculateTaxes)
   
 function normalizeAddress(addr) {
@@ -95,7 +101,7 @@ function calculateTaxes(items, results) {
 // Reactors for taxcloud native flow
 
 function invokeRequest(req) {
-  let [ url, login, key ] = this.fetch('taxcloud/access/url', 'taxcloud/access/id', 'taxcloud/access/key')
+  let [ url, login, key ] = this.get('taxcloud/access/url', 'taxcloud/access/id', 'taxcloud/access/key')
   this.debug(req)
   this.send('http/request/post', {
     url: url,

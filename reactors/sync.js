@@ -13,6 +13,12 @@ module.exports = kos
   .in('sync/listen').out('link/listen/url').bind(
     function syncListen(url) { this.send('link/listen/url', url) }
   )
-  .in('link/stream').bind(
-    function syncKineticObjects(stream) { stream.pipe(this.parent).pipe(stream) }
+  .in('link/stream').out('sync/stream').bind(
+    function syncKineticObjects(stream) { 
+      this.parent.pipe(stream)
+      stream.on('active', () => {
+        stream.pipe(this.parent)
+        this.send('sync/stream', stream)
+      })
+    }
   )

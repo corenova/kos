@@ -2,14 +2,16 @@
 'use strict'
 
 const fs = require('fs')
-const debug = require('debug')
 const colors = require('colors')
 const program = require('commander')
 const readline = require('readline')
 
-const core = require('../reactors/core')
 const pkginfo = require('../package.json')
 const render = require('./lib/render') // TOOD - for now...
+
+// get core & debug reactors
+const core  = require('../reactors/core')
+const debug = require('../reactors/debug')
 
 program
   .version(pkginfo.version)
@@ -27,24 +29,18 @@ program
   .action(() => {})
 
 program
-  .command('show <reactors...>')
+  .command('show <reactor>')
   .alias('sh')
   .description('Show detailed information about a reactor')
-  .action((reactors, opts) => {
-    core.on('reactor', render)
-    core.feed('load', ...reactors)
+  .action((reactor, opts) => {
+    core.on('reactor', x => console.log(render(x)))
+    core.feed('load', reactor)
   })
 
-// convenience execution of an interactive "run" flow with command-line options
-// program
-//   .command('run [flows...]')
-//   .description('Starts an interactive web server with optional flows')
-//   .option('-p, --port <number>', 'local port to listen for web requests', 3000)
-//   .action((flows, opts) => {
-//     kos.load('run')
-//       .feed('run', opts)
-//       .feed('run/load', flows)
-//   })
+function collect(val, keys) {
+  keys.push(val)
+  return keys
+}
 
 program
   .arguments('<flows...>')
@@ -53,7 +49,9 @@ program
   .option('-s, --silent', 'suppress all debug/info/warn/error log messages')
   .action((flows, opts) => {
     let { input, trigger, silent, verbose } = opts
-    core.feed('log', { silent, verbose })
+    opts.silent || core.pipe(debug)
+
+    core.feed('debug/config', { verbose })
     core.feed('load', ...flows)
 
     let io = core.io()
@@ -78,14 +76,7 @@ if (!process.argv.slice(2).length) {
   program.outputHelp()
 }
 
-// KOS utility helper functions
-
-function collect(val, keys) {
-  keys.push(val)
-  return keys
-}
-
-// should be a flow?
+// TODO: should convert to kos.reactor("tty")
 function commander(io) {
   const reactors = core.fetch('reactors')
   const cmd = readline.createInterface({ 

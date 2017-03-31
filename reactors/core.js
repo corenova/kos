@@ -15,7 +15,7 @@ function loadReactor(name) {
   let search = [ 
     path.resolve(name),
     path.resolve(path.join('reactors', name)),
-    path.resolve(__dirname, path.join('reactors', name)),
+    path.resolve(__dirname, name),
     name
   ]
   for (let name of search) {

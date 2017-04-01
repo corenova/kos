@@ -2,9 +2,9 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos
-  .reactor('debug', 'Provides KOS debug output facility')
-  .in('debug/config').use('module/debug').bind(setupLogger)
+module.exports = kos.reactor('debug')
+  .desc('Provides KOS debug output facility')
+  .in('debug/config').and.has('module/debug').bind(setupLogger)
 
 function setupLogger({ verbose=0 }) {
   let debug = this.fetch('module/debug')

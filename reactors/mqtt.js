@@ -13,32 +13,25 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos
-  .reactor('mqtt', "Provides MQTT transaction transforms utilizing 'mqtt' module")
-  .require('module/mqtt', 'module/url')
-  .setState('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
+module.exports = kos.reactor('mqtt')
+  .desc("Provides MQTT transaction transforms utilizing 'mqtt' module")
+  .init('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
 
-  .in('mqtt/connect').out('mqtt/client').use('module/mqtt').bind(connect)
+  .in('mqtt/connect').and.has('module/mqtt')
+  .out('mqtt/client').bind(connect)
 
   .in('mqtt/connect/url').out('mqtt/connect')
   .bind(function simpleConnect(url) {
     this.send('mqtt/connect', { url: url })
   })
 
-  .in('mqtt/client','mqtt/subscribe').default('topics', new Set)
+  .in('mqtt/client','mqtt/subscribe')
   .out('mqtt/subscription','mqtt/message')
+  .init('topics', new Set)
   .bind(subscribe)
 
   .in('mqtt/client','mqtt/message').bind(publish)
-
-  .in('mqtt/message/*').out('mqtt/message')
-  .bind(function convert({ key, value }) {
-    let topic = key.replace(/mqtt\/message\/(.+)$/,'$1')
-    this.send('mqtt/message', {
-      topic: topic,
-      payload: value
-    })
-  })
+  .in('mqtt/message/*').out('mqtt/message').bind(convert)
 
 function connect(opts) {
   const [ mqtt, {parse}, protocols ] = this.fetch('module/mqtt', 'module/url', 'protocols')
@@ -90,4 +83,12 @@ function publish() {
       if (err) this.throw(err)
     })
   }
+}
+
+function convert({ key, value }) {
+  let topic = key.replace(/mqtt\/message\/(.+)$/,'$1')
+  this.send('mqtt/message', {
+    topic: topic,
+    payload: value
+  })
 }

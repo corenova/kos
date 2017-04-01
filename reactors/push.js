@@ -3,9 +3,9 @@
 const { kos = require('..') } = global
 const linkReactor = require('./link')
 
-module.exports = kos
-  .reactor('push', 'Provide dataflow stream push to a remote flow')
-  .embed(linkReactor)
+module.exports = kos.reactor('push')
+  .desc('Provide dataflow stream push to a remote flow')
+  .load(linkReactor)
 
   .in('push/connect').out('link/connect/url').bind(
     function pushConnect(url) { this.send('link/connect/url', url) }

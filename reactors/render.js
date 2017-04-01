@@ -2,29 +2,31 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos
-  .reactor('render', 'Provides Kinetic Reactor visualization')
-  .setState('reactors', new Map)
+module.exports = kos.reactor('render')
+  .desc('Provides Kinetic Reactor visualization')
+  .init('reactors', new Map)
 
-  .in('joint/graph','joint/paper/config').out('joint/paper')
-  .use('browser/document','module/jointjs').bind(renderGraphToPaper)
+  .in('dom/element','joint/graph','joint/paper/config').and.has('module/jointjs')
+  .out('joint/paper').bind(renderGraphToPaper)
 
   // reactor specific render triggers
-  .in('reactor').bind(collectReactors)
-  .in('render/reactor').out('joint/graph').use('module/jointjs').bind(reactorToDiagram)
+  .in('render/reactor').and.has('module/jointjs')
+  .out('joint/graph').bind(reactorToDiagram)
+
   .in('render/reactor/name').out('render/reactor').bind(renderReactorByName)
 
-function renderGraphToPaper(source, opts) {
+  // TODO - shouldn't need this...
+  .in('reactor').bind(collectReactors)
+
+function renderGraphToPaper(element, source, opts) {
   const joint = this.get('module/jointjs')
   const doc   = this.get('browser/document')
 
   let graph = new joint.dia.Graph
   opts = Object.assign({
-    el: opts.el || document.getElementById(opts.target),
+    el: element,
     gridSize: 10,
-    perpendicularLinks: true,
-    interactive: false,
-    padding: 5
+    perpendicularLinks: true
   }, opts, { model: graph })
   let paper = new joint.dia.Paper(opts)
 
@@ -95,26 +97,33 @@ function reactorToDiagram(target) {
 
   let yoffset = 50
   // generate the trigger PTN model
-  for (let { label, inputs, outputs } of target.triggers) {
+  for (let { label, inputs, requires, outputs } of target.triggers) {
+    let accepts = requires.concat(inputs)
     let coffset = yoffset, poffset = yoffset, hoffset = yoffset
-    if (inputs.length > outputs.length) {
-      poffset = yoffset + ((inputs.length - outputs.length) * 100 / 2)
-      hoffset = yoffset + (inputs.length - 1) * 100 / 2
+    if (accepts.length > outputs.length) {
+      poffset = yoffset + ((accepts.length - outputs.length) * 100 / 2)
+      hoffset = yoffset + (accepts.length - 1) * 100 / 2
       yoffset += inputs.length * 100
     }
     else {
-      coffset = yoffset + ((outputs.length - inputs.length) * 100 / 2)
+      coffset = yoffset + ((outputs.length - accepts.length) * 100 / 2)
       hoffset = yoffset + (outputs.length - 1) * 100 / 2
       yoffset += outputs.length * 100
     }
 
-    let handler = t.clone().attr('.label/text', label).position(TX[2], hoffset)
+    let handler = t.clone()
+      .attr('.label/text', label)
+      .position(TX[2], hoffset)
 
-    let consumes = inputs.map((x, idx) => {
-      return p.clone().attr('.label/text', x).position(PX[2], coffset + (100 * idx))
-    })
+    let consumes = accepts.map((x, idx) => {
+      return p.clone()
+        .attr('.label/text', x)
+        .position(PX[2], coffset + (100 * idx))
+      })
     let produces = outputs.map((x, idx) => {
-      return p.clone().attr('.label/text', x).position(PX[3], poffset + (100 * idx))
+      return p.clone()
+        .attr('.label/text', x)
+        .position(PX[3], poffset + (100 * idx))
     })
 
     graph.addCells(...consumes, ...produces, handler)

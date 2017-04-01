@@ -1,9 +1,8 @@
 const { kos = require('..') } = global
 
-module.exports = kos
-  .reactor('react')
+module.exports = kos.reactor('react')
   .in('module/react').out('react/element').bind(createElement)
-  .in('react/component').use('module/react').bind(registerComponent)
+  .in('react/component').and.has('module/react').bind(registerComponent)
 
 function createElement(React) {
   let { createElement, createClass } = React

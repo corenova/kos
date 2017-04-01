@@ -8,21 +8,25 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos
-  .reactor('ws', "Provides WebSocket transactions utilizing 'ws' module")
-  .setState('protocols', ['ws:', 'wss:'])
+module.exports = kos.reactor('ws')
+  .desc("Provides WebSocket transactions utilizing 'ws' module")
+  .init('protocols', ['ws:', 'wss:'])
 
-  .in('ws/connect').out('ws/socket','link','ws/connect')
-  .use('module/simple-websocket').bind(connect)
+  .in('ws/connect').and.has('module/simple-websocket')
+  .out('ws/socket','link','ws/connect')
+  .bind(connect)
 
-  .in('ws/listen').out('ws/server','ws/socket','link')
-  .use('module/simple-websocket/server').bind(listen)
+  .in('ws/listen').and.has('module/simple-websocket/server')
+  .out('ws/server','ws/socket','link')
+  .bind(listen)
 
-  .in('ws/connect/url').out('ws/connect')
-  .use('module/url').bind(connectByUrl)
+  .in('ws/connect/url').and.has('module/url')
+  .out('ws/connect')
+  .bind(connectByUrl)
 
-  .in('ws/listen/url').out('ws/listen')
-  .use('module/url').bind(listenByUrl)
+  .in('ws/listen/url').and.has('module/url')
+  .out('ws/listen')
+  .bind(listenByUrl)
 
 function connect(opts) {
   const WebSocket = this.fetch('module/simple-websocket')

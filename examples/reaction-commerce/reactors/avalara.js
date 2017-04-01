@@ -2,9 +2,9 @@
 
 const kos = require('kos')
 
-module.exports = kos.create('reaction-avalara')
-  .require('module/avalara-taxrates','avalara/access/key')
-  .in('avalara/request/address').out('avalara/response').bind(calculateTaxRates)
+module.exports = kos.reactor('reaction-avalara')
+  .in('avalara/request/address').and.has('module/avalara-taxrates','avalara/access/key')
+  .out('avalara/response').bind(calculateTaxRates)
 
 function calculateTaxRates(addr) {
   let [ Avalara, apiKey ] = this.pull('module/avalara-taxrates', 'avalara/access/key')

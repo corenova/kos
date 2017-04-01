@@ -7,67 +7,47 @@ var _2 = _interopRequireDefault(_);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var app = _2.default.reactor('demo', 'a demo app for visualizing KOS');
-//.embed(render)
-// fire once sync session established
+var app = _2.default.reactor('demo').desc('a demo app for visualizing KOS').load(_.sync, _.render).in('show').and.has('browser/document').out('dom/element', 'joint/paper/config', 'render/reactor').bind(renderSelf).in('joint/paper').out('render/reactor').bind(userActivity);
 
+// fire once sync session established
 //.in('sync/stream').out('render/reactor','joint/paper/config').bind(renderRemoteReactors)
 
-function renderRemoteReactors(stream) {
-  this.send('render/reactor', _.sync);
-  this.send('joint/paper/config', { target: 'main' });
+function renderSelf(opts) {
+  var doc = this.get('browser/document');
+  var target = opts.target;
+
+
+  this.send('dom/element', doc.getElementById(target));
+  this.send('joint/paper/config', {
+    gridSize: 10,
+    interactive: false,
+    padding: 5
+  });
+  this.send('render/reactor', app);
 }
 
-// setup the reactor chain
-app.chain(_.sync, _.render, _.debug);
+function userActivity(paper) {
+  var _this = this;
+
+  this.debug('making paper interactive');
+
+  paper.on('cell:pointerdblclick', function (view) {
+    console.log(view);
+    _this.debug(view);
+  });
+}
+
+// enable debug reactor flow
+app.pipe(_.debug);
 
 // feed the app with init tokens
 app.feed('debug/config', { verbose: 3 }).feed('browser/document', document) // we're running on a web browser
-.feed('module/url', require('url')).feed('module/simple-websocket', require('simple-websocket')).feed('module/jointjs', require('jointjs')).feed('joint/paper/config', { target: 'main' }).feed('render/reactor', _.sync, _.link, _.ws);
+.feed('module/url', require('url')).feed('module/simple-websocket', require('simple-websocket')).feed('module/jointjs', require('jointjs')).feed('show', { target: 'main' });
+
 //.feed('sync/connect', 'ws:localhost:8080')
 
 // NOTE: Once sync connects, everything you feed into the core will
 // go to every reactor
-
-
-// TODO: use React to provide layout
-
-// import React from 'react'
-// import ReactDOM from 'react-dom'
-// // import { Router, Route, IndexRoute, browserHistory } from 'react-router'
-// ReactDOM.render((
-//   <div>test</div>
-// ), document.getElementById('main'))
-
-//import 'bootstrap-loader'
-//import 'styles/corenova.scss'
-
-
-// highlight/tomorrow.css
-// react-widgets.css?
-
-// const Features = () => (<div>features</div>)
-// const Projects = ({children}) => (<div>{children}</div>)
-
-// import App from 'components/App'
-// import Home from 'scenes/Home'
-// import { ProjectContainer, ProjectTimeline, ProjectPulse } from 'scenes/Project'
-
-// render((
-//   <Router history={browserHistory}>
-// 	<Route path="/" component={App}>
-// 	  <IndexRoute component={Home} />
-// 	  <Route path="/features" component={Features} />
-// 	  <Route path="/projects" component={Projects}>
-// 	    <Route path="/project/:id" component={ProjectContainer}>
-// 	      <IndexRoute component={ProjectTimeline} />
-// 	      <Route path="timeline" component={ProjectTimeline} />
-// 	      <Route path="pulse" component={ProjectPulse} />
-// 	    </Route>
-// 	  </Route>
-// 	</Route>
-//   </Router>
-// ), document.getElementById('main'));
 
 },{"..":2,"jointjs":74,"simple-websocket":96,"url":100}],2:[function(require,module,exports){
 'use strict';
@@ -283,15 +263,13 @@ var KineticReactor = function (_KineticStream) {
   }]);
 
   function KineticReactor(options) {
-    var description = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-
     _classCallCheck(this, KineticReactor);
 
     if (options instanceof KineticReactor) {
       options = options.inspect();
       debug(options.label, 'cloning');
     }
-    if (typeof options === 'string') options = { label: options, summary: description };
+    if (typeof options === 'string') options = { label: options };
 
     if (!options.label) throw new Error("must supply 'label' to create a new KineticReactor");
 
@@ -299,7 +277,7 @@ var KineticReactor = function (_KineticStream) {
 
     var _options = options,
         label = _options.label,
-        summary = _options.summary,
+        purpose = _options.purpose,
         _options$reactors = _options.reactors,
         reactors = _options$reactors === undefined ? [] : _options$reactors,
         _options$triggers = _options.triggers,
@@ -309,7 +287,7 @@ var KineticReactor = function (_KineticStream) {
 
 
     _this._label = label;
-    _this._summary = summary;
+    _this._purpose = purpose;
     _this._reactors = new Map();
     _this._triggers = new Set();
 
@@ -356,18 +334,41 @@ var KineticReactor = function (_KineticStream) {
     });
     _this.pipe(_this.core).pipe(_this);
 
-    _this.addReactor.apply(_this, _toConsumableArray(reactors));
-    _this.addTrigger.apply(_this, _toConsumableArray(triggers));
+    // NOTE: can't use this.load here since arguments may be simple
+    // JSON objects
+    _this.loadReactor.apply(_this, _toConsumableArray(reactors));
+    _this.loadTrigger.apply(_this, _toConsumableArray(triggers));
 
     debug(_this.identity, 'new', _this.id);
     return _this;
   }
 
   _createClass(KineticReactor, [{
-    key: 'addReactor',
-    value: function addReactor() {
-      for (var _len = arguments.length, reactors = Array(_len), _key = 0; _key < _len; _key++) {
-        reactors[_key] = arguments[_key];
+    key: 'desc',
+    value: function desc() {
+      var description = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+
+      this._purpose = description;
+      return this;
+    }
+
+    // Load KineticStream(s) into current Reactor
+    //
+    // Loading extends the Reactor with additional receivers (such as
+    // Reactors and Triggers) that can process tokens accepted into the
+    // Reactor CORE.
+    //
+    // KineticTriggers will handle externally accepted and internally
+    // produced tokens
+    //
+    // KineticReactors will only handle internally produced tokens
+    // (other than tokens it requires)
+
+  }, {
+    key: 'load',
+    value: function load() {
+      for (var _len = arguments.length, streams = Array(_len), _key = 0; _key < _len; _key++) {
+        streams[_key] = arguments[_key];
       }
 
       var _iteratorNormalCompletion = true;
@@ -375,12 +376,11 @@ var KineticReactor = function (_KineticStream) {
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = reactors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var reactor = _step.value;
+        for (var _iterator = streams[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var stream = _step.value;
 
-          reactor = new KineticReactor(reactor).join(this);
-          this._reactors.set(reactor.label, reactor);
-          this.core.pipe(reactor).pipe(this.core);
+          if (!(stream instanceof KineticStream)) throw new Error('must supply KineticStream to chain');
+          if (stream instanceof KineticReactor) this.loadReactor(stream);else if (stream instanceof KineticTrigger) this.loadTrigger(stream);else this.core.pipe(stream).pipe(this.core);
         }
       } catch (err) {
         _didIteratorError = true;
@@ -400,10 +400,10 @@ var KineticReactor = function (_KineticStream) {
       return this;
     }
   }, {
-    key: 'addTrigger',
-    value: function addTrigger() {
-      for (var _len2 = arguments.length, triggers = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        triggers[_key2] = arguments[_key2];
+    key: 'loadReactor',
+    value: function loadReactor() {
+      for (var _len2 = arguments.length, reactors = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        reactors[_key2] = arguments[_key2];
       }
 
       var _iteratorNormalCompletion2 = true;
@@ -411,12 +411,12 @@ var KineticReactor = function (_KineticStream) {
       var _iteratorError2 = undefined;
 
       try {
-        for (var _iterator2 = triggers[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var trigger = _step2.value;
+        for (var _iterator2 = reactors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var reactor = _step2.value;
 
-          trigger = new KineticTrigger(trigger).join(this);
-          this._triggers.add(trigger);
-          this.core.pipe(trigger).pipe(this.core);
+          reactor = new KineticReactor(reactor).join(this);
+          this._reactors.set(reactor.label, reactor);
+          this.core.pipe(reactor).pipe(this.core);
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -435,24 +435,11 @@ var KineticReactor = function (_KineticStream) {
 
       return this;
     }
-
-    // Embed KineticStream(s) into current Reactor
-    //
-    // Embedding extends the Reactor with additional receivers (such as
-    // Reactors and Triggers) that can process tokens accepted into the
-    // Reactor CORE.
-    //
-    // KineticTriggers will handle externally accepted and internally
-    // produced tokens
-    //
-    // KineticReactors will only handle internally produced tokens
-    // (other than tokens it requires)
-
   }, {
-    key: 'embed',
-    value: function embed() {
-      for (var _len3 = arguments.length, streams = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-        streams[_key3] = arguments[_key3];
+    key: 'loadTrigger',
+    value: function loadTrigger() {
+      for (var _len3 = arguments.length, triggers = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        triggers[_key3] = arguments[_key3];
       }
 
       var _iteratorNormalCompletion3 = true;
@@ -460,11 +447,12 @@ var KineticReactor = function (_KineticStream) {
       var _iteratorError3 = undefined;
 
       try {
-        for (var _iterator3 = streams[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var stream = _step3.value;
+        for (var _iterator3 = triggers[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var trigger = _step3.value;
 
-          if (!(stream instanceof KineticStream)) throw new Error('must supply KineticStream to chain');
-          if (stream instanceof KineticReactor) this.addReactor(stream);else if (stream instanceof KineticTrigger) this.addTrigger(stream);else this.core.pipe(stream).pipe(this.core);
+          trigger = new KineticTrigger(trigger).join(this);
+          this._triggers.add(trigger);
+          this.core.pipe(trigger).pipe(this.core);
         }
       } catch (err) {
         _didIteratorError3 = true;
@@ -490,7 +478,7 @@ var KineticReactor = function (_KineticStream) {
     //
     // this.pipe(StreamA).pipe(StreamB).pipe(StreamC).pipe(this)
     // 
-    // Instead of attaching to the Reactor CORE as in the `embed()`
+    // Instead of attaching to the Reactor CORE as in the `load()`
     // case, it simply establishes a data pipeline of outputs from the
     // Reactor to have a control feedback loop across one more more
     // additional KineticStreams. Basically, the collective outputs from
@@ -554,7 +542,7 @@ var KineticReactor = function (_KineticStream) {
     value: function inspect() {
       return Object.assign(_get(KineticReactor.prototype.__proto__ || Object.getPrototypeOf(KineticReactor.prototype), 'inspect', this).call(this), {
         label: this._label,
-        summary: this._summary,
+        purpose: this._purpose,
         requires: this.requires,
         reactors: this.reactors.map(function (x) {
           return x.inspect();
@@ -569,7 +557,7 @@ var KineticReactor = function (_KineticStream) {
     value: function toJSON() {
       return Object.assign(_get(KineticReactor.prototype.__proto__ || Object.getPrototypeOf(KineticReactor.prototype), 'toJSON', this).call(this), {
         label: this._label,
-        summary: this._summary,
+        purpose: this._purpose,
         requires: this.requires,
         reactors: this.reactors.map(function (x) {
           return x.toJSON();
@@ -596,9 +584,9 @@ var KineticReactor = function (_KineticStream) {
       return this._label;
     }
   }, {
-    key: 'summary',
+    key: 'purpose',
     get: function get() {
-      return this._summary;
+      return this._purpose;
     }
   }, {
     key: 'triggers',
@@ -729,9 +717,12 @@ var KineticStream = function (_Transform) {
       // ignore chunks it's seen before, otherwise mark it and send it along
       this.seen(chunk) ? callback() : callback(null, this.mark(chunk));
     }
+
+    // setup initial state (can be called multiple times)
+
   }, {
-    key: 'setState',
-    value: function setState() {
+    key: 'init',
+    value: function init() {
       var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
       var value = arguments[1];
 
@@ -1198,15 +1189,17 @@ var KineticTrigger = function (_KineticStream) {
       return this;
     }
 
-    // data objects required for invoking the KineticTrigger 
+    // data objects that are pre-conditions for invoking the
+    // KineticTrigger
     //
-    // NOTE: the difference between `use()` and `in()` is that required
-    // data objects are pre-requisites for the reaction and remain
-    // sticky to the State Machine
+    // NOTE: the difference between `has()` and `in()` is that the
+    // pre-condition data tokens stay sticky to the State Machine and
+    // must be present before the declared input data tokens can invoke
+    // the trigger.
 
   }, {
-    key: 'use',
-    value: function use() {
+    key: 'has',
+    value: function has() {
       for (var _len3 = arguments.length, keys = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
         keys[_key3] = arguments[_key3];
       }
@@ -1222,7 +1215,7 @@ var KineticTrigger = function (_KineticStream) {
           if (/^module\//.test(key)) {
             var target = key.match(/^module\/(.+)$/, '$1');
             try {
-              this.setState(key, require(target[1]));
+              this.init(key, require(target[1]));
             } catch (e) {
               debug('unable to auto-load require', key);
             }
@@ -1247,18 +1240,21 @@ var KineticTrigger = function (_KineticStream) {
       return this;
     }
 
+    // a no-op continuation grammer for improving readability
+
+  }, {
+    key: 'bind',
+
+
     // Bind a function to be triggered by the matching input key(s)
     // flowing into source KOS
     //
     // returns: source KOS
-
-  }, {
-    key: 'bind',
     value: function bind(fn) {
       var parent = this.state.get('parent');
       if (typeof fn !== 'function') throw new Error("[bind] expected function but got something else");
       this._handler = fn;
-      return parent ? parent.addTrigger(this) : this;
+      return parent ? parent.loadTrigger(this) : this;
     }
   }, {
     key: 'send',
@@ -1297,6 +1293,11 @@ var KineticTrigger = function (_KineticStream) {
         requires: this.requires,
         handler: this.handler
       });
+    }
+  }, {
+    key: 'and',
+    get: function get() {
+      return this;
     }
   }, {
     key: 'type',
@@ -39059,7 +39060,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('debug', 'Provides KOS debug output facility').in('debug/config').use('module/debug').bind(setupLogger);
+module.exports = kos.reactor('debug').desc('Provides KOS debug output facility').in('debug/config').and.has('module/debug').bind(setupLogger);
 
 function setupLogger(_ref) {
   var _ref$verbose = _ref.verbose,
@@ -39127,7 +39128,7 @@ var _global = global,
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
 
-module.exports = kos.reactor('http', 'Provides HTTP client and server reactions').in('http/request').out('http/response').use('module/superagent').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').out('http/server', 'http/socket', 'link', 'http/server/request').use('module/http').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
+module.exports = kos.reactor('http').desc('Provides HTTP client and server reactions').in('http/request').and.has('module/superagent').out('http/response').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').and.has('module/http').out('http/server', 'http/socket', 'link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
 
 // TODO: future
 //.in('http/server/request','http/proxy').out('http/request').bind(proxy)
@@ -39236,7 +39237,7 @@ var _global = global,
 var netReactor = require('./net');
 var wsReactor = require('./ws');
 
-module.exports = kos.reactor('link', 'Provides dynamic client/server communication flows for various protocols').embed(netReactor, wsReactor).setState('streams', new Map()).in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).in('link/connect/url').out('link/connect').use('module/url').bind(connectByUrl).in('link/listen/url').out('link/listen').use('module/url').bind(listenByUrl).in('link').out('link/stream').bind(createLinkStream);
+module.exports = kos.reactor('link').desc('Provides dynamic client/server communication flows for various protocols').load(netReactor, wsReactor).init('streams', new Map()).in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).in('link/connect/url').and.has('module/url').out('link/connect').bind(connectByUrl).in('link/listen/url').and.has('module/url').out('link/listen').bind(listenByUrl).in('link').out('link/stream').bind(createLinkStream);
 
 function connect(opts) {
   switch (opts.protocol) {
@@ -39329,11 +39330,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('net', "Provides network client/server communication flows").setState('protocols', ['tcp:', 'udp:']).in('module/net', 'module/url').bind(ready).in('net/connect').out('net/socket', 'link', 'net/connect').use('module/net').bind(connect).in('net/listen').out('net/server', 'net/socket', 'link').use('module/net').bind(listen).in('net/connect/url').out('net/connect').use('module/url').bind(connectByUrl).in('net/listen/url').out('net/listen').use('module/url').bind(listenByUrl);
-
-function ready(net, url) {
-  // should add verification logic...
-}
+module.exports = kos.reactor('net').desc("Provides network client/server communication flows").init('protocols', ['tcp:', 'udp:']).in('net/connect').and.has('module/net').out('net/socket', 'link', 'net/connect').bind(connect).in('net/listen').and.has('module/net').out('net/server', 'net/socket', 'link').bind(listen).in('net/connect/url').and.has('module/url').out('net/connect').bind(connectByUrl).in('net/listen/url').and.has('module/url').out('net/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;
@@ -39445,22 +39442,23 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('render', 'Provides Kinetic Reactor visualization').setState('reactors', new Map()).in('joint/graph', 'joint/paper/config').out('joint/paper').use('browser/document', 'module/jointjs').bind(renderGraphToPaper)
+module.exports = kos.reactor('render').desc('Provides Kinetic Reactor visualization').init('reactors', new Map()).in('dom/element', 'joint/graph', 'joint/paper/config').and.has('module/jointjs').out('joint/paper').bind(renderGraphToPaper)
 
 // reactor specific render triggers
-.in('reactor').bind(collectReactors).in('render/reactor').out('joint/graph').use('module/jointjs').bind(reactorToDiagram).in('render/reactor/name').out('render/reactor').bind(renderReactorByName);
+.in('render/reactor').and.has('module/jointjs').out('joint/graph').bind(reactorToDiagram).in('render/reactor/name').out('render/reactor').bind(renderReactorByName)
 
-function renderGraphToPaper(source, opts) {
+// TODO - shouldn't need this...
+.in('reactor').bind(collectReactors);
+
+function renderGraphToPaper(element, source, opts) {
   var joint = this.get('module/jointjs');
   var doc = this.get('browser/document');
 
   var graph = new joint.dia.Graph();
   opts = Object.assign({
-    el: opts.el || document.getElementById(opts.target),
+    el: element,
     gridSize: 10,
-    perpendicularLinks: true,
-    interactive: false,
-    padding: 5
+    perpendicularLinks: true
   }, opts, { model: graph });
   var paper = new joint.dia.Paper(opts);
 
@@ -39535,24 +39533,26 @@ function reactorToDiagram(target) {
       var _step$value = _step.value,
           label = _step$value.label,
           inputs = _step$value.inputs,
+          requires = _step$value.requires,
           outputs = _step$value.outputs;
 
+      var accepts = requires.concat(inputs);
       var coffset = yoffset,
           poffset = yoffset,
           hoffset = yoffset;
-      if (inputs.length > outputs.length) {
-        poffset = yoffset + (inputs.length - outputs.length) * 100 / 2;
-        hoffset = yoffset + (inputs.length - 1) * 100 / 2;
+      if (accepts.length > outputs.length) {
+        poffset = yoffset + (accepts.length - outputs.length) * 100 / 2;
+        hoffset = yoffset + (accepts.length - 1) * 100 / 2;
         yoffset += inputs.length * 100;
       } else {
-        coffset = yoffset + (outputs.length - inputs.length) * 100 / 2;
+        coffset = yoffset + (outputs.length - accepts.length) * 100 / 2;
         hoffset = yoffset + (outputs.length - 1) * 100 / 2;
         yoffset += outputs.length * 100;
       }
 
       var handler = t.clone().attr('.label/text', label).position(TX[2], hoffset);
 
-      var consumes = inputs.map(function (x, idx) {
+      var consumes = accepts.map(function (x, idx) {
         return p.clone().attr('.label/text', x).position(PX[2], coffset + 100 * idx);
       });
       var produces = outputs.map(function (x, idx) {
@@ -39682,7 +39682,7 @@ var _global = global,
 
 var linkReactor = require('./link');
 
-module.exports = kos.reactor('sync', 'Provide dataflow object synchronization with remote stream(s)').embed(linkReactor).in('sync/connect').out('link/connect/url').bind(function syncConnect(url) {
+module.exports = kos.reactor('sync').desc('Provide dataflow object synchronization with remote stream(s)').load(linkReactor).in('sync/connect').out('link/connect/url').bind(function syncConnect(url) {
   this.send('link/connect/url', url);
 }).in('sync/listen').out('link/listen/url').bind(function syncListen(url) {
   this.send('link/listen/url', url);
@@ -39712,7 +39712,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('ws', "Provides WebSocket transactions utilizing 'ws' module").setState('protocols', ['ws:', 'wss:']).in('ws/connect').out('ws/socket', 'link', 'ws/connect').use('module/simple-websocket').bind(connect).in('ws/listen').out('ws/server', 'ws/socket', 'link').use('module/simple-websocket/server').bind(listen).in('ws/connect/url').out('ws/connect').use('module/url').bind(connectByUrl).in('ws/listen/url').out('ws/listen').use('module/url').bind(listenByUrl);
+module.exports = kos.reactor('ws').desc("Provides WebSocket transactions utilizing 'ws' module").init('protocols', ['ws:', 'wss:']).in('ws/connect').and.has('module/simple-websocket').out('ws/socket', 'link', 'ws/connect').bind(connect).in('ws/listen').and.has('module/simple-websocket/server').out('ws/server', 'ws/socket', 'link').bind(listen).in('ws/connect/url').and.has('module/url').out('ws/connect').bind(connectByUrl).in('ws/listen/url').and.has('module/url').out('ws/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;

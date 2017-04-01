@@ -15,13 +15,13 @@ const defaultShop = {
   ]
 }
 
-module.exports = kos
-  .reactor('reaction-cart', 'Provides reaction commerce cart management workflow')
-  .setState('reaction/shop/default', defaultShop)
+module.exports = kos.reactor('reaction-cart')
+  .desc('Provides reaction commerce cart management workflow')
+  .init('reaction/shop/default', defaultShop)
 
   // flow reactors
   .in('reaction/shop').bind(collectShops)
-  .in('reaction/item').out('reaction/cart').setState('items', new Map).bind(addItemToCart)
+  .in('reaction/item').out('reaction/cart').init('items', new Map).bind(addItemToCart)
   .in('reaction/cart').out('cart/items').bind(itemizeReactionCart)
 
 //-------------------

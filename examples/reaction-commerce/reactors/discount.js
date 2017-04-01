@@ -2,8 +2,8 @@
 
 const { kos = require('kos') } = global
 
-module.exports = kos
-  .reactor('reaction-discount', 'Provides reaction commerce discount management workflow')
+module.exports = kos.reactor('reaction-discount')
+  .desc('Provides reaction commerce discount management workflow')
   // flow reactors
   // KOS prevents looping of self-generated output from triggering itself
   .in('cart/items','reaction/discount').out('cart/items').bind(applyDiscount)

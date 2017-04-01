@@ -3,11 +3,10 @@
 const { kos = require('..') } = global
 const npmReactor = require('./npm')
 
-module.exports = kos
-  .reactor('require', "Provides external module loading via 'require'")
-  .embed(npmReactor)
-
-  .setState('pending', new Set)
+module.exports = kos.reactor('require')
+  .desc("Provides external module loading via 'require'")
+  .load(npmReactor)
+  .init('pending', new Set)
 
   // transforms
   .in('require').out('module/*', 'require/error').bind(tryRequire)

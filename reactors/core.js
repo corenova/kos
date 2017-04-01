@@ -2,12 +2,12 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos
-  .reactor('core', 'Provides KOS reactor loading & logging facility')
-  .setState('reactors', new Map)
+module.exports = kos.reactor('core')
+  .desc('Provides KOS reactor loading & logging facility')
+  .init('reactors', new Map)
 
-  .in('load').out('reactor').use('module/path').bind(loadReactor)
-  .in('reactor').out('load').bind(chainReactor)
+  .in('load').and.has('module/path').out('reactor').bind(loadReactor)
+  .in('reactor').bind(chainReactor)
 
 function loadReactor(name) {
   let path = this.fetch('module/path')

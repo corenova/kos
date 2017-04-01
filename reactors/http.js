@@ -7,15 +7,16 @@
 const { kos = require('..') } = global
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
-module.exports = kos
-  .reactor('http', 'Provides HTTP client and server reactions')
+module.exports = kos.reactor('http')
+  .desc('Provides HTTP client and server reactions')
 
-  .in('http/request').out('http/response').use('module/superagent').bind(clientRequest)
+  .in('http/request').and.has('module/superagent')
+  .out('http/response').bind(clientRequest)
+
   .in('http/request/get').out('http/request').bind(simpleGet)
 
-  .in('http/listen')
+  .in('http/listen').and.has('module/http')
   .out('http/server','http/socket','link','http/server/request')
-  .use('module/http')
   .bind(createServer)
 
   .in('http/server/request')

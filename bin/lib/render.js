@@ -170,7 +170,7 @@ function renderStream(stream, level=1) {
   let str = ''
   let info = {
 	label:    stream.label,
-	summary:  stream.summary,
+	purpose:  stream.purpose,
 	requires: stream.requires,
     reactors: stream.reactors.map(x => x.label),
     triggers: stream.triggers.map(x => FUNC + '(' + x.handler.name + ')'),

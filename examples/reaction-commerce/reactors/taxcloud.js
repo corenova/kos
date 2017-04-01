@@ -4,14 +4,14 @@ const { kos = require('kos') } = global
 const httpReactor = require('kos/reactors/http')
 
 // TaxCloud service subflow (should be defined as a separate flow module)
-const TaxCloud = kos
-  .reactor('service-taxcloud')
-  .embed(httpReactor)
-  .setState('taxcloud/access/url', 'https://api.taxcloud.net/1.0/TaxCloud/Lookup')
-  .setState('requests', new Map)
+const TaxCloud = kos.reactor('service-taxcloud')
+  .load(httpReactor)
+  .init('taxcloud/access/url', 'https://api.taxcloud.net/1.0/TaxCloud/Lookup')
+  .init('requests', new Map)
 
-  .in('taxcloud/request').out('http/request/post')
-  .use('taxcloud/access/id','taxcloud/access/key','taxcloud/access/url')
+  .in('taxcloud/request')
+  .has('taxcloud/access/id','taxcloud/access/key','taxcloud/access/url')
+  .out('http/request/post')
   .bind(invokeRequest)
 
   .in('http/response').out('taxcloud/response').bind(handleResponse)
@@ -30,9 +30,8 @@ const TaxCloud = kos
   })
 
 // Reaction Commerce TaxCloud flow
-module.exports = kos
-  .reactor('reaction-taxcloud')
-  .embed(TaxCloud)
+module.exports = kos.reactor('reaction-taxcloud')
+  .load(TaxCloud)
 
   .in('reaction/shipping/address').out('taxcloud/destination').bind(normalizeDestination)
   .in('cart/items/taxable').out('taxcloud/items').bind(normalizeCartItems)
@@ -43,7 +42,7 @@ module.exports = kos
 
   .in('taxcloud/items','taxcloud/response/items')
   .out('cart/items/tax')
-  .setState('taxes', new Map)
+  .init('taxes', new Map)
   .bind(calculateTaxes)
   
 function normalizeAddress(addr) {

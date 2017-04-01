@@ -5,10 +5,10 @@ const { kos = require('..') } = global
 const httpReactor = require('./http')
 const wsReactor = require('./ws')
 
-module.exports = kos
-  .reactor('rest', 'Provides RElational State Transfer interactions with KOS reactors')
-  .embed(httpReactor, wsReactor)
-  .setState('basePath', '/')
+module.exports = kos.reactor('rest')
+  .desc('Provides RElational State Transfer interactions with KOS reactors')
+  .load(httpReactor, wsReactor)
+  .init('basePath', '/')
 
   .in('rest/listen').out('http/listen','http/route').bind(runInstance)
   .in('http/server').out('ws/listen').bind(runWebSocketServer)

@@ -10,16 +10,19 @@ const { kos = require('..') } = global
 const netReactor = require('./net')
 const wsReactor = require('./ws')
 
-module.exports = kos
-  .reactor('link', 'Provides dynamic client/server communication flows for various protocols')
-  .embed(netReactor, wsReactor)
-  .setState('streams', new Map)
+module.exports = kos.reactor('link')
+  .desc('Provides dynamic client/server communication flows for various protocols')
+  .load(netReactor, wsReactor)
+  .init('streams', new Map)
 
   .in('link/connect').out('net/connect','ws/connect').bind(connect)
   .in('link/listen').out('net/listen','ws/listen').bind(listen)
 
-  .in('link/connect/url').out('link/connect').use('module/url').bind(connectByUrl)
-  .in('link/listen/url').out('link/listen').use('module/url').bind(listenByUrl)
+  .in('link/connect/url').and.has('module/url')
+  .out('link/connect').bind(connectByUrl)
+
+  .in('link/listen/url').and.has('module/url')
+  .out('link/listen').bind(listenByUrl)
 
   .in('link').out('link/stream').bind(createLinkStream)
 

@@ -2,8 +2,8 @@
 
 const { kos = require('kos') } = global
 
-module.exports = kos
-  .reactor('reaction-shipping', 'Provides reaction commerce shipping workflow')
+module.exports = kos.reactor('reaction-shipping')
+  .desc('Provides reaction commerce shipping workflow')
   // flow reactors
   .in('cart/items','reaction/shipping').out('cart/items/shippable').bind(itemizeShippableGoods)
   .in('reaction/shipping').out('reaction/shipping/address').bind(extractShippingAddress)

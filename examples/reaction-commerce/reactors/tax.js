@@ -2,8 +2,8 @@
 
 const { kos = require('kos') } = global
 
-module.exports = kos
-  .reactor('reaction-tax', 'Provides reaction commerce tax calculation workflow')
+module.exports = kos.reactor('reaction-tax')
+  .desc('Provides reaction commerce tax calculation workflow')
 
   .in('cart/items').out('cart/items/taxable').bind(filterTaxableGoods)
   .in('cart/items/taxable','cart/items/tax').out('cart/tax').bind(calculateOverallTax)

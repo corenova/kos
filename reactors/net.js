@@ -8,27 +8,26 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos
-  .reactor('net', "Provides network client/server communication flows")
-  .setState('protocols', ['tcp:', 'udp:'])
+module.exports = kos.reactor('net')
+  .desc("Provides network client/server communication flows")
+  .init('protocols', ['tcp:', 'udp:'])
 
-  .in('module/net','module/url').bind(ready)
+  .in('net/connect').and.has('module/net')
+  .out('net/socket','link','net/connect')
+  .bind(connect)
 
-  .in('net/connect').out('net/socket','link','net/connect')
-  .use('module/net').bind(connect)
+  .in('net/listen').and.has('module/net')
+  .out('net/server','net/socket','link')
+  .bind(listen)
 
-  .in('net/listen').out('net/server','net/socket','link')
-  .use('module/net').bind(listen)
+  .in('net/connect/url').and.has('module/url')
+  .out('net/connect')
+  .bind(connectByUrl)
 
-  .in('net/connect/url').out('net/connect')
-  .use('module/url').bind(connectByUrl)
+  .in('net/listen/url').and.has('module/url')
+  .out('net/listen')
+  .bind(listenByUrl)
 
-  .in('net/listen/url').out('net/listen')
-  .use('module/url').bind(listenByUrl)
-
-function ready(net, url) {
-  // should add verification logic...
-}
 
 function connect(opts) {
   const [ net, protocols ] = this.fetch('module/net', 'protocols')

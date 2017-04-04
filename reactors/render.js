@@ -6,51 +6,22 @@ module.exports = kos.reactor('render')
   .desc('Provides Kinetic Reactor visualization')
   .init('reactors', new Map)
 
-  .in('dom/element','joint/graph','joint/paper/config').and.has('module/jointjs')
-  .out('joint/paper').bind(renderGraphToPaper)
-
   // reactor specific render triggers
   .in('render/reactor').and.has('module/jointjs')
-  .out('joint/graph').bind(reactorToDiagram)
+  .out('joint/graph','joint/token').bind(reactorToDiagram)
 
+  .in('joint/graph','render/paper').and.has('module/jointjs')
+  .out('joint/paper').bind(renderGraphToPaper)
+
+  .in('joint/paper','joint/token').and.has('render/reactor')
+  .bind(animateReactor)
+
+  // TODO - shouldn't need these
   .in('render/reactor/name').out('render/reactor').bind(renderReactorByName)
-
-  // TODO - shouldn't need this...
   .in('reactor').bind(collectReactors)
 
-function renderGraphToPaper(element, source, opts) {
-  const joint = this.get('module/jointjs')
-  const doc   = this.get('browser/document')
-
-  let graph = new joint.dia.Graph
-  opts = Object.assign({
-    el: element,
-    gridSize: 10,
-    perpendicularLinks: true
-  }, opts, { model: graph })
-  let paper = new joint.dia.Paper(opts)
-
-  if (source instanceof joint.dia.Graph)
-    graph.fromJSON(source.toJSON())
-  else
-    graph.fromJSON(source)
-
-  paper.fitToContent({ padding: opts.padding })
-  this.send('joint/paper', paper)
-}
-
-function collectReactors(reactor) {
-  this.fetch('reactors').set(reactor.label, reactor)
-}
-
-function renderReactorByName(name) {
-  const reactors = this.fetch('reactors')
-  if (reactors.has(name)) this.send('render/reactor', reactors.get(name))
-  else this.warn('no such reactor:', name)
-}
-
 function reactorToDiagram(target) {
-  const { dia, shapes } = this.get('module/jointjs')
+  const { dia, shapes, V } = this.get('module/jointjs')
   const { Place, Transition, Link } = shapes.pn
   const graph = new dia.Graph
   const p = new Place({
@@ -58,7 +29,8 @@ function reactorToDiagram(target) {
       '.label': { fill: '#7c68fc'},
       '.root': { stroke: '#9586fd', 'stroke-width': 3 },
       '.tokens > circle': { fill: '#7a7e9b' }
-    }
+    },
+    tokens: 0
   })
   const t = new Transition({
     attrs: {
@@ -69,19 +41,21 @@ function reactorToDiagram(target) {
   // a subnet is a nested petri-net
   const subnet = p.clone().attr('.root/stroke-width', 7)
 
-  let PX = [ 50, 210, 400, 590, 850, 1020 ]
-  let TX = [ 150, 310, 510, 700, 950 ]
+  //let PX = [ 50, 210, 400, 590, 850, 1020 ]
+  //let TX = [ 150, 310, 510, 700, 950 ]
+  let PX = [ 0, 160, 350, 540, 800, 970 ]
+  let TX = [ 100, 260, 460, 650, 900 ]
 
-  let input  = p.clone().attr('.label/text', 'input')
+  let input  = p.clone().attr('.label/text', 'input').set('kinetic', target.id)
   let reject = p.clone().attr('.label/text', 'reject')
-  let core   = p.clone().attr('.label/text', 'core')
-  let buffer = p.clone().attr('.label/text', 'buffer')
+  let core   = p.clone().attr('.label/text', 'core').set('kinetic', 'core')
+  let buffer = p.clone().attr('.label/text', 'buffer').set('kinetic', 'buffer')
   let output = p.clone().attr('.label/text', 'output')
 
-  let accept   = t.clone().attr('.label/text', 'accept')
-  let consume  = t.clone().attr('.label/text', 'consume')
-  let produce  = t.clone().attr('.label/text', 'produce')
-  let feedback = t.clone().attr('.label/text', 'feedback')
+  let accept   = t.clone().attr('.label/text', 'accept').set('kinetic', 'accept')
+  let feedback = t.clone().attr('.label/text', 'feedback').set('kinetic', 'feedback')
+  let consume  = t.clone().attr('.label/text', 'consume').set('kinetic', 'consume')
+  let produce  = t.clone().attr('.label/text', 'produce').set('kinetic', 'produce')
   let send     = t.clone().attr('.label/text', 'send')
 
   graph.addCell([ input, core, reject, buffer, output, accept, consume, produce, feedback ])
@@ -97,13 +71,13 @@ function reactorToDiagram(target) {
 
   let yoffset = 50
   // generate the trigger PTN model
-  for (let { label, inputs, requires, outputs } of target.triggers) {
+  for (let { id, label, inputs, requires, outputs } of target.triggers) {
     let accepts = requires.concat(inputs)
     let coffset = yoffset, poffset = yoffset, hoffset = yoffset
     if (accepts.length > outputs.length) {
       poffset = yoffset + ((accepts.length - outputs.length) * 100 / 2)
       hoffset = yoffset + (accepts.length - 1) * 100 / 2
-      yoffset += inputs.length * 100
+      yoffset += accepts.length * 100
     }
     else {
       coffset = yoffset + ((outputs.length - accepts.length) * 100 / 2)
@@ -112,16 +86,19 @@ function reactorToDiagram(target) {
     }
 
     let handler = t.clone()
+      .set('kinetic', id)
       .attr('.label/text', label)
       .position(TX[2], hoffset)
 
     let consumes = accepts.map((x, idx) => {
       return p.clone()
+        .set('kinetic', `input/${x}`)
         .attr('.label/text', x)
         .position(PX[2], coffset + (100 * idx))
       })
     let produces = outputs.map((x, idx) => {
       return p.clone()
+        .set('kinetic', `output/${x}`)
         .attr('.label/text', x)
         .position(PX[3], poffset + (100 * idx))
     })
@@ -132,7 +109,9 @@ function reactorToDiagram(target) {
       link(consume, x), link(x, handler)
     ]))
     produces.forEach((x, idx) => {
-      let out = send.clone().position(TX[3], poffset + (100 * idx))
+      let out = send.clone()
+        .set('kinetic', `${id}/send`)
+        .position(TX[3], poffset + (100 * idx))
       graph.addCell([
         out, 
         link(handler, x),
@@ -161,6 +140,7 @@ function reactorToDiagram(target) {
   if (target.reactors.length) {
     let offset = yoffset + (target.reactors.length - 1) * 100 / 2
     let absorb  = t.clone()
+      .set('kinetic', 'absorb')
       .attr('.label/text', 'absorb')
       .position(TX[1], offset)
     graph.addCell([
@@ -169,6 +149,8 @@ function reactorToDiagram(target) {
     ])
     for (let reactor of target.reactors) {
       let sub  = subnet.clone()
+        .set('kinetic', reactor.id)
+        .set('subnet', true)
         .attr('.label/text', reactor.label)
         .position(PX[2], yoffset)
       let out = send.clone().position(TX[3], yoffset)
@@ -195,6 +177,9 @@ function reactorToDiagram(target) {
   ])
 
   this.send('joint/graph', graph)
+  this.send('joint/token', V('circle', {
+    r: 5, fill: '#f3b662'
+  }))
 
   function link(a, b) {
     return new Link({
@@ -216,5 +201,142 @@ function reactorToDiagram(target) {
       }
     })
   }
+}
+
+function renderGraphToPaper(source, opts) {
+  const joint = this.get('module/jointjs')
+  const doc   = this.get('browser/document')
+
+  let graph = new joint.dia.Graph
+  opts = Object.assign({
+    gridSize: 10,
+    perpendicularLinks: true
+  }, opts, { model: graph })
+  let paper = new joint.dia.Paper(opts)
+
+  if (source instanceof joint.dia.Graph)
+    graph.fromJSON(source.toJSON())
+  else
+    graph.fromJSON(source)
+
+  paper.fitToContent({ padding: opts.padding, allowNewOrigin: 'any' })
+  this.send('joint/paper', paper)
+}
+
+function animateReactor(paper, token) {
+  let reactor = this.get('render/reactor')
+  let graph = paper.model
+  let map = new Map
+  for (let elem of graph.getElements()) {
+    let kinetic = elem.get('kinetic')
+    if (!kinetic) continue
+    map.set(kinetic, elem)
+  }
+
+  reactor.on('accept', ko => {
+    // let t = map.get('accept')
+    // let inbound = graph.getConnectedLinks(t, {inbound: true})
+    // let sources = inbound.map(link => graph.getCell(link.get('source').id))
+    // sources.forEach(x => x.set('tokens', 1))
+  })
+  reactor.on('feedback', ko => {
+    console.log('feedback', ko)
+    let origin = map.get(ko.origin) // originating transition
+    if (!origin) {
+      let match = reactor.reactors.find(x => x.contains(ko.origin))
+      origin = map.get(match.id)
+    }
+    let links = graph.getConnectedLinks(origin, {outbound: true})
+    let output
+    if (origin.get('subnet')) {
+      output = origin
+      output.set('tokens', output.get('tokens') + 1)
+    } else {
+      let link = links.find(l => {
+        let elem = graph.getCell(l.get('target').id)
+        return elem.get('kinetic') === `output/${ko.key}`
+      })
+      output = graph.getCell(link.get('target').id)
+      paper.findViewByModel(link).sendToken(token.clone().node, 500, () => {
+        output.set('tokens', output.get('tokens') + 1)
+      })
+    }
+    let send = graph.getNeighbors(output, {outbound: true})[0]
+    let feedback = map.get('feedback')
+    fireTransition(send, { duration: 500 })
+    fireTransition(feedback, { duration: 2000 })
+  })
+
+  reactor.on('consume', ko => {
+    console.log('consume', ko)
+    let t = map.get('consume')
+    fireTransition(t, { target: `input/${ko.key}`, duration: 1000 })
+  })
+
+  reactor.on('absorb', ko => {
+    console.log('absorb', ko)
+    let t = map.get('absorb')
+    fireTransition(t, { duration: 1000 })
+  })
+
+  reactor.on('fire', trigger => {
+    console.log('fire', trigger)
+    let t = map.get(trigger.id)
+    fireTransition(t, { duration: 500 })
+  })
+
+  // reactor.on('produce', ko => {
+  //   let t = map.get('produce')
+  //   fireTransition(t, { duration: 500 })
+  // })
+
+  // nested function inside since we don't want recursive animations
+  function fireTransition(t, opts) {
+    let { target, duration = 1000 } = opts
+    let inbound = graph.getConnectedLinks(t, {inbound: true})
+    let sources = inbound.map(link => graph.getCell(link.get('source').id))
+    let isReady = sources.every(p => p.get('tokens') > 0)
+    if (!isReady) {
+      console.log('transition not ready: ', t.get('kinetic'))
+      if (sources.length === 1) {
+        let source = sources[0]
+        source.once('change', () => {
+          console.log('detected change ', source.get('kinetic'))
+          if (source.get('tokens') > 0)
+            setTimeout(() => fireTransition(t, opts), 500)
+        })
+      }
+      return
+    }
+
+    let outbound = graph.getConnectedLinks(t, {outbound: true})
+    let targets = outbound.map(link => graph.getCell(link.get('target').id))
+    if (target) targets = targets.filter(p => p.get('kinetic') === target)
+    
+    sources.forEach(p => {
+      let link = inbound.find(l => l.get('source').id === p.id)
+      let tokens = p.get('tokens')
+      if (tokens > 0) p.set('tokens', tokens - 1)
+      paper.findViewByModel(link).sendToken(token.clone().node, duration)
+    })
+    targets.forEach(p => {
+      let link = outbound.find(l => l.get('target').id === p.id)
+      paper.findViewByModel(link).sendToken(token.clone().node, duration, () => {
+        p.set('tokens', p.get('tokens') + 1)
+      })
+    })
+  }
+}
+
+// TODO: below shouldn't be needed
+
+function collectReactors(reactor) {
+  this.fetch('reactors').set(reactor.label, reactor)
+}
+
+function renderReactorByName(name) {
+  const reactors = this.fetch('reactors')
+  if (reactors.has(name)) this.send('render/reactor', reactors.get(name))
+  else this.warn('no such reactor:', name)
 }
 

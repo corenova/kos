@@ -64,9 +64,9 @@ var KineticObject = function () {
   }, {
     key: 'match',
     value: function match(keys) {
-      if (!keys) return false;
-      if (keys instanceof Set && keys.has(this.key)) return true;
-      if (Array.isArray(keys) && keys.includes(this.key)) return true;
+      if (Array.isArray(keys)) keys = new Set(keys);
+      if (!(keys instanceof Set)) return false;
+      if (keys.has(this.key)) return true;
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -112,6 +112,11 @@ var KineticObject = function () {
 
       if (typeof value === 'function') value = null;
       return '{"' + key + '":' + CircularJSON.stringify(value) + '}';
+    }
+  }, {
+    key: 'origin',
+    get: function get() {
+      return this.tags.keys().next().value;
     }
   }, {
     key: 'accepted',
@@ -190,15 +195,13 @@ var KineticReactor = function (_KineticStream) {
   }]);
 
   function KineticReactor(options) {
-    var description = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-
     _classCallCheck(this, KineticReactor);
 
     if (options instanceof KineticReactor) {
       options = options.inspect();
       debug(options.label, 'cloning');
     }
-    if (typeof options === 'string') options = { label: options, summary: description };
+    if (typeof options === 'string') options = { label: options };
 
     if (!options.label) throw new Error("must supply 'label' to create a new KineticReactor");
 
@@ -206,7 +209,7 @@ var KineticReactor = function (_KineticStream) {
 
     var _options = options,
         label = _options.label,
-        summary = _options.summary,
+        purpose = _options.purpose,
         _options$reactors = _options.reactors,
         reactors = _options$reactors === undefined ? [] : _options$reactors,
         _options$triggers = _options.triggers,
@@ -216,39 +219,46 @@ var KineticReactor = function (_KineticStream) {
 
 
     _this._label = label;
-    _this._summary = summary;
+    _this._purpose = purpose;
     _this._reactors = new Map();
     _this._triggers = new Set();
 
     // CORE REACTOR
     _this.core = new KineticStream({
       maxListeners: maxReceivers,
-      transform: function transform(ko, enc, callback) {
-        if (!ko) return callback();
+      filter: function filter(ko) {
         if (_this.seen(ko)) {
           // from external flow
+          _this.emit('accept', ko);
           var requires = _this.requires,
-              inputs = _this.inputs;
+              inputs = _this.inputs,
+              absorbs = _this.absorbs;
 
           if (ko.match(requires) || ko.match(inputs)) {
             debug(_this.identity, '<==', ko.key);
-            _this.emit('consume', ko);
-            // mark the KineticObject that it's been accepted into this flow
+            // update the KineticObject that it's been accepted into this flow
             _this.mark(ko, true);
+            _this.emit('consume', ko);
+            if (ko.match(absorbs)) _this.emit('absorb', ko);
           } else {
             _this.emit('reject', ko);
-            return callback();
+            return false;
           }
         } else {
           // from internal flow
-          var absorbs = _this.absorbs,
+          _this.emit('feedback', ko);
+          var _inputs = _this.inputs,
+              _absorbs = _this.absorbs,
               outputs = _this.outputs;
 
           outputs.push.apply(outputs, ['error', 'warn', 'info', 'debug']);
-          if (ko.match(absorbs)) {
+
+          if (ko.match(_inputs)) _this.emit('consume', ko);else _this.emit('reject', ko);
+
+          if (ko.match(_absorbs)) {
             debug(_this.identity, '<->', ko.key);
-            _this.emit('absorb', ko);
             _this.mark(ko, true); // prevent external propagation
+            _this.emit('absorb', ko);
           } else if (ko.match(outputs)) {
             debug(_this.identity, '==>', ko.key);
             _this.emit('produce', ko);
@@ -258,26 +268,46 @@ var KineticReactor = function (_KineticStream) {
           }
           if (ko.key !== 'error') _this.emit(ko.key, ko.value);
         }
-        callback(null, ko);
+        return true;
       }
     });
     _this.pipe(_this.core).pipe(_this);
 
-    _this.addReactor.apply(_this, _toConsumableArray(reactors));
-    _this.addTrigger.apply(_this, _toConsumableArray(triggers));
+    // NOTE: can't use this.load here since arguments may be simple
+    // JSON objects
+    _this.loadReactor.apply(_this, _toConsumableArray(reactors));
+    _this.loadTrigger.apply(_this, _toConsumableArray(triggers));
 
     debug(_this.identity, 'new', _this.id);
     return _this;
   }
 
-  // Convenience function for injecting KineticObject into Writable stream
-
-
   _createClass(KineticReactor, [{
-    key: 'feed',
-    value: function feed(key) {
-      for (var _len = arguments.length, values = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        values[_key - 1] = arguments[_key];
+    key: 'desc',
+    value: function desc() {
+      var description = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+
+      this._purpose = description;
+      return this;
+    }
+
+    // Load KineticStream(s) into current Reactor
+    //
+    // Loading extends the Reactor with additional receivers (such as
+    // Reactors and Triggers) that can process tokens accepted into the
+    // Reactor CORE.
+    //
+    // KineticTriggers will handle externally accepted and internally
+    // produced tokens
+    //
+    // KineticReactors will only handle internally produced tokens
+    // (other than tokens it requires)
+
+  }, {
+    key: 'load',
+    value: function load() {
+      for (var _len = arguments.length, streams = Array(_len), _key = 0; _key < _len; _key++) {
+        streams[_key] = arguments[_key];
       }
 
       var _iteratorNormalCompletion = true;
@@ -285,10 +315,11 @@ var KineticReactor = function (_KineticStream) {
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = values[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var value = _step.value;
+        for (var _iterator = streams[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var stream = _step.value;
 
-          this.write(new KineticObject(key, value));
+          if (!(stream instanceof KineticStream)) throw new Error('must supply KineticStream to chain');
+          if (stream instanceof KineticReactor) this.loadReactor(stream);else if (stream instanceof KineticTrigger) this.loadTrigger(stream);else this.core.pipe(stream).pipe(this.core);
         }
       } catch (err) {
         _didIteratorError = true;
@@ -308,8 +339,8 @@ var KineticReactor = function (_KineticStream) {
       return this;
     }
   }, {
-    key: 'addReactor',
-    value: function addReactor() {
+    key: 'loadReactor',
+    value: function loadReactor() {
       for (var _len2 = arguments.length, reactors = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
         reactors[_key2] = arguments[_key2];
       }
@@ -344,8 +375,8 @@ var KineticReactor = function (_KineticStream) {
       return this;
     }
   }, {
-    key: 'addTrigger',
-    value: function addTrigger() {
+    key: 'loadTrigger',
+    value: function loadTrigger() {
       for (var _len3 = arguments.length, triggers = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
         triggers[_key3] = arguments[_key3];
       }
@@ -380,61 +411,13 @@ var KineticReactor = function (_KineticStream) {
       return this;
     }
 
-    // Embed KineticStream(s) into current Reactor
-    //
-    // Embedding extends the Reactor with additional receivers (such as
-    // Reactors and Triggers) that can process tokens accepted into the
-    // Reactor CORE.
-    //
-    // KineticTriggers will handle externally accepted and internally
-    // produced tokens
-    //
-    // KineticReactors will only handle internally produced tokens
-    // (other than tokens it requires)
-
-  }, {
-    key: 'embed',
-    value: function embed() {
-      for (var _len4 = arguments.length, streams = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-        streams[_key4] = arguments[_key4];
-      }
-
-      var _iteratorNormalCompletion4 = true;
-      var _didIteratorError4 = false;
-      var _iteratorError4 = undefined;
-
-      try {
-        for (var _iterator4 = streams[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-          var stream = _step4.value;
-
-          if (!(stream instanceof KineticStream)) throw new Error('must supply KineticStream to chain');
-          if (stream instanceof KineticReactor) this.addReactor(stream);else if (stream instanceof KineticTrigger) this.addTrigger(stream);else this.core.pipe(stream).pipe(this.core);
-        }
-      } catch (err) {
-        _didIteratorError4 = true;
-        _iteratorError4 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion4 && _iterator4.return) {
-            _iterator4.return();
-          }
-        } finally {
-          if (_didIteratorError4) {
-            throw _iteratorError4;
-          }
-        }
-      }
-
-      return this;
-    }
-
     // Chain KineticStream(s) from/to the current Reactor
     //
     // Chaining is a convenience method to emulate following logic:
     //
     // this.pipe(StreamA).pipe(StreamB).pipe(StreamC).pipe(this)
     // 
-    // Instead of attaching to the Reactor CORE as in the `embed()`
+    // Instead of attaching to the Reactor CORE as in the `load()`
     // case, it simply establishes a data pipeline of outputs from the
     // Reactor to have a control feedback loop across one more more
     // additional KineticStreams. Basically, the collective outputs from
@@ -444,8 +427,8 @@ var KineticReactor = function (_KineticStream) {
   }, {
     key: 'chain',
     value: function chain() {
-      for (var _len5 = arguments.length, streams = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-        streams[_key5] = arguments[_key5];
+      for (var _len4 = arguments.length, streams = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+        streams[_key4] = arguments[_key4];
       }
 
       // TODO: should we validate that the streams are instances of KineticStream?
@@ -463,8 +446,8 @@ var KineticReactor = function (_KineticStream) {
   }, {
     key: 'in',
     value: function _in() {
-      for (var _len6 = arguments.length, keys = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-        keys[_key6] = arguments[_key6];
+      for (var _len5 = arguments.length, keys = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+        keys[_key5] = arguments[_key5];
       }
 
       return this.trigger(keys);
@@ -498,7 +481,7 @@ var KineticReactor = function (_KineticStream) {
     value: function inspect() {
       return Object.assign(_get(KineticReactor.prototype.__proto__ || Object.getPrototypeOf(KineticReactor.prototype), 'inspect', this).call(this), {
         label: this._label,
-        summary: this._summary,
+        purpose: this._purpose,
         requires: this.requires,
         reactors: this.reactors.map(function (x) {
           return x.inspect();
@@ -513,7 +496,7 @@ var KineticReactor = function (_KineticStream) {
     value: function toJSON() {
       return Object.assign(_get(KineticReactor.prototype.__proto__ || Object.getPrototypeOf(KineticReactor.prototype), 'toJSON', this).call(this), {
         label: this._label,
-        summary: this._summary,
+        purpose: this._purpose,
         requires: this.requires,
         reactors: this.reactors.map(function (x) {
           return x.toJSON();
@@ -540,9 +523,9 @@ var KineticReactor = function (_KineticStream) {
       return this._label;
     }
   }, {
-    key: 'summary',
+    key: 'purpose',
     get: function get() {
-      return this._summary;
+      return this._purpose;
     }
   }, {
     key: 'triggers',
@@ -613,8 +596,7 @@ try {
 var uuid = require('uuid');
 
 var _require = require('stream'),
-    Transform = _require.Transform,
-    Duplex = _require.Duplex;
+    Transform = _require.Transform;
 
 var KineticObject = require('./object');
 
@@ -643,39 +625,52 @@ var KineticStream = function (_Transform) {
       options = options.inspect();
     }
     options.objectMode = true;
+    delete options.transform; // disallow override for default transform
 
     var _this = _possibleConstructorReturn(this, (KineticStream.__proto__ || Object.getPrototypeOf(KineticStream)).call(this, options));
 
     _this.id = uuid();
+    if (options.filter instanceof Function) _this.filter = options.filter;
 
     if (options.state instanceof Map) _this.state = options.state;else _this.state = new Map(options.state);
 
-    _this.buffer = '';
     _this.on('end', _this.warn.bind(_this, 'kinetic stream died unexpectedly'));
 
     options.maxListeners && _this.setMaxListeners(options.maxListeners);
     return _this;
   }
 
-  // Kinetic Transform Implementation
-  //
-  // Basic enforcement of chunk to be KineticObject
-  // Also prevents circular loop by rejecting objects it's seen before
-
-
   _createClass(KineticStream, [{
+    key: 'clone',
+    value: function clone() {
+      return new this.constructor(this);
+    }
+
+    // Kinetic Transform Implementation
+    //
+    // Basic enforcement of chunk to be KineticObject
+    // Also prevents circular loop by rejecting objects it's seen before
+
+  }, {
     key: '_transform',
     value: function _transform(chunk, enc, callback) {
       if (!(chunk instanceof KineticObject)) {
         return callback(new Error("chunk is not a KineticObject"));
       }
-
-      // ignore chunks it's seen before, otherwise mark it and send it along
-      this.seen(chunk) ? callback() : callback(null, this.mark(chunk));
+      // accept if it hasn't been seen before and allowed by the filter
+      if (!this.seen(chunk) && this.filter(chunk)) callback(null, this.mark(chunk));else callback();
     }
   }, {
-    key: 'setState',
-    value: function setState() {
+    key: 'filter',
+    value: function filter(ko) {
+      return true;
+    }
+
+    // setup initial state (can be called multiple times)
+
+  }, {
+    key: 'init',
+    value: function init() {
       var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
       var value = arguments[1];
 
@@ -702,6 +697,43 @@ var KineticStream = function (_Transform) {
       return this;
     }
 
+    // Convenience function for injecting KineticObject into Writable stream
+
+  }, {
+    key: 'feed',
+    value: function feed(key) {
+      for (var _len = arguments.length, values = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        values[_key - 1] = arguments[_key];
+      }
+
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = values[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var value = _step.value;
+
+          this.write(new KineticObject(key, value));
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+
+      return this;
+    }
+
     // A special "wrapper" method that creates a new KineticStream
     // stream around the current stream instance. It provides
     // compatibility interface with non-KOS streams by transforming
@@ -724,7 +756,7 @@ var KineticStream = function (_Transform) {
       var self = this;
       var buffer = '';
       var lines = [];
-      var wrapper = new KineticStream({
+      var wrapper = new Transform({
         // transform KSON to KineticObject
         transform: function transform(chunk, enc, callback) {
           if (chunk instanceof KineticObject) return callback(null, chunk);
@@ -733,32 +765,33 @@ var KineticStream = function (_Transform) {
           buffer += chunk;
           lines = buffer.split(/\r?\n/);
           if (lines.length) buffer = lines.pop();
-          var _iteratorNormalCompletion = true;
-          var _didIteratorError = false;
-          var _iteratorError = undefined;
+          var _iteratorNormalCompletion2 = true;
+          var _didIteratorError2 = false;
+          var _iteratorError2 = undefined;
 
           try {
-            for (var _iterator = lines.filter(Boolean)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-              var line = _step.value;
+            for (var _iterator2 = lines.filter(Boolean)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+              var line = _step2.value;
 
               try {
                 var ko = KineticObject.fromKSON(line.trim());
+                debug('io:write', ko.key);
                 self.write(this.mark(ko));
               } catch (e) {
                 self.error(e);
               }
             }
           } catch (err) {
-            _didIteratorError = true;
-            _iteratorError = err;
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
           } finally {
             try {
-              if (!_iteratorNormalCompletion && _iterator.return) {
-                _iterator.return();
+              if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
               }
             } finally {
-              if (_didIteratorError) {
-                throw _iteratorError;
+              if (_didIteratorError2) {
+                throw _iteratorError2;
               }
             }
           }
@@ -773,20 +806,6 @@ var KineticStream = function (_Transform) {
         wrapper.push(ko.toKSON() + "\n");
       });
       return wrapper.join(this);
-    }
-  }, {
-    key: 'filter',
-    value: function filter() {
-      for (var _len = arguments.length, keys = Array(_len), _key = 0; _key < _len; _key++) {
-        keys[_key] = arguments[_key];
-      }
-
-      var triggers = new Set(keys);
-      return this.pipe(new KineticStream({
-        transform: function transform(ko, enc, cb) {
-          ko && ko.match(triggers) ? cb(null, ko) : cb();
-        }
-      }));
     }
 
     // get data for key(s) from up the hierarchy if not in local state
@@ -975,37 +994,29 @@ var KineticTrigger = function (_KineticStream) {
     return _this;
   }
 
-  //--------------------------------------------------------
-  // primary transform
-  //--------------------------------------------------------
-
-
   _createClass(KineticTrigger, [{
-    key: '_transform',
-    value: function _transform(chunk, enc, callback) {
+    key: 'filter',
+    value: function filter(ko) {
       var _this2 = this;
 
-      if (this.handler === KineticTrigger.none) return callback();
-
-      _get(KineticTrigger.prototype.__proto__ || Object.getPrototypeOf(KineticTrigger.prototype), '_transform', this).call(this, chunk, enc, function (err, ko) {
-        if (err) return callback(err);
-        if (ko && _this2.ready(ko)) {
-          var ctx = _this2.context;
-          ctx.event = ko.key;
-          ctx.arguments = _this2.inputs.map(function (x) {
-            return _this2.state.get(x);
-          });
-          // TODO: clear the local state for input triggers
-          debug(_this2.identity, 'ƒ(' + _this2.inputs + ')');
-          try {
-            _this2.handler.apply(ctx, ctx.arguments);
-          } catch (e) {
-            debug(e);
-            _this2.error(e);
-          }
+      if (this.handler === KineticTrigger.none) return false;
+      if (this.ready(ko)) {
+        var ctx = this.context;
+        ctx.event = ko.key;
+        ctx.arguments = this.inputs.map(function (x) {
+          return _this2.state.get(x);
+        });
+        // TODO: clear the local state for input triggers
+        debug(this.identity, 'ƒ(' + this.inputs + ')');
+        this.parent && this.parent.emit('fire', this);
+        try {
+          this.handler.apply(ctx, ctx.arguments);
+        } catch (e) {
+          debug(e);
+          this.error(e);
         }
-        callback();
-      });
+      }
+      return false;
     }
 
     // accept ko if ALL conditions are met:
@@ -1017,12 +1028,16 @@ var KineticTrigger = function (_KineticStream) {
     value: function ready(ko) {
       var _this3 = this;
 
-      ko.match(this._requires) && this.state.set(ko.key, ko.value);
+      if (ko.match(this._requires)) {
+        this.mark(ko, true);
+        this.state.set(ko.key, ko.value);
+      }
 
       // TODO: should warn about dropped input triggers...
       if (this.requires.every(function (x) {
         return _this3.state.has(x);
       }) && ko.match(this._inputs)) {
+        this.mark(ko, true);
         this.state.set(ko.key, ko.value);
         // TODO: should also check parent
         return this.inputs.every(function (x) {
@@ -1104,15 +1119,17 @@ var KineticTrigger = function (_KineticStream) {
       return this;
     }
 
-    // data objects required for invoking the KineticTrigger 
+    // data objects that are pre-conditions for invoking the
+    // KineticTrigger
     //
-    // NOTE: the difference between `use()` and `in()` is that required
-    // data objects are pre-requisites for the reaction and remain
-    // sticky to the State Machine
+    // NOTE: the difference between `has()` and `in()` is that the
+    // pre-condition data tokens stay sticky to the State Machine and
+    // must be present before the declared input data tokens can invoke
+    // the trigger.
 
   }, {
-    key: 'use',
-    value: function use() {
+    key: 'has',
+    value: function has() {
       for (var _len3 = arguments.length, keys = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
         keys[_key3] = arguments[_key3];
       }
@@ -1128,7 +1145,7 @@ var KineticTrigger = function (_KineticStream) {
           if (/^module\//.test(key)) {
             var target = key.match(/^module\/(.+)$/, '$1');
             try {
-              this.setState(key, require(target[1]));
+              this.init(key, require(target[1]));
             } catch (e) {
               debug('unable to auto-load require', key);
             }
@@ -1153,18 +1170,20 @@ var KineticTrigger = function (_KineticStream) {
       return this;
     }
 
+    // a no-op continuation grammer for improving readability
+
+  }, {
+    key: 'bind',
+
+
     // Bind a function to be triggered by the matching input key(s)
     // flowing into source KOS
     //
     // returns: source KOS
-
-  }, {
-    key: 'bind',
     value: function bind(fn) {
-      var parent = this.state.get('parent');
       if (typeof fn !== 'function') throw new Error("[bind] expected function but got something else");
       this._handler = fn;
-      return parent ? parent.addTrigger(this) : this;
+      return this.parent ? this.parent.loadTrigger(this) : this;
     }
   }, {
     key: 'send',
@@ -1203,6 +1222,11 @@ var KineticTrigger = function (_KineticStream) {
         requires: this.requires,
         handler: this.handler
       });
+    }
+  }, {
+    key: 'and',
+    get: function get() {
+      return this;
     }
   }, {
     key: 'type',
@@ -1249,8 +1273,7 @@ var KineticTrigger = function (_KineticStream) {
   }, {
     key: 'identity',
     get: function get() {
-      var parent = this.state.get('parent');
-      return parent ? parent.identity + ':' + this.handler.name : this.handler.name;
+      return this.parent ? this.parent.identity + ':' + this.handler.name : this.handler.name;
     }
   }]);
 
@@ -7372,66 +7395,22 @@ function v4(options, buf, offset) {
 module.exports = v4;
 
 },{"./lib/bytesToUuid":39,"./lib/rng":40}],43:[function(require,module,exports){
-(function (__dirname){
+(function (global){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
-var kos = require('..');
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
 
-module.exports = kos.reactor('core', 'Provides KOS reactor loading & logging facility').setState('reactors', new Map()).in('load').out('reactor').use('module/path').bind(loadReactor).in('reactor').out('load').bind(chainReactor).in('log').use('module/debug').bind(setupLogger);
 
-function loadReactor(name) {
-  var path = this.fetch('module/path');
-  var reactor = {};
-  var search = [path.resolve(name), path.resolve(path.join('reactors', name)), path.resolve(__dirname, path.join('reactors', name)), name];
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
-
-  try {
-    for (var _iterator = search[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var _name = _step.value;
-
-      try {
-        reactor = require(_name);break;
-      } catch (e) {
-        if (e.code !== 'MODULE_NOT_FOUND') throw e;
-      }
-    }
-  } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator.return) {
-        _iterator.return();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
-  }
-
-  if (reactor.type !== Symbol.for('kinetic.reactor')) throw new Error("unable to load KOS for " + name + " from " + search);
-
-  this.send('reactor', reactor);
-}
-
-function chainReactor(reactor) {
-  var reactors = this.fetch('reactors');
-  this.parent.chain(reactor);
-  reactors.set(reactor.label, reactor);
-}
+module.exports = kos.reactor('debug').desc('Provides KOS debug output facility').in('debug/config').and.has('module/debug').bind(setupLogger);
 
 function setupLogger(_ref) {
   var _ref$verbose = _ref.verbose,
-      verbose = _ref$verbose === undefined ? 0 : _ref$verbose,
-      _ref$silent = _ref.silent,
-      silent = _ref$silent === undefined ? false : _ref$silent;
+      verbose = _ref$verbose === undefined ? 0 : _ref$verbose;
 
-  if (silent) return;
   var debug = this.fetch('module/debug');
   var namespaces = ['kos:error', 'kos:warn'];
   if (verbose) namespaces.push('kos:info');
@@ -7477,7 +7456,7 @@ function setupLogger(_ref) {
   }
 }
 
-}).call(this,"/reactors")
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"..":undefined}],44:[function(require,module,exports){
 (function (global){
 'use strict';
@@ -7494,7 +7473,7 @@ var _global = global,
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
 
-module.exports = kos.reactor('http', 'Provides HTTP client and server reactions').in('http/request').out('http/response').use('module/superagent').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').out('http/server', 'http/socket', 'link', 'http/server/request').use('module/http').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
+module.exports = kos.reactor('http').desc('Provides HTTP client and server reactions').in('http/request').and.has('module/superagent').out('http/response').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').and.has('module/http').out('http/server', 'http/socket', 'link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
 
 // TODO: future
 //.in('http/server/request','http/proxy').out('http/request').bind(proxy)
@@ -7603,7 +7582,7 @@ var _global = global,
 var netReactor = require('./net');
 var wsReactor = require('./ws');
 
-module.exports = kos.reactor('link', 'Provides dynamic client/server communication flows for various protocols').embed(netReactor, wsReactor).setState('streams', new Map()).in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).in('link/connect/url').out('link/connect').use('module/url').bind(connectByUrl).in('link/listen/url').out('link/listen').use('module/url').bind(listenByUrl).in('link').out('link/stream').bind(createLinkStream);
+module.exports = kos.reactor('link').desc('Provides dynamic client/server communication flows for various protocols').load(netReactor, wsReactor).init('streams', new Map()).in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).in('link/connect/url').and.has('module/url').out('link/connect').bind(connectByUrl).in('link/listen/url').and.has('module/url').out('link/listen').bind(listenByUrl).in('link').out('link/stream').bind(createLinkStream);
 
 function connect(opts) {
   switch (opts.protocol) {
@@ -7667,6 +7646,7 @@ function createLinkStream(link) {
       io.unpipe(socket);
       socket.destroy();
     });
+    stream.emit('active', socket);
   });
   if (!streams.has(addr)) {
     stream.on('ready', function () {
@@ -7678,7 +7658,7 @@ function createLinkStream(link) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined,"./net":46,"./ws":48}],46:[function(require,module,exports){
+},{"..":undefined,"./net":46,"./ws":49}],46:[function(require,module,exports){
 (function (global){
 // Network transaction flow
 //
@@ -7695,11 +7675,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('net', "Provides network client/server communication flows").setState('protocols', ['tcp:', 'udp:']).in('module/net', 'module/url').bind(ready).in('net/connect').out('net/socket', 'link', 'net/connect').use('module/net').bind(connect).in('net/listen').out('net/server', 'net/socket', 'link').use('module/net').bind(listen).in('net/connect/url').out('net/connect').use('module/url').bind(connectByUrl).in('net/listen/url').out('net/listen').use('module/url').bind(listenByUrl);
-
-function ready(net, url) {
-  // should add verification logic...
-}
+module.exports = kos.reactor('net').desc("Provides network client/server communication flows").init('protocols', ['tcp:', 'udp:']).in('net/connect').and.has('module/net').out('net/socket', 'link', 'net/connect').bind(connect).in('net/listen').and.has('module/net').out('net/server', 'net/socket', 'link').bind(listen).in('net/connect/url').and.has('module/url').out('net/connect').bind(connectByUrl).in('net/listen/url').and.has('module/url').out('net/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;
@@ -7804,22 +7780,272 @@ function normalizeOptions(opts) {
 (function (global){
 'use strict';
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var _global = global,
+    _global$kos = _global.kos,
+    kos = _global$kos === undefined ? require('..') : _global$kos;
+
+
+module.exports = kos.reactor('render').desc('Provides Kinetic Reactor visualization').init('reactors', new Map())
+
+// reactor specific render triggers
+.in('render/reactor').and.has('module/jointjs').out('joint/graph').bind(reactorToDiagram).in('render/reactor/name').out('render/reactor').bind(renderReactorByName)
+
+// TODO - shouldn't need this...
+.in('reactor').bind(collectReactors).in('joint/graph', 'joint/paper/config').and.has('module/jointjs').out('joint/paper').bind(renderGraphToPaper);
+
+function collectReactors(reactor) {
+  this.fetch('reactors').set(reactor.label, reactor);
+}
+
+function renderReactorByName(name) {
+  var reactors = this.fetch('reactors');
+  if (reactors.has(name)) this.send('render/reactor', reactors.get(name));else this.warn('no such reactor:', name);
+}
+
+function reactorToDiagram(target) {
+  var _get = this.get('module/jointjs'),
+      dia = _get.dia,
+      shapes = _get.shapes;
+
+  var _shapes$pn = shapes.pn,
+      Place = _shapes$pn.Place,
+      Transition = _shapes$pn.Transition,
+      Link = _shapes$pn.Link;
+
+  var graph = new dia.Graph();
+  var p = new Place({
+    attrs: {
+      '.label': { fill: '#7c68fc' },
+      '.root': { stroke: '#9586fd', 'stroke-width': 3 },
+      '.tokens > circle': { fill: '#7a7e9b' }
+    },
+    tokens: 0
+  });
+  var t = new Transition({
+    attrs: {
+      '.label': { fill: '#fe854f' },
+      '.root': { fill: '#9586fd', stroke: '#9586fd' }
+    }
+  });
+  // a subnet is a nested petri-net
+  var subnet = p.clone().attr('.root/stroke-width', 7);
+
+  //let PX = [ 50, 210, 400, 590, 850, 1020 ]
+  //let TX = [ 150, 310, 510, 700, 950 ]
+  var PX = [0, 160, 350, 540, 800, 970];
+  var TX = [100, 260, 460, 650, 900];
+
+  var input = p.clone().attr('.label/text', 'input');
+  var reject = p.clone().attr('.label/text', 'reject');
+  var core = p.clone().attr('.label/text', 'core').set('kinetic', 'core');
+  var buffer = p.clone().attr('.label/text', 'buffer').set('kinetic', 'buffer');
+  var output = p.clone().attr('.label/text', 'output');
+
+  var accept = t.clone().attr('.label/text', 'accept').set('kinetic', 'accept');
+  var feedback = t.clone().attr('.label/text', 'feedback').set('kinetic', 'feedback');
+  var consume = t.clone().attr('.label/text', 'consume').set('kinetic', 'consume');
+  var produce = t.clone().attr('.label/text', 'produce');
+  var send = t.clone().attr('.label/text', 'send');
+
+  graph.addCell([input, core, reject, buffer, output, accept, consume, produce, feedback]);
+  graph.addCell([link(input, accept), link(accept, core), link(accept, reject), link(core, consume), link(consume, reject), link(buffer, produce), link(produce, output)]);
+
+  var yoffset = 50;
+  // generate the trigger PTN model
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    var _loop = function _loop() {
+      var _step$value = _step.value,
+          id = _step$value.id,
+          label = _step$value.label,
+          inputs = _step$value.inputs,
+          requires = _step$value.requires,
+          outputs = _step$value.outputs;
+
+      var accepts = requires.concat(inputs);
+      var coffset = yoffset,
+          poffset = yoffset,
+          hoffset = yoffset;
+      if (accepts.length > outputs.length) {
+        poffset = yoffset + (accepts.length - outputs.length) * 100 / 2;
+        hoffset = yoffset + (accepts.length - 1) * 100 / 2;
+        yoffset += accepts.length * 100;
+      } else {
+        coffset = yoffset + (outputs.length - accepts.length) * 100 / 2;
+        hoffset = yoffset + (outputs.length - 1) * 100 / 2;
+        yoffset += outputs.length * 100;
+      }
+
+      var handler = t.clone().set('kinetic', id).attr('.label/text', label).position(TX[2], hoffset);
+
+      var consumes = accepts.map(function (x, idx) {
+        return p.clone().set('kinetic', 'input/' + x).attr('.label/text', x).position(PX[2], coffset + 100 * idx);
+      });
+      var produces = outputs.map(function (x, idx) {
+        return p.clone().set('kinetic', 'output/' + x).attr('.label/text', x).position(PX[3], poffset + 100 * idx);
+      });
+
+      graph.addCells.apply(graph, _toConsumableArray(consumes).concat(_toConsumableArray(produces), [handler]));
+
+      consumes.forEach(function (x) {
+        return graph.addCell([link(consume, x), link(x, handler)]);
+      });
+      produces.forEach(function (x, idx) {
+        var out = send.clone().set('kinetic', id + '/send').position(TX[3], poffset + 100 * idx);
+        graph.addCell([out, link(handler, x), link(x, out), link(out, buffer)]);
+      });
+    };
+
+    for (var _iterator = target.triggers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      _loop();
+    }
+
+    //
+    // Position the main PT elements based on computed flow triggers and reactors
+    //
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator.return) {
+        _iterator.return();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  var ycenter = (yoffset - 50) / 2;
+  // Places
+  input.position(PX[0], ycenter);
+  reject.position(PX[1], ycenter - 50);
+  core.position(PX[1], ycenter + 50);
+  buffer.position(PX[4], ycenter);
+  output.position(PX[5], ycenter);
+  // Transitions
+  accept.position(TX[0], ycenter);
+  consume.position(TX[1], ycenter);
+  produce.position(TX[4], ycenter);
+
+  // generate the embedded reactor PTN subnets
+  if (target.reactors.length) {
+    var offset = yoffset + (target.reactors.length - 1) * 100 / 2;
+    var absorb = t.clone().attr('.label/text', 'absorb').position(TX[1], offset);
+    graph.addCell([absorb, link(core, absorb)]);
+    var _iteratorNormalCompletion2 = true;
+    var _didIteratorError2 = false;
+    var _iteratorError2 = undefined;
+
+    try {
+      for (var _iterator2 = target.reactors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        var reactor = _step2.value;
+
+        var sub = subnet.clone().set('ref', reactor.id).attr('.label/text', reactor.label).position(PX[2], yoffset);
+        var out = send.clone().position(TX[3], yoffset);
+        graph.addCell([sub, out, link(absorb, sub), link(sub, out), link(out, buffer)]);
+        yoffset += 100;
+      }
+    } catch (err) {
+      _didIteratorError2 = true;
+      _iteratorError2 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+          _iterator2.return();
+        }
+      } finally {
+        if (_didIteratorError2) {
+          throw _iteratorError2;
+        }
+      }
+    }
+  }
+
+  // handle feedback transition last
+  feedback.position(TX[2], yoffset - 25);
+  graph.addCell([link(feedback, core).set('router', { name: 'orthogonal' }),
+  //link(produce, input).set('router', { name: 'orthogonal' }),
+  link(buffer, feedback).set('router', { name: 'orthogonal' }).set('vertices', [{ x: PX[4] + 25, y: yoffset }])
+  // link(produce, input).set('vertices',  [{ x: PX[1]+25, y: yoffset }]),
+  // link(produce, origin).set('vertices', [{ x: PX[0]+25, y: yoffset }]),
+  ]);
+
+  this.send('joint/graph', graph);
+
+  function link(a, b) {
+    return new Link({
+      source: { id: a.id, selector: '.root' },
+      target: { id: b.id, selector: '.root' },
+      attrs: {
+        '.connection': {
+          'fill': 'none',
+          'stroke-linejoin': 'round',
+          'stroke-width': '2',
+          'stroke': '#999999'
+          //'stroke': '#4b4a67'
+        },
+        '.marker-target': { fill: '#999999' },
+        '.connection-wrap': { display: 'none' },
+        '.marker-vertices': { display: 'none' },
+        '.marker-arrowheads': { display: 'none' },
+        '.link-tools': { display: 'none' }
+      }
+    });
+  }
+}
+
+function renderGraphToPaper(source, opts) {
+  var joint = this.get('module/jointjs');
+  var doc = this.get('browser/document');
+
+  var graph = new joint.dia.Graph();
+  opts = Object.assign({
+    gridSize: 10,
+    perpendicularLinks: true
+  }, opts, { model: graph });
+  var paper = new joint.dia.Paper(opts);
+
+  if (source instanceof joint.dia.Graph) graph.fromJSON(source.toJSON());else graph.fromJSON(source);
+
+  paper.fitToContent({ padding: opts.padding, allowNewOrigin: 'any' });
+  this.send('joint/paper', paper);
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"..":undefined}],48:[function(require,module,exports){
+(function (global){
+'use strict';
+
 var _global = global,
     _global$kos = _global.kos,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 var linkReactor = require('./link');
 
-module.exports = kos.reactor('sync', 'Provide dataflow object synchronization with remote stream(s)').embed(linkReactor).in('sync/connect').out('link/connect/url').bind(function syncConnect(url) {
+module.exports = kos.reactor('sync').desc('Provide dataflow object synchronization with remote stream(s)').load(linkReactor).in('sync/connect').out('link/connect/url').bind(function syncConnect(url) {
   this.send('link/connect/url', url);
 }).in('sync/listen').out('link/listen/url').bind(function syncListen(url) {
   this.send('link/listen/url', url);
-}).in('link/stream').bind(function syncKineticObjects(stream) {
-  stream.pipe(this.parent).pipe(stream);
+}).in('link/stream').out('sync/stream').bind(function syncKineticObjects(stream) {
+  var _this = this;
+
+  this.parent.pipe(stream);
+  stream.on('active', function () {
+    stream.pipe(_this.parent);
+    _this.send('sync/stream', stream);
+  });
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined,"./link":45}],48:[function(require,module,exports){
+},{"..":undefined,"./link":45}],49:[function(require,module,exports){
 (function (global){
 // WebSocket transaction flow
 //
@@ -7834,7 +8060,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('ws', "Provides WebSocket transactions utilizing 'ws' module").setState('protocols', ['ws:', 'wss:']).in('ws/connect').out('ws/socket', 'link', 'ws/connect').use('module/simple-websocket').bind(connect).in('ws/listen').out('ws/server', 'ws/socket', 'link').use('module/simple-websocket/server').bind(listen).in('ws/connect/url').out('ws/connect').use('module/url').bind(connectByUrl).in('ws/listen/url').out('ws/listen').use('module/url').bind(listenByUrl);
+module.exports = kos.reactor('ws').desc("Provides WebSocket transactions utilizing 'ws' module").init('protocols', ['ws:', 'wss:']).in('ws/connect').and.has('module/simple-websocket').out('ws/socket', 'link', 'ws/connect').bind(connect).in('ws/listen').and.has('module/simple-websocket/server').out('ws/server', 'ws/socket', 'link').bind(listen).in('ws/connect/url').and.has('module/url').out('ws/connect').bind(connectByUrl).in('ws/listen/url').and.has('module/url').out('ws/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;
@@ -7940,23 +8166,26 @@ function normalizeOptions(opts) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined}],49:[function(require,module,exports){
+},{"..":undefined}],50:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var kos = require('./node');
-var core = require('./reactors/core');
-var link = require('./reactors/link');
+var debug = require('./reactors/debug');
 var sync = require('./reactors/sync');
+var link = require('./reactors/link');
 var http = require('./reactors/http');
 var ws = require('./reactors/ws');
+var render = require('./reactors/render');
 
 exports.default = kos;
-exports.link = link;
+exports.debug = debug;
 exports.sync = sync;
+exports.link = link;
 exports.http = http;
 exports.ws = ws;
+exports.render = render;
 
-},{"./node":6,"./reactors/core":43,"./reactors/http":44,"./reactors/link":45,"./reactors/sync":47,"./reactors/ws":48}]},{},[49]);
+},{"./node":6,"./reactors/debug":43,"./reactors/http":44,"./reactors/link":45,"./reactors/render":47,"./reactors/sync":48,"./reactors/ws":49}]},{},[50]);

@@ -7,42 +7,52 @@ var _2 = _interopRequireDefault(_);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var app = _2.default.reactor('demo').desc('a demo app for visualizing KOS').load(_.sync, _.render).in('show').and.has('browser/document').out('dom/element', 'joint/paper/config', 'render/reactor').bind(renderSelf).in('joint/paper').out('render/reactor').bind(userActivity);
+var app = _2.default.reactor('demo').desc('a demo app for visualizing KOS').load(_.sync, _.render).in('render').out('render/reactor', 'render/paper').bind(renderApp).in('connect').out('sync/connect').bind(connect).in('joint/paper').and.has('render/reactor').out('render/selection').bind(makeInteractive).in('render/selection').bind(renderSelection);
+//.in('render/transition').bind(renderTransition)
 
 // fire once sync session established
 //.in('sync/stream').out('render/reactor','joint/paper/config').bind(renderRemoteReactors)
 
-function renderSelf(opts) {
-  var doc = this.get('browser/document');
-  var target = opts.target;
+function renderApp(opts) {
+  var source = opts.source,
+      target = opts.target;
 
-
-  this.send('dom/element', doc.getElementById(target));
-  this.send('joint/paper/config', {
-    gridSize: 10,
-    interactive: false,
-    padding: 5
-  });
-  this.send('render/reactor', app);
+  if (source instanceof _2.default.Reactor) {
+    this.send('render/reactor', source);
+    this.send('render/paper', {
+      el: target,
+      gridSize: 10,
+      interactive: false,
+      padding: 5
+    });
+  }
+  // TODO: enable rendering of remote source, i.e. ws://localhost:8080
 }
 
-function userActivity(paper) {
+function connect(opts) {}
+
+function makeInteractive(paper) {
   var _this = this;
 
-  this.debug('making paper interactive');
-
-  paper.on('cell:pointerdblclick', function (view) {
-    console.log(view);
-    _this.debug(view);
+  console.log('making paper interactive');
+  paper.on('cell:pointerclick', function (view) {
+    _this.send('render/selection', view);
   });
 }
+
+function renderSelection(view) {}
+//this.debug('rendering selected view', view)
+
 
 // enable debug reactor flow
 app.pipe(_.debug);
 
 // feed the app with init tokens
 app.feed('debug/config', { verbose: 3 }).feed('browser/document', document) // we're running on a web browser
-.feed('module/url', require('url')).feed('module/simple-websocket', require('simple-websocket')).feed('module/jointjs', require('jointjs')).feed('show', { target: 'main' });
+.feed('module/url', require('url')).feed('module/simple-websocket', require('simple-websocket')).feed('module/jointjs', require('jointjs')).feed('render', {
+  source: app,
+  target: document.getElementById('main')
+});
 
 //.feed('sync/connect', 'ws:localhost:8080')
 
@@ -137,9 +147,9 @@ var KineticObject = function () {
   }, {
     key: 'match',
     value: function match(keys) {
-      if (!keys) return false;
-      if (keys instanceof Set && keys.has(this.key)) return true;
-      if (Array.isArray(keys) && keys.includes(this.key)) return true;
+      if (Array.isArray(keys)) keys = new Set(keys);
+      if (!(keys instanceof Set)) return false;
+      if (keys.has(this.key)) return true;
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -185,6 +195,11 @@ var KineticObject = function () {
 
       if (typeof value === 'function') value = null;
       return '{"' + key + '":' + CircularJSON.stringify(value) + '}';
+    }
+  }, {
+    key: 'origin',
+    get: function get() {
+      return this.tags.keys().next().value;
     }
   }, {
     key: 'accepted',
@@ -294,32 +309,39 @@ var KineticReactor = function (_KineticStream) {
     // CORE REACTOR
     _this.core = new KineticStream({
       maxListeners: maxReceivers,
-      transform: function transform(ko, enc, callback) {
-        if (!ko) return callback();
+      filter: function filter(ko) {
         if (_this.seen(ko)) {
           // from external flow
+          _this.emit('accept', ko);
           var requires = _this.requires,
-              inputs = _this.inputs;
+              inputs = _this.inputs,
+              absorbs = _this.absorbs;
 
           if (ko.match(requires) || ko.match(inputs)) {
             debug(_this.identity, '<==', ko.key);
-            _this.emit('consume', ko);
-            // mark the KineticObject that it's been accepted into this flow
+            // update the KineticObject that it's been accepted into this flow
             _this.mark(ko, true);
+            _this.emit('consume', ko);
+            if (ko.match(absorbs)) _this.emit('absorb', ko);
           } else {
             _this.emit('reject', ko);
-            return callback();
+            return false;
           }
         } else {
           // from internal flow
-          var absorbs = _this.absorbs,
+          _this.emit('feedback', ko);
+          var _inputs = _this.inputs,
+              _absorbs = _this.absorbs,
               outputs = _this.outputs;
 
           outputs.push.apply(outputs, ['error', 'warn', 'info', 'debug']);
-          if (ko.match(absorbs)) {
+
+          if (ko.match(_inputs)) _this.emit('consume', ko);else _this.emit('reject', ko);
+
+          if (ko.match(_absorbs)) {
             debug(_this.identity, '<->', ko.key);
-            _this.emit('absorb', ko);
             _this.mark(ko, true); // prevent external propagation
+            _this.emit('absorb', ko);
           } else if (ko.match(outputs)) {
             debug(_this.identity, '==>', ko.key);
             _this.emit('produce', ko);
@@ -329,7 +351,7 @@ var KineticReactor = function (_KineticStream) {
           }
           if (ko.key !== 'error') _this.emit(ko.key, ko.value);
         }
-        callback(null, ko);
+        return true;
       }
     });
     _this.pipe(_this.core).pipe(_this);
@@ -532,6 +554,17 @@ var KineticReactor = function (_KineticStream) {
       });
       return func ? this.include(trigger) : trigger.join(this);
     }
+  }, {
+    key: 'contains',
+    value: function contains(id) {
+      if (this.triggers.some(function (x) {
+        return x.id === id;
+      })) return true;
+      if (this.reactors.some(function (x) {
+        return x.contains(id);
+      })) return true;
+      return false;
+    }
 
     //---------------------------------------------
     // Collection of Getters for inspecting KOS 
@@ -657,8 +690,7 @@ try {
 var uuid = require('uuid');
 
 var _require = require('stream'),
-    Transform = _require.Transform,
-    Duplex = _require.Duplex;
+    Transform = _require.Transform;
 
 var KineticObject = require('./object');
 
@@ -687,35 +719,45 @@ var KineticStream = function (_Transform) {
       options = options.inspect();
     }
     options.objectMode = true;
+    delete options.transform; // disallow override for default transform
 
     var _this = _possibleConstructorReturn(this, (KineticStream.__proto__ || Object.getPrototypeOf(KineticStream)).call(this, options));
 
     _this.id = uuid();
+    if (options.filter instanceof Function) _this.filter = options.filter;
 
     if (options.state instanceof Map) _this.state = options.state;else _this.state = new Map(options.state);
 
-    _this.buffer = '';
     _this.on('end', _this.warn.bind(_this, 'kinetic stream died unexpectedly'));
 
     options.maxListeners && _this.setMaxListeners(options.maxListeners);
     return _this;
   }
 
-  // Kinetic Transform Implementation
-  //
-  // Basic enforcement of chunk to be KineticObject
-  // Also prevents circular loop by rejecting objects it's seen before
-
-
   _createClass(KineticStream, [{
+    key: 'clone',
+    value: function clone() {
+      return new this.constructor(this);
+    }
+
+    // Kinetic Transform Implementation
+    //
+    // Basic enforcement of chunk to be KineticObject
+    // Also prevents circular loop by rejecting objects it's seen before
+
+  }, {
     key: '_transform',
     value: function _transform(chunk, enc, callback) {
       if (!(chunk instanceof KineticObject)) {
         return callback(new Error("chunk is not a KineticObject"));
       }
-
-      // ignore chunks it's seen before, otherwise mark it and send it along
-      this.seen(chunk) ? callback() : callback(null, this.mark(chunk));
+      // accept if it hasn't been seen before and allowed by the filter
+      if (!this.seen(chunk) && this.filter(chunk)) callback(null, this.mark(chunk));else callback();
+    }
+  }, {
+    key: 'filter',
+    value: function filter(ko) {
+      return true;
     }
 
     // setup initial state (can be called multiple times)
@@ -808,7 +850,7 @@ var KineticStream = function (_Transform) {
       var self = this;
       var buffer = '';
       var lines = [];
-      var wrapper = new KineticStream({
+      var wrapper = new Transform({
         // transform KSON to KineticObject
         transform: function transform(chunk, enc, callback) {
           if (chunk instanceof KineticObject) return callback(null, chunk);
@@ -859,20 +901,6 @@ var KineticStream = function (_Transform) {
       });
       return wrapper.join(this);
     }
-  }, {
-    key: 'filter',
-    value: function filter() {
-      for (var _len2 = arguments.length, keys = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        keys[_key2] = arguments[_key2];
-      }
-
-      var triggers = new Set(keys);
-      return this.pipe(new KineticStream({
-        transform: function transform(ko, enc, cb) {
-          ko && ko.match(triggers) ? cb(null, ko) : cb();
-        }
-      }));
-    }
 
     // get data for key(s) from up the hierarchy if not in local state
 
@@ -881,8 +909,8 @@ var KineticStream = function (_Transform) {
     value: function fetch() {
       var _this2 = this;
 
-      for (var _len3 = arguments.length, keys = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-        keys[_key3] = arguments[_key3];
+      for (var _len2 = arguments.length, keys = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        keys[_key2] = arguments[_key2];
       }
 
       var res = keys.map(function (key) {
@@ -919,8 +947,8 @@ var KineticStream = function (_Transform) {
   }, {
     key: 'log',
     value: function log(type) {
-      for (var _len4 = arguments.length, args = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
-        args[_key4 - 1] = arguments[_key4];
+      for (var _len3 = arguments.length, args = Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+        args[_key3 - 1] = arguments[_key3];
       }
 
       this.push(new KineticObject(type, [this.identity].concat(args), this.id));
@@ -946,8 +974,8 @@ var KineticStream = function (_Transform) {
   }, {
     key: 'error',
     value: function error(err) {
-      for (var _len5 = arguments.length, rest = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
-        rest[_key5 - 1] = arguments[_key5];
+      for (var _len4 = arguments.length, rest = Array(_len4 > 1 ? _len4 - 1 : 0), _key4 = 1; _key4 < _len4; _key4++) {
+        rest[_key4 - 1] = arguments[_key4];
       }
 
       if (!(err instanceof Error)) err = new Error([err].concat(rest).join(' '));
@@ -1060,37 +1088,29 @@ var KineticTrigger = function (_KineticStream) {
     return _this;
   }
 
-  //--------------------------------------------------------
-  // primary transform
-  //--------------------------------------------------------
-
-
   _createClass(KineticTrigger, [{
-    key: '_transform',
-    value: function _transform(chunk, enc, callback) {
+    key: 'filter',
+    value: function filter(ko) {
       var _this2 = this;
 
-      if (this.handler === KineticTrigger.none) return callback();
-
-      _get(KineticTrigger.prototype.__proto__ || Object.getPrototypeOf(KineticTrigger.prototype), '_transform', this).call(this, chunk, enc, function (err, ko) {
-        if (err) return callback(err);
-        if (ko && _this2.ready(ko)) {
-          var ctx = _this2.context;
-          ctx.event = ko.key;
-          ctx.arguments = _this2.inputs.map(function (x) {
-            return _this2.state.get(x);
-          });
-          // TODO: clear the local state for input triggers
-          debug(_this2.identity, 'ƒ(' + _this2.inputs + ')');
-          try {
-            _this2.handler.apply(ctx, ctx.arguments);
-          } catch (e) {
-            debug(e);
-            _this2.error(e);
-          }
+      if (this.handler === KineticTrigger.none) return false;
+      if (this.ready(ko)) {
+        var ctx = this.context;
+        ctx.event = ko.key;
+        ctx.arguments = this.inputs.map(function (x) {
+          return _this2.state.get(x);
+        });
+        // TODO: clear the local state for input triggers
+        debug(this.identity, 'ƒ(' + this.inputs + ')');
+        this.parent && this.parent.emit('fire', this);
+        try {
+          this.handler.apply(ctx, ctx.arguments);
+        } catch (e) {
+          debug(e);
+          this.error(e);
         }
-        callback();
-      });
+      }
+      return false;
     }
 
     // accept ko if ALL conditions are met:
@@ -1102,12 +1122,16 @@ var KineticTrigger = function (_KineticStream) {
     value: function ready(ko) {
       var _this3 = this;
 
-      ko.match(this._requires) && this.state.set(ko.key, ko.value);
+      if (ko.match(this._requires)) {
+        this.mark(ko, true);
+        this.state.set(ko.key, ko.value);
+      }
 
       // TODO: should warn about dropped input triggers...
       if (this.requires.every(function (x) {
         return _this3.state.has(x);
       }) && ko.match(this._inputs)) {
+        this.mark(ko, true);
         this.state.set(ko.key, ko.value);
         // TODO: should also check parent
         return this.inputs.every(function (x) {
@@ -1251,10 +1275,9 @@ var KineticTrigger = function (_KineticStream) {
     //
     // returns: source KOS
     value: function bind(fn) {
-      var parent = this.state.get('parent');
       if (typeof fn !== 'function') throw new Error("[bind] expected function but got something else");
       this._handler = fn;
-      return parent ? parent.loadTrigger(this) : this;
+      return this.parent ? this.parent.loadTrigger(this) : this;
     }
   }, {
     key: 'send',
@@ -1344,8 +1367,7 @@ var KineticTrigger = function (_KineticStream) {
   }, {
     key: 'identity',
     get: function get() {
-      var parent = this.state.get('parent');
-      return parent ? parent.identity + ':' + this.handler.name : this.handler.name;
+      return this.parent ? this.parent.identity + ':' + this.handler.name : this.handler.name;
     }
   }]);
 
@@ -39442,45 +39464,19 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('render').desc('Provides Kinetic Reactor visualization').init('reactors', new Map()).in('dom/element', 'joint/graph', 'joint/paper/config').and.has('module/jointjs').out('joint/paper').bind(renderGraphToPaper)
+module.exports = kos.reactor('render').desc('Provides Kinetic Reactor visualization').init('reactors', new Map())
 
 // reactor specific render triggers
-.in('render/reactor').and.has('module/jointjs').out('joint/graph').bind(reactorToDiagram).in('render/reactor/name').out('render/reactor').bind(renderReactorByName)
+.in('render/reactor').and.has('module/jointjs').out('joint/graph', 'joint/token').bind(reactorToDiagram).in('joint/graph', 'render/paper').and.has('module/jointjs').out('joint/paper').bind(renderGraphToPaper).in('joint/paper', 'joint/token').and.has('render/reactor').bind(animateReactor)
 
-// TODO - shouldn't need this...
-.in('reactor').bind(collectReactors);
-
-function renderGraphToPaper(element, source, opts) {
-  var joint = this.get('module/jointjs');
-  var doc = this.get('browser/document');
-
-  var graph = new joint.dia.Graph();
-  opts = Object.assign({
-    el: element,
-    gridSize: 10,
-    perpendicularLinks: true
-  }, opts, { model: graph });
-  var paper = new joint.dia.Paper(opts);
-
-  if (source instanceof joint.dia.Graph) graph.fromJSON(source.toJSON());else graph.fromJSON(source);
-
-  paper.fitToContent({ padding: opts.padding });
-  this.send('joint/paper', paper);
-}
-
-function collectReactors(reactor) {
-  this.fetch('reactors').set(reactor.label, reactor);
-}
-
-function renderReactorByName(name) {
-  var reactors = this.fetch('reactors');
-  if (reactors.has(name)) this.send('render/reactor', reactors.get(name));else this.warn('no such reactor:', name);
-}
+// TODO - shouldn't need these
+.in('render/reactor/name').out('render/reactor').bind(renderReactorByName).in('reactor').bind(collectReactors);
 
 function reactorToDiagram(target) {
   var _get = this.get('module/jointjs'),
       dia = _get.dia,
-      shapes = _get.shapes;
+      shapes = _get.shapes,
+      V = _get.V;
 
   var _shapes$pn = shapes.pn,
       Place = _shapes$pn.Place,
@@ -39493,7 +39489,8 @@ function reactorToDiagram(target) {
       '.label': { fill: '#7c68fc' },
       '.root': { stroke: '#9586fd', 'stroke-width': 3 },
       '.tokens > circle': { fill: '#7a7e9b' }
-    }
+    },
+    tokens: 0
   });
   var t = new Transition({
     attrs: {
@@ -39504,19 +39501,21 @@ function reactorToDiagram(target) {
   // a subnet is a nested petri-net
   var subnet = p.clone().attr('.root/stroke-width', 7);
 
-  var PX = [50, 210, 400, 590, 850, 1020];
-  var TX = [150, 310, 510, 700, 950];
+  //let PX = [ 50, 210, 400, 590, 850, 1020 ]
+  //let TX = [ 150, 310, 510, 700, 950 ]
+  var PX = [0, 160, 350, 540, 800, 970];
+  var TX = [100, 260, 460, 650, 900];
 
-  var input = p.clone().attr('.label/text', 'input');
+  var input = p.clone().attr('.label/text', 'input').set('kinetic', target.id);
   var reject = p.clone().attr('.label/text', 'reject');
-  var core = p.clone().attr('.label/text', 'core');
-  var buffer = p.clone().attr('.label/text', 'buffer');
+  var core = p.clone().attr('.label/text', 'core').set('kinetic', 'core');
+  var buffer = p.clone().attr('.label/text', 'buffer').set('kinetic', 'buffer');
   var output = p.clone().attr('.label/text', 'output');
 
-  var accept = t.clone().attr('.label/text', 'accept');
-  var consume = t.clone().attr('.label/text', 'consume');
-  var produce = t.clone().attr('.label/text', 'produce');
-  var feedback = t.clone().attr('.label/text', 'feedback');
+  var accept = t.clone().attr('.label/text', 'accept').set('kinetic', 'accept');
+  var feedback = t.clone().attr('.label/text', 'feedback').set('kinetic', 'feedback');
+  var consume = t.clone().attr('.label/text', 'consume').set('kinetic', 'consume');
+  var produce = t.clone().attr('.label/text', 'produce').set('kinetic', 'produce');
   var send = t.clone().attr('.label/text', 'send');
 
   graph.addCell([input, core, reject, buffer, output, accept, consume, produce, feedback]);
@@ -39531,6 +39530,7 @@ function reactorToDiagram(target) {
   try {
     var _loop = function _loop() {
       var _step$value = _step.value,
+          id = _step$value.id,
           label = _step$value.label,
           inputs = _step$value.inputs,
           requires = _step$value.requires,
@@ -39543,20 +39543,20 @@ function reactorToDiagram(target) {
       if (accepts.length > outputs.length) {
         poffset = yoffset + (accepts.length - outputs.length) * 100 / 2;
         hoffset = yoffset + (accepts.length - 1) * 100 / 2;
-        yoffset += inputs.length * 100;
+        yoffset += accepts.length * 100;
       } else {
         coffset = yoffset + (outputs.length - accepts.length) * 100 / 2;
         hoffset = yoffset + (outputs.length - 1) * 100 / 2;
         yoffset += outputs.length * 100;
       }
 
-      var handler = t.clone().attr('.label/text', label).position(TX[2], hoffset);
+      var handler = t.clone().set('kinetic', id).attr('.label/text', label).position(TX[2], hoffset);
 
       var consumes = accepts.map(function (x, idx) {
-        return p.clone().attr('.label/text', x).position(PX[2], coffset + 100 * idx);
+        return p.clone().set('kinetic', 'input/' + x).attr('.label/text', x).position(PX[2], coffset + 100 * idx);
       });
       var produces = outputs.map(function (x, idx) {
-        return p.clone().attr('.label/text', x).position(PX[3], poffset + 100 * idx);
+        return p.clone().set('kinetic', 'output/' + x).attr('.label/text', x).position(PX[3], poffset + 100 * idx);
       });
 
       graph.addCells.apply(graph, _toConsumableArray(consumes).concat(_toConsumableArray(produces), [handler]));
@@ -39565,7 +39565,7 @@ function reactorToDiagram(target) {
         return graph.addCell([link(consume, x), link(x, handler)]);
       });
       produces.forEach(function (x, idx) {
-        var out = send.clone().position(TX[3], poffset + 100 * idx);
+        var out = send.clone().set('kinetic', id + '/send').position(TX[3], poffset + 100 * idx);
         graph.addCell([out, link(handler, x), link(x, out), link(out, buffer)]);
       });
     };
@@ -39607,7 +39607,7 @@ function reactorToDiagram(target) {
   // generate the embedded reactor PTN subnets
   if (target.reactors.length) {
     var offset = yoffset + (target.reactors.length - 1) * 100 / 2;
-    var absorb = t.clone().attr('.label/text', 'absorb').position(TX[1], offset);
+    var absorb = t.clone().set('kinetic', 'absorb').attr('.label/text', 'absorb').position(TX[1], offset);
     graph.addCell([absorb, link(core, absorb)]);
     var _iteratorNormalCompletion2 = true;
     var _didIteratorError2 = false;
@@ -39617,7 +39617,7 @@ function reactorToDiagram(target) {
       for (var _iterator2 = target.reactors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
         var reactor = _step2.value;
 
-        var sub = subnet.clone().attr('.label/text', reactor.label).position(PX[2], yoffset);
+        var sub = subnet.clone().set('kinetic', reactor.id).set('subnet', true).attr('.label/text', reactor.label).position(PX[2], yoffset);
         var out = send.clone().position(TX[3], yoffset);
         graph.addCell([sub, out, link(absorb, sub), link(sub, out), link(out, buffer)]);
         yoffset += 100;
@@ -39648,6 +39648,9 @@ function reactorToDiagram(target) {
   ]);
 
   this.send('joint/graph', graph);
+  this.send('joint/token', V('circle', {
+    r: 5, fill: '#f3b662'
+  }));
 
   function link(a, b) {
     return new Link({
@@ -39669,6 +39672,178 @@ function reactorToDiagram(target) {
       }
     });
   }
+}
+
+function renderGraphToPaper(source, opts) {
+  var joint = this.get('module/jointjs');
+  var doc = this.get('browser/document');
+
+  var graph = new joint.dia.Graph();
+  opts = Object.assign({
+    gridSize: 10,
+    perpendicularLinks: true
+  }, opts, { model: graph });
+  var paper = new joint.dia.Paper(opts);
+
+  if (source instanceof joint.dia.Graph) graph.fromJSON(source.toJSON());else graph.fromJSON(source);
+
+  paper.fitToContent({ padding: opts.padding, allowNewOrigin: 'any' });
+  this.send('joint/paper', paper);
+}
+
+function animateReactor(paper, token) {
+  var reactor = this.get('render/reactor');
+  var graph = paper.model;
+  var map = new Map();
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
+
+  try {
+    for (var _iterator3 = graph.getElements()[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+      var elem = _step3.value;
+
+      var kinetic = elem.get('kinetic');
+      if (!kinetic) continue;
+      map.set(kinetic, elem);
+    }
+  } catch (err) {
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
+      }
+    } finally {
+      if (_didIteratorError3) {
+        throw _iteratorError3;
+      }
+    }
+  }
+
+  reactor.on('accept', function (ko) {
+    // let t = map.get('accept')
+    // let inbound = graph.getConnectedLinks(t, {inbound: true})
+    // let sources = inbound.map(link => graph.getCell(link.get('source').id))
+    // sources.forEach(x => x.set('tokens', 1))
+  });
+  reactor.on('feedback', function (ko) {
+    console.log('feedback', ko);
+    var origin = map.get(ko.origin); // originating transition
+    if (!origin) {
+      var match = reactor.reactors.find(function (x) {
+        return x.contains(ko.origin);
+      });
+      origin = map.get(match.id);
+    }
+    var links = graph.getConnectedLinks(origin, { outbound: true });
+    var output = void 0;
+    if (origin.get('subnet')) {
+      output = origin;
+      output.set('tokens', output.get('tokens') + 1);
+    } else {
+      var link = links.find(function (l) {
+        var elem = graph.getCell(l.get('target').id);
+        return elem.get('kinetic') === 'output/' + ko.key;
+      });
+      output = graph.getCell(link.get('target').id);
+      paper.findViewByModel(link).sendToken(token.clone().node, 500, function () {
+        output.set('tokens', output.get('tokens') + 1);
+      });
+    }
+    var send = graph.getNeighbors(output, { outbound: true })[0];
+    var feedback = map.get('feedback');
+    fireTransition(send, { duration: 500 });
+    fireTransition(feedback, { duration: 2000 });
+  });
+
+  reactor.on('consume', function (ko) {
+    console.log('consume', ko);
+    var t = map.get('consume');
+    fireTransition(t, { target: 'input/' + ko.key, duration: 1000 });
+  });
+
+  reactor.on('absorb', function (ko) {
+    console.log('absorb', ko);
+    var t = map.get('absorb');
+    fireTransition(t, { duration: 1000 });
+  });
+
+  reactor.on('fire', function (trigger) {
+    console.log('fire', trigger);
+    var t = map.get(trigger.id);
+    fireTransition(t, { duration: 500 });
+  });
+
+  // reactor.on('produce', ko => {
+  //   let t = map.get('produce')
+  //   fireTransition(t, { duration: 500 })
+  // })
+
+  // nested function inside since we don't want recursive animations
+  function fireTransition(t, opts) {
+    var target = opts.target,
+        _opts$duration = opts.duration,
+        duration = _opts$duration === undefined ? 1000 : _opts$duration;
+
+    var inbound = graph.getConnectedLinks(t, { inbound: true });
+    var sources = inbound.map(function (link) {
+      return graph.getCell(link.get('source').id);
+    });
+    var isReady = sources.every(function (p) {
+      return p.get('tokens') > 0;
+    });
+    if (!isReady) {
+      console.log('transition not ready: ', t.get('kinetic'));
+      if (sources.length === 1) {
+        var source = sources[0];
+        source.once('change', function () {
+          console.log('detected change ', source.get('kinetic'));
+          if (source.get('tokens') > 0) setTimeout(function () {
+            return fireTransition(t, opts);
+          }, 500);
+        });
+      }
+      return;
+    }
+
+    var outbound = graph.getConnectedLinks(t, { outbound: true });
+    var targets = outbound.map(function (link) {
+      return graph.getCell(link.get('target').id);
+    });
+    if (target) targets = targets.filter(function (p) {
+      return p.get('kinetic') === target;
+    });
+
+    sources.forEach(function (p) {
+      var link = inbound.find(function (l) {
+        return l.get('source').id === p.id;
+      });
+      var tokens = p.get('tokens');
+      if (tokens > 0) p.set('tokens', tokens - 1);
+      paper.findViewByModel(link).sendToken(token.clone().node, duration);
+    });
+    targets.forEach(function (p) {
+      var link = outbound.find(function (l) {
+        return l.get('target').id === p.id;
+      });
+      paper.findViewByModel(link).sendToken(token.clone().node, duration, function () {
+        p.set('tokens', p.get('tokens') + 1);
+      });
+    });
+  }
+}
+
+// TODO: below shouldn't be needed
+
+function collectReactors(reactor) {
+  this.fetch('reactors').set(reactor.label, reactor);
+}
+
+function renderReactorByName(name) {
+  var reactors = this.fetch('reactors');
+  if (reactors.has(name)) this.send('render/reactor', reactors.get(name));else this.warn('no such reactor:', name);
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})

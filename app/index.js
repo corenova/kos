@@ -1,41 +1,51 @@
-import kos, { sync, link, ws, render, debug } from '..'
+import kos, { sync, render, debug } from '..'
 
 const app = kos.reactor('demo')
   .desc('a demo app for visualizing KOS')
   .load(sync, render)
 
-  .in('show').and.has('browser/document')
-  .out('dom/element','joint/paper/config','render/reactor')
-  .bind(renderSelf)
+  .in('render').out('render/reactor','render/paper').bind(renderApp)
+  .in('connect').out('sync/connect').bind(connect)
 
-  .in('joint/paper')
-  .out('render/reactor')
-  .bind(userActivity)
+  .in('joint/paper').and.has('render/reactor')
+  .out('render/selection')
+  .bind(makeInteractive)
+
+  .in('render/selection').bind(renderSelection)
+  //.in('render/transition').bind(renderTransition)
 
   // fire once sync session established
   //.in('sync/stream').out('render/reactor','joint/paper/config').bind(renderRemoteReactors)
 
-function renderSelf(opts) {
-  const doc = this.get('browser/document')
-  let { target } = opts
-
-  this.send('dom/element', doc.getElementById(target))
-  this.send('joint/paper/config', {
-    gridSize: 10,
-    interactive: false,
-    padding: 5
-  })
-  this.send('render/reactor', app)
+function renderApp(opts) {
+  let { source, target } = opts
+  if (source instanceof kos.Reactor) {
+    this.send('render/reactor', source)
+    this.send('render/paper', {
+      el: target,
+      gridSize: 10,
+      interactive: false,
+      padding: 5
+    })
+  }
+  // TODO: enable rendering of remote source, i.e. ws://localhost:8080
 }
 
-function userActivity(paper) {
-  this.debug('making paper interactive')
+function connect(opts) {
+  
+}
 
-  paper.on('cell:pointerdblclick', (view) => {
-    console.log(view)
-    this.debug(view)
+function makeInteractive(paper) {
+  console.log('making paper interactive')
+  paper.on('cell:pointerclick', (view) => {
+    this.send('render/selection', view)
   })
 }
+
+function renderSelection(view) {
+  //this.debug('rendering selected view', view)
+}
+
 
 // enable debug reactor flow
 app.pipe(debug)
@@ -47,7 +57,10 @@ app
   .feed('module/url', require('url'))
   .feed('module/simple-websocket', require('simple-websocket'))
   .feed('module/jointjs', require('jointjs'))
-  .feed('show', { target: 'main' })
+  .feed('render', { 
+    source: app,
+    target: document.getElementById('main')
+  })
 
   //.feed('sync/connect', 'ws:localhost:8080')
 

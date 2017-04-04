@@ -14,7 +14,7 @@ module.exports = kos.reactor('render')
   .out('joint/paper').bind(renderGraphToPaper)
 
   .in('joint/paper','joint/token').and.has('render/reactor')
-  .bind(animateReactor)
+  .bind(animateReactorFlow)
 
   // TODO - shouldn't need these
   .in('render/reactor/name').out('render/reactor').bind(renderReactorByName)
@@ -50,7 +50,7 @@ function reactorToDiagram(target) {
   let reject = p.clone().attr('.label/text', 'reject')
   let core   = p.clone().attr('.label/text', 'core').set('kinetic', 'core')
   let buffer = p.clone().attr('.label/text', 'buffer').set('kinetic', 'buffer')
-  let output = p.clone().attr('.label/text', 'output')
+  let output = p.clone().attr('.label/text', 'output').set('kinetic', 'output')
 
   let accept   = t.clone().attr('.label/text', 'accept').set('kinetic', 'accept')
   let feedback = t.clone().attr('.label/text', 'feedback').set('kinetic', 'feedback')
@@ -71,7 +71,7 @@ function reactorToDiagram(target) {
 
   let yoffset = 50
   // generate the trigger PTN model
-  for (let { id, label, inputs, requires, outputs } of target.triggers) {
+  for (let { id, label, inputs, requires, outputs, state } of target.triggers) {
     let accepts = requires.concat(inputs)
     let coffset = yoffset, poffset = yoffset, hoffset = yoffset
     if (accepts.length > outputs.length) {
@@ -93,6 +93,7 @@ function reactorToDiagram(target) {
     let consumes = accepts.map((x, idx) => {
       return p.clone()
         .set('kinetic', `input/${x}`)
+        .set('tokens', state.get(x) ? 1 : 0)
         .attr('.label/text', x)
         .position(PX[2], coffset + (100 * idx))
       })
@@ -223,72 +224,144 @@ function renderGraphToPaper(source, opts) {
   this.send('joint/paper', paper)
 }
 
-function animateReactor(paper, token) {
+// TODO: for now, we're not breaking it apart into separate reactions
+// 
+// once we have a way to detect/animate circular continuous flow,
+// we'll break it apart into reaction triggers!
+function animateReactorFlow(paper, token) {
   let reactor = this.get('render/reactor')
   let graph = paper.model
-  let map = new Map
+  let elements = new Map
   for (let elem of graph.getElements()) {
     let kinetic = elem.get('kinetic')
     if (!kinetic) continue
-    map.set(kinetic, elem)
+    elements.set(kinetic, elem)
   }
 
-  reactor.on('accept', ko => {
-    // let t = map.get('accept')
-    // let inbound = graph.getConnectedLinks(t, {inbound: true})
-    // let sources = inbound.map(link => graph.getCell(link.get('source').id))
-    // sources.forEach(x => x.set('tokens', 1))
+  reactor.on('flow', (ko, flow) => {
+    console.log('flow', ko, flow)
+    let seq
+    // here we build the animation pipeline
+    switch (flow[0]) {
+    case 'feedback': seq = traceInternalFlow(ko, flow)
+      break;
+    case 'accept': seq = traceExternalFlow(ko, flow)
+      break;
+    }
+    if (!seq) return // silently ignore for now
+    // send iterator to the sequence
+
+    let steps = []
+    for (const step of seq) {
+      steps.push( Array.isArray(step) ? step.map(x => x.attr('.label/text')) : step.attr('.label/text') )
+    }
+    console.log(steps.join(' -> '))
+    animateFlowSequence(Array.from(seq), paper, graph, token)
   })
-  reactor.on('feedback', ko => {
-    console.log('feedback', ko)
-    let origin = map.get(ko.origin) // originating transition
+
+  function traceInternalFlow(ko, flow) {
+    flow = new Set(flow)
+    let sequence = new Set
+    let origin = elements.get(ko.origin) // originating trigger or reactor
     if (!origin) {
       let match = reactor.reactors.find(x => x.contains(ko.origin))
-      origin = map.get(match.id)
+      origin = elements.get(match.id)
     }
-    let links = graph.getConnectedLinks(origin, {outbound: true})
-    let output
-    if (origin.get('subnet')) {
-      output = origin
-      output.set('tokens', output.get('tokens') + 1)
-    } else {
+    sequence.add(origin)
+    if (origin.get('subnet')) sequence.add(graph.getNeighbors(origin, {outbound: true}))
+    else {
+      let links = graph.getConnectedLinks(origin, {outbound: true})
       let link = links.find(l => {
         let elem = graph.getCell(l.get('target').id)
         return elem.get('kinetic') === `output/${ko.key}`
       })
-      output = graph.getCell(link.get('target').id)
-      paper.findViewByModel(link).sendToken(token.clone().node, 500, () => {
-        output.set('tokens', output.get('tokens') + 1)
-      })
+      let target = graph.getCell(link.get('target').id)
+      sequence.add(target)
+      sequence.add(graph.getNeighbors(target, {outbound: true}))
     }
-    let send = graph.getNeighbors(output, {outbound: true})[0]
-    let feedback = map.get('feedback')
-    fireTransition(send, { duration: 500 })
-    fireTransition(feedback, { duration: 2000 })
-  })
+    sequence.add(elements.get('buffer'))
+    if (flow.has('produce')) {
+      sequence.add([ elements.get('feedback'), elements.get('produce') ])
+      sequence.add([ elements.get('core'), elements.get('output') ])
+    } else {
+      sequence.add(elements.get('feedback'))
+      sequence.add(elements.get('core'))
+    }
 
-  reactor.on('consume', ko => {
-    console.log('consume', ko)
-    let t = map.get('consume')
-    fireTransition(t, { target: `input/${ko.key}`, duration: 1000 })
-  })
+    let consume = elements.get('consume')
+    let absorb  = elements.get('absorb')
+    if (flow.has('consume') && flow.has('absorb'))
+      sequence.add([ consume, absorb ])
+    else if (flow.has('consume'))
+      sequence.add(consume)
+    else if (flow.has('absorb'))
+      sequence.add(absorb)
 
-  reactor.on('absorb', ko => {
-    console.log('absorb', ko)
-    let t = map.get('absorb')
-    fireTransition(t, { duration: 1000 })
-  })
+    let outputs = []
+    if (flow.has('consume')) {
+      let matches = graph
+        .getNeighbors(consume, {outbound: true})
+        .filter(x => x.get('kinetic') === `input/${ko.key}`)
+      outputs.push(...matches)
+    }
+    if (flow.has('absorb')) outputs.push(...graph.getNeighbors(absorb, {outbound: true}))
+    if (outputs.length)
+      sequence.add(outputs)
 
+    return sequence
+    //fireTransition(consume, { target: `input/${ko.key}`, duration: 1000 })
+    //fireTransition(absorb, { duration: 1000 })
+  }
+
+  function traceExternalFlow(ko, flow) {
+
+  }
+
+  function animateFlowSequence(seq, paper, graph, token) {
+    let source = seq.shift()
+    let target = seq.shift()
+    if (!source || !target) return
+    let sources = Array.isArray(source) ? source : [ source ]
+    let targets = Array.isArray(target) ? target : [ target ]
+
+    for (const src of sources) {
+      const p2t = src.get('type') === 'pn.Place'
+      if (p2t) {
+        let tokens = src.get('tokens')
+        if (tokens > 0) src.set('tokens', tokens - 1)
+      }
+      for (const dst of targets) {
+        let link = graph
+          .getConnectedLinks(dst, {inbound: true})
+          .find(l => l.get('source').id === src.id)
+        if (!link) continue
+        let linkv = paper.findViewByModel(link)
+        let tok = token.clone().node
+        if (p2t) {
+          linkv.sendToken(tok, 1000)
+          animateFlowSequence([dst].concat(seq), paper, graph, token)
+        } else {
+          linkv.sendToken(tok, 1000, () => {
+            dst.set('tokens', dst.get('tokens') + 1)
+            // add slight delay after token incremented before
+            // continuing animation
+            setTimeout(() => {
+              animateFlowSequence([dst].concat(seq), paper, graph, token)
+              if (!seq.length && dst.get('subnet'))
+                dst.set('tokens', dst.get('tokens') - 1)
+            }, 500)
+          })
+        }
+      }
+    }
+  }
+
+  // TODO: this event should be handled differently...
   reactor.on('fire', trigger => {
     console.log('fire', trigger)
-    let t = map.get(trigger.id)
+    let t = elements.get(trigger.id)
     fireTransition(t, { duration: 500 })
   })
-
-  // reactor.on('produce', ko => {
-  //   let t = map.get('produce')
-  //   fireTransition(t, { duration: 500 })
-  // })
 
   // nested function inside since we don't want recursive animations
   function fireTransition(t, opts) {
@@ -297,11 +370,11 @@ function animateReactor(paper, token) {
     let sources = inbound.map(link => graph.getCell(link.get('source').id))
     let isReady = sources.every(p => p.get('tokens') > 0)
     if (!isReady) {
-      console.log('transition not ready: ', t.get('kinetic'))
+      //console.log('transition not ready: ', t.get('kinetic'))
       if (sources.length === 1) {
         let source = sources[0]
         source.once('change', () => {
-          console.log('detected change ', source.get('kinetic'))
+          //console.log('detected change ', source.get('kinetic'))
           if (source.get('tokens') > 0)
             setTimeout(() => fireTransition(t, opts), 500)
         })

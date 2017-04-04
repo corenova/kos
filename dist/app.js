@@ -310,9 +310,12 @@ var KineticReactor = function (_KineticStream) {
     _this.core = new KineticStream({
       maxListeners: maxReceivers,
       filter: function filter(ko) {
+        // we track the flow of transitions on the KO
+        var flow = [];
         if (_this.seen(ko)) {
           // from external flow
-          _this.emit('accept', ko);
+          flow.push('accept');
+          //this.emit('accept', ko)
           var requires = _this.requires,
               inputs = _this.inputs,
               absorbs = _this.absorbs;
@@ -321,36 +324,37 @@ var KineticReactor = function (_KineticStream) {
             debug(_this.identity, '<==', ko.key);
             // update the KineticObject that it's been accepted into this flow
             _this.mark(ko, true);
-            _this.emit('consume', ko);
-            if (ko.match(absorbs)) _this.emit('absorb', ko);
+            flow.push('consume');
+            if (ko.match(absorbs)) flow.push('absorb');
           } else {
-            _this.emit('reject', ko);
+            flow.push('reject');
             return false;
           }
         } else {
           // from internal flow
-          _this.emit('feedback', ko);
+          flow.push('feedback');
           var _inputs = _this.inputs,
               _absorbs = _this.absorbs,
               outputs = _this.outputs;
 
           outputs.push.apply(outputs, ['error', 'warn', 'info', 'debug']);
 
-          if (ko.match(_inputs)) _this.emit('consume', ko);else _this.emit('reject', ko);
+          if (ko.match(_inputs)) flow.push('consume');else flow.push('reject');
 
           if (ko.match(_absorbs)) {
             debug(_this.identity, '<->', ko.key);
             _this.mark(ko, true); // prevent external propagation
-            _this.emit('absorb', ko);
+            flow.push('absorb');
           } else if (ko.match(outputs)) {
             debug(_this.identity, '==>', ko.key);
-            _this.emit('produce', ko);
+            flow.push('produce');
           } else {
             debug(_this.identity, '<--', ko.key);
             _this.mark(ko); // prevent external propagataion
           }
           if (ko.key !== 'error') _this.emit(ko.key, ko.value);
         }
+        _this.emit('flow', ko, flow);
         return true;
       }
     });
@@ -39467,7 +39471,7 @@ var _global = global,
 module.exports = kos.reactor('render').desc('Provides Kinetic Reactor visualization').init('reactors', new Map())
 
 // reactor specific render triggers
-.in('render/reactor').and.has('module/jointjs').out('joint/graph', 'joint/token').bind(reactorToDiagram).in('joint/graph', 'render/paper').and.has('module/jointjs').out('joint/paper').bind(renderGraphToPaper).in('joint/paper', 'joint/token').and.has('render/reactor').bind(animateReactor)
+.in('render/reactor').and.has('module/jointjs').out('joint/graph', 'joint/token').bind(reactorToDiagram).in('joint/graph', 'render/paper').and.has('module/jointjs').out('joint/paper').bind(renderGraphToPaper).in('joint/paper', 'joint/token').and.has('render/reactor').bind(animateReactorFlow)
 
 // TODO - shouldn't need these
 .in('render/reactor/name').out('render/reactor').bind(renderReactorByName).in('reactor').bind(collectReactors);
@@ -39510,7 +39514,7 @@ function reactorToDiagram(target) {
   var reject = p.clone().attr('.label/text', 'reject');
   var core = p.clone().attr('.label/text', 'core').set('kinetic', 'core');
   var buffer = p.clone().attr('.label/text', 'buffer').set('kinetic', 'buffer');
-  var output = p.clone().attr('.label/text', 'output');
+  var output = p.clone().attr('.label/text', 'output').set('kinetic', 'output');
 
   var accept = t.clone().attr('.label/text', 'accept').set('kinetic', 'accept');
   var feedback = t.clone().attr('.label/text', 'feedback').set('kinetic', 'feedback');
@@ -39534,7 +39538,8 @@ function reactorToDiagram(target) {
           label = _step$value.label,
           inputs = _step$value.inputs,
           requires = _step$value.requires,
-          outputs = _step$value.outputs;
+          outputs = _step$value.outputs,
+          state = _step$value.state;
 
       var accepts = requires.concat(inputs);
       var coffset = yoffset,
@@ -39553,7 +39558,7 @@ function reactorToDiagram(target) {
       var handler = t.clone().set('kinetic', id).attr('.label/text', label).position(TX[2], hoffset);
 
       var consumes = accepts.map(function (x, idx) {
-        return p.clone().set('kinetic', 'input/' + x).attr('.label/text', x).position(PX[2], coffset + 100 * idx);
+        return p.clone().set('kinetic', 'input/' + x).set('tokens', state.get(x) ? 1 : 0).attr('.label/text', x).position(PX[2], coffset + 100 * idx);
       });
       var produces = outputs.map(function (x, idx) {
         return p.clone().set('kinetic', 'output/' + x).attr('.label/text', x).position(PX[3], poffset + 100 * idx);
@@ -39691,10 +39696,14 @@ function renderGraphToPaper(source, opts) {
   this.send('joint/paper', paper);
 }
 
-function animateReactor(paper, token) {
+// TODO: for now, we're not breaking it apart into separate reactions
+// 
+// once we have a way to detect/animate circular continuous flow,
+// we'll break it apart into reaction triggers!
+function animateReactorFlow(paper, token) {
   var reactor = this.get('render/reactor');
   var graph = paper.model;
-  var map = new Map();
+  var elements = new Map();
   var _iteratorNormalCompletion3 = true;
   var _didIteratorError3 = false;
   var _iteratorError3 = undefined;
@@ -39705,7 +39714,7 @@ function animateReactor(paper, token) {
 
       var kinetic = elem.get('kinetic');
       if (!kinetic) continue;
-      map.set(kinetic, elem);
+      elements.set(kinetic, elem);
     }
   } catch (err) {
     _didIteratorError3 = true;
@@ -39722,64 +39731,201 @@ function animateReactor(paper, token) {
     }
   }
 
-  reactor.on('accept', function (ko) {
-    // let t = map.get('accept')
-    // let inbound = graph.getConnectedLinks(t, {inbound: true})
-    // let sources = inbound.map(link => graph.getCell(link.get('source').id))
-    // sources.forEach(x => x.set('tokens', 1))
+  reactor.on('flow', function (ko, flow) {
+    console.log('flow', ko, flow);
+    var seq = void 0;
+    // here we build the animation pipeline
+    switch (flow[0]) {
+      case 'feedback':
+        seq = traceInternalFlow(ko, flow);
+        break;
+      case 'accept':
+        seq = traceExternalFlow(ko, flow);
+        break;
+    }
+    if (!seq) return; // silently ignore for now
+    // send iterator to the sequence
+
+    var steps = [];
+    var _iteratorNormalCompletion4 = true;
+    var _didIteratorError4 = false;
+    var _iteratorError4 = undefined;
+
+    try {
+      for (var _iterator4 = seq[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+        var step = _step4.value;
+
+        steps.push(Array.isArray(step) ? step.map(function (x) {
+          return x.attr('.label/text');
+        }) : step.attr('.label/text'));
+      }
+    } catch (err) {
+      _didIteratorError4 = true;
+      _iteratorError4 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion4 && _iterator4.return) {
+          _iterator4.return();
+        }
+      } finally {
+        if (_didIteratorError4) {
+          throw _iteratorError4;
+        }
+      }
+    }
+
+    console.log(steps.join(' -> '));
+    //if (seq[0].get('subnet')) seq[0].set('tokens', seq[0].get('tokens') + 1)
+    animateFlowSequence(Array.from(seq), paper, graph, token);
   });
-  reactor.on('feedback', function (ko) {
-    console.log('feedback', ko);
-    var origin = map.get(ko.origin); // originating transition
+
+  function traceInternalFlow(ko, flow) {
+    flow = new Set(flow);
+    var sequence = new Set();
+    var origin = elements.get(ko.origin); // originating trigger or reactor
     if (!origin) {
       var match = reactor.reactors.find(function (x) {
         return x.contains(ko.origin);
       });
-      origin = map.get(match.id);
+      origin = elements.get(match.id);
     }
-    var links = graph.getConnectedLinks(origin, { outbound: true });
-    var output = void 0;
-    if (origin.get('subnet')) {
-      output = origin;
-      output.set('tokens', output.get('tokens') + 1);
-    } else {
+    sequence.add(origin);
+    if (origin.get('subnet')) sequence.add(graph.getNeighbors(origin, { outbound: true }));else {
+      var links = graph.getConnectedLinks(origin, { outbound: true });
       var link = links.find(function (l) {
         var elem = graph.getCell(l.get('target').id);
         return elem.get('kinetic') === 'output/' + ko.key;
       });
-      output = graph.getCell(link.get('target').id);
-      paper.findViewByModel(link).sendToken(token.clone().node, 500, function () {
-        output.set('tokens', output.get('tokens') + 1);
-      });
+      var target = graph.getCell(link.get('target').id);
+      sequence.add(target);
+      sequence.add(graph.getNeighbors(target, { outbound: true }));
     }
-    var send = graph.getNeighbors(output, { outbound: true })[0];
-    var feedback = map.get('feedback');
-    fireTransition(send, { duration: 500 });
-    fireTransition(feedback, { duration: 2000 });
-  });
+    sequence.add(elements.get('buffer'));
+    if (flow.has('produce')) {
+      sequence.add([elements.get('feedback'), elements.get('produce')]);
+      sequence.add([elements.get('core'), elements.get('output')]);
+    } else {
+      sequence.add(elements.get('feedback'));
+      sequence.add(elements.get('core'));
+    }
 
-  reactor.on('consume', function (ko) {
-    console.log('consume', ko);
-    var t = map.get('consume');
-    fireTransition(t, { target: 'input/' + ko.key, duration: 1000 });
-  });
+    var consume = elements.get('consume');
+    var absorb = elements.get('absorb');
+    if (flow.has('consume') && flow.has('absorb')) sequence.add([consume, absorb]);else if (flow.has('consume')) sequence.add(consume);else if (flow.has('absorb')) sequence.add(absorb);
 
-  reactor.on('absorb', function (ko) {
-    console.log('absorb', ko);
-    var t = map.get('absorb');
-    fireTransition(t, { duration: 1000 });
-  });
+    var outputs = [];
+    if (flow.has('consume')) {
+      var matches = graph.getNeighbors(consume, { outbound: true }).filter(function (x) {
+        return x.get('kinetic') === 'input/' + ko.key;
+      });
+      outputs.push.apply(outputs, _toConsumableArray(matches));
+    }
+    if (flow.has('absorb')) outputs.push.apply(outputs, _toConsumableArray(graph.getNeighbors(absorb, { outbound: true })));
+    if (outputs.length) sequence.add(outputs);
 
+    return sequence;
+    //fireTransition(consume, { target: `input/${ko.key}`, duration: 1000 })
+    //fireTransition(absorb, { duration: 1000 })
+  }
+
+  function traceExternalFlow(ko, flow) {}
+
+  function animateFlowSequence(seq, paper, graph, token) {
+    var source = seq.shift();
+    var target = seq.shift();
+    if (!source || !target) return;
+    var sources = Array.isArray(source) ? source : [source];
+    var targets = Array.isArray(target) ? target : [target];
+
+    var _iteratorNormalCompletion5 = true;
+    var _didIteratorError5 = false;
+    var _iteratorError5 = undefined;
+
+    try {
+      var _loop2 = function _loop2() {
+        var src = _step5.value;
+
+        var p2t = src.get('type') === 'pn.Place';
+        if (p2t) {
+          var tokens = src.get('tokens');
+          if (tokens > 0) src.set('tokens', tokens - 1);
+        }
+        var _iteratorNormalCompletion6 = true;
+        var _didIteratorError6 = false;
+        var _iteratorError6 = undefined;
+
+        try {
+          var _loop3 = function _loop3() {
+            var dst = _step6.value;
+
+            var link = graph.getConnectedLinks(dst, { inbound: true }).find(function (l) {
+              return l.get('source').id === src.id;
+            });
+            if (!link) return 'continue';
+            var linkv = paper.findViewByModel(link);
+            var tok = token.clone().node;
+            if (p2t) {
+              linkv.sendToken(tok, 1000);
+              animateFlowSequence([dst].concat(seq), paper, graph, token);
+            } else {
+              linkv.sendToken(tok, 1000, function () {
+                dst.set('tokens', dst.get('tokens') + 1);
+                // add slight delay after token incremented before
+                // continuing animation
+                setTimeout(function () {
+                  animateFlowSequence([dst].concat(seq), paper, graph, token);
+                  if (!seq.length && dst.get('subnet')) dst.set('tokens', dst.get('tokens') - 1);
+                }, 500);
+              });
+            }
+          };
+
+          for (var _iterator6 = targets[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+            var _ret3 = _loop3();
+
+            if (_ret3 === 'continue') continue;
+          }
+        } catch (err) {
+          _didIteratorError6 = true;
+          _iteratorError6 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion6 && _iterator6.return) {
+              _iterator6.return();
+            }
+          } finally {
+            if (_didIteratorError6) {
+              throw _iteratorError6;
+            }
+          }
+        }
+      };
+
+      for (var _iterator5 = sources[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+        _loop2();
+      }
+    } catch (err) {
+      _didIteratorError5 = true;
+      _iteratorError5 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion5 && _iterator5.return) {
+          _iterator5.return();
+        }
+      } finally {
+        if (_didIteratorError5) {
+          throw _iteratorError5;
+        }
+      }
+    }
+  }
+
+  // TODO: this event should be handled differently...
   reactor.on('fire', function (trigger) {
     console.log('fire', trigger);
-    var t = map.get(trigger.id);
+    var t = elements.get(trigger.id);
     fireTransition(t, { duration: 500 });
   });
-
-  // reactor.on('produce', ko => {
-  //   let t = map.get('produce')
-  //   fireTransition(t, { duration: 500 })
-  // })
 
   // nested function inside since we don't want recursive animations
   function fireTransition(t, opts) {
@@ -39795,11 +39941,11 @@ function animateReactor(paper, token) {
       return p.get('tokens') > 0;
     });
     if (!isReady) {
-      console.log('transition not ready: ', t.get('kinetic'));
+      //console.log('transition not ready: ', t.get('kinetic'))
       if (sources.length === 1) {
         var source = sources[0];
         source.once('change', function () {
-          console.log('detected change ', source.get('kinetic'));
+          //console.log('detected change ', source.get('kinetic'))
           if (source.get('tokens') > 0) setTimeout(function () {
             return fireTransition(t, opts);
           }, 500);

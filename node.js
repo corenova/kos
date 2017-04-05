@@ -8,6 +8,12 @@ const KineticTrigger = require('./lib/trigger')
 const kos = {
   reactor() { return new KineticReactor(...arguments) },
 
+  reactors: new Map,
+  register(reactor) {
+    if (reactor instanceof KineticReactor)
+      kos.reactors.set(reactor.id, reactor)
+  },
+
   Object:  KineticObject,
   Stream:  KineticStream,
   Reactor: KineticReactor,

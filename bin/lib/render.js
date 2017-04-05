@@ -169,14 +169,14 @@ function renderTriggers(stream) {
 function renderStream(stream, level=1) {
   let str = ''
   let info = {
-	label:    stream.label,
+	name:     stream.name,
 	purpose:  stream.purpose,
 	requires: stream.requires,
-    reactors: stream.reactors.map(x => x.label),
+    reactors: stream.reactors.map(x => x.name),
     triggers: stream.triggers.map(x => FUNC + '(' + x.handler.name + ')'),
     '': null
   }
-  if (level > 1) delete info.label
+  if (level > 1) delete info.name
   for (let key in info) {
 	if (Array.isArray(info[key])) {
 	  if (info[key].length)
@@ -188,7 +188,7 @@ function renderStream(stream, level=1) {
   }
   str += tree(info, true)
   for (let reactor of stream.reactors) {
-    str += '   ├─ '+reactor.label+"\n"
+    str += '   ├─ '+reactor.name+"\n"
     str += indent(renderStream(reactor, level+1), 1, '   │  ') + "\n"
     str += "   │\n"
   }

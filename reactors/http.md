@@ -14,8 +14,8 @@ const HttpFlow = require('kos/flows/http')
 ## kos show
 
 ```
-├─ label: kos-flow-http
-├─ summary: Provides HTTP client and/or server flows
+├─ name: http
+├─ purpose: Provides HTTP client and/or server flows
 ├─ subflows
 │  ├─ kos-flow-http-client
 │  └─ kos-flow-http-server

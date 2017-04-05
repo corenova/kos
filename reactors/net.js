@@ -51,12 +51,13 @@ function connect(opts) {
   sock.on('close', () => {
     if (sock.closing) return
     retry && setTimeout(() => {
+      opts = Object.assign({}, opts, {
+        retry: Math.round(Math.min(max, retry * 1.5))
+      })
       this.debug("attempt reconnect", addr)
       // NOTE: we use send with id=null since KOs that can trigger
       // itself are automatically filtered to prevent infinite loops
-      this.send('net/connect', Object.assign({}, opts, {
-        retry: Math.round(Math.min(max, retry * 1.5))
-      }), null)
+      this.send('net/connect', opts, { id: null })
     }, retry)
   })
   sock.on('error', this.error.bind(this))

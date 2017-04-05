@@ -27,8 +27,8 @@ FunctionFlow
 ## kos show
 
 ```
-├─ label: kos-flow-function
-├─ summary: Provides dynamic function exeuction via messages
+├─ name: function
+├─ purpose: Provides dynamic function exeuction via messages
 ├─ requires
 │  └─ function
 ├─ actions

@@ -7,7 +7,7 @@ module.exports = kos.reactor('debug')
   .in('debug/config').and.has('module/debug').bind(setupLogger)
 
 function setupLogger({ verbose=0 }) {
-  let debug = this.fetch('module/debug')
+  let debug = this.get('module/debug')
   let namespaces = [ 'kos:error', 'kos:warn' ]
   if (verbose)     namespaces.push('kos:info')
   if (verbose > 1) namespaces.push('kos:debug')

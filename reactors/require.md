@@ -1,4 +1,4 @@
-# kos-flow-require
+# require
 
 This flow module provides a useful pattern for fulfilling `module/xxx`
 dependencies for other flows. It can be *embedded* or used as a *data
@@ -15,12 +15,12 @@ Source code is [here](./require.js).
 ## Usage
 
 ```js
-const RequireFlow = require('kos/flows/require')
+const requireReactor = require('kos/reactors/require')
 ```
 
 Simple example:
 ```js
-RequireFlow
+requireReactor
   .on('module/url', x => console.log(x))
   .feed('require/url')
 ```
@@ -28,7 +28,7 @@ RequireFlow
 Enabling it to `require` external modules not found in the local
 system:
 ```js
-RequireFlow
+requireReactor
   .on('module/delegates', x => console.log(x))
   .feed('require/npm')
   .feed('require/delegates')
@@ -37,8 +37,8 @@ RequireFlow
 ## kos show
 
 ```
-├─ label: kos-flow-require
-├─ summary: Provides external module loading via 'require'
+├─ name: require
+├─ purpose: Provides external module loading via 'require'
 ├─ subflows
 │  └─ kos-flow-npm
 ├─ actions

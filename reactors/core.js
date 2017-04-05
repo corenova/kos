@@ -1,10 +1,12 @@
 'use strict'
 
 const { kos = require('..') } = global
+const requireReactor = require('./require')
 
 module.exports = kos.reactor('core')
-  .desc('Provides KOS reactor loading & logging facility')
+  .desc('Provides KOS reactor loading & require facility')
   .init('reactors', new Map)
+  .chain(requireReactor)
 
   .in('load').and.has('module/path').out('reactor').bind(loadReactor)
   .in('reactor').bind(chainReactor)
@@ -33,5 +35,5 @@ function loadReactor(name) {
 function chainReactor(reactor) { 
   let reactors = this.fetch('reactors')
   this.parent.chain(reactor)
-  reactors.set(reactor.label, reactor)
+  reactors.set(reactor.name, reactor)
 }

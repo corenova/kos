@@ -17,15 +17,15 @@ program
   .version(pkginfo.version)
   .option('-v, --verbose', 'enable more verbose output', ( (v, t) => t + 1), 0)
 
-program
-  .command('create [name]')
-  .description('Start a new dataflow project')
-  .action(() => {})
+// program
+//   .command('create [name]')
+//   .description('Start a new dataflow project')
+//   .action(() => {})
 
 program
   .command('list')
   .alias('ls')
-  .description('List locally available flows')
+  .description('List locally available reactors')
   .action(() => {})
 
 program
@@ -37,22 +37,19 @@ program
     core.feed('load', reactor)
   })
 
-function collect(val, keys) {
-  keys.push(val)
-  return keys
-}
+function collect(val, keys) { keys.push(val); return keys }
 
 program
-  .arguments('<flows...>')
+  .arguments('<reactors...>')
   .option('-i, --input <file>', 'load KSON file(s) as initial input(s)', collect, [])
   .option('-t, --trigger <kson>', 'feed arbitrary KSON trigger(s)', collect, [])
   .option('-s, --silent', 'suppress all debug/info/warn/error log messages')
-  .action((flows, opts) => {
+  .action((reactors, opts) => {
     let { input, trigger, silent, verbose } = opts
     opts.silent || core.pipe(debug)
 
     core.feed('debug/config', { verbose })
-    core.feed('load', ...flows)
+    core.feed('load', ...reactors)
 
     let io = core.io()
 

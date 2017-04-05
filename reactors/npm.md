@@ -35,8 +35,8 @@ command.
 ## kos show
 
 ```
-├─ label: kos-flow-npm
-├─ summary: Provides NPM registry transactions utilizing 'npm' module
+├─ name: npm
+├─ purpose: Provides NPM registry transactions utilizing 'npm' module
 ├─ requires
 │  └─ module/npm
 ├─ actions

@@ -49,8 +49,8 @@ MqttFlow
 ## kos show
 
 ```
-├─ label: kos:flow:mqtt
-├─ summary: Provides MQTT transaction flow utilizing 'mqtt' module
+├─ name: mqtt
+├─ purpose: Provides MQTT transaction flow utilizing 'mqtt' module
 ├─ requires
 │  ├─ module/mqtt
 │  └─ module/url

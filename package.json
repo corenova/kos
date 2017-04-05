@@ -30,11 +30,17 @@
   },
   "homepage": "https://github.com/corenova/kos#readme",
   "scripts": {
-    "build:min": "browserify . -o dist/kos.min.js -t [ babelify --presets [ es2015 ] ] -p [ minifyify --no-map ]",
-    "build:full": "browserify . -o dist/kos.js -t [ babelify --presets [ es2015 ] ]",
-    "build:app": "browserify app/index.js -o dist/app.js -t [ babelify --presets [ es2015 react ] ]",
+    "clean": "rimraf dist/*",
+    "prebuild": "npm run clean -s && mkdir -p dist",
+    "build:min": "browserify -t babelify -p [ minifyify --no-map ] . -o dist/kos.min.js",
+    "build:full": "browserify -t babelify . -o dist/kos.js",
     "build": "npm run build:full && npm run build:min",
     "test": "mocha"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
   },
   "dependencies": {
     "circular-json": "^0.3.1",
@@ -46,9 +52,6 @@
     "uuid": "^3.0.1"
   },
   "optionalDependencies": {
-    "jointjs": "^1.0.3",
-    "react": "^15.4.2",
-    "react-dom": "^15.4.2",
     "simple-websocket": "^5.0.0",
     "superagent": "^3.4.1"
   },
@@ -59,6 +62,7 @@
     "browserify": "^14.1.0",
     "minifyify": "^7.3.5",
     "mocha": "^3.2.0",
+    "rimraf": "^2.6.1",
     "should": "^11.2.0"
   }
 }

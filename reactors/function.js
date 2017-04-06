@@ -10,7 +10,7 @@ module.exports = kos.reactor('function')
 function exec(args) {
   if (this.event === 'caller') return this.set('caller', args)
 
-  let f = this.fetch('function')
+  let f = this.get('function')
   let ctx = this.get('caller')
   try { this.send('return', f.apply(ctx, args)) }
   catch (e) { this.throw(e) }

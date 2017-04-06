@@ -75,7 +75,7 @@ function listenByUrl(dest) {
 
 function createLinkStream(link) {
   let { addr, socket } = link
-  let streams = this.fetch('streams')
+  let streams = this.get('streams')
   let stream = streams.has(addr) ? streams.get(addr) : new kos.Stream
 
   socket.on('active', () => {

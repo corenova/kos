@@ -30,8 +30,8 @@ function runWebSocketServer(server) {
 }
 
 function getReactorState({ req, res }) {
-  let key = url2key(req.url, this.fetch('basePath'))
-  let data = this.fetch(key)
+  let key = url2key(req.url, this.get('basePath'))
+  let data = this.get(key)
   res.statusCode = data ? 200 : 404
   if (data) {
     res.setHeader('Content-Type', 'application/json')
@@ -47,17 +47,17 @@ function getReactorState({ req, res }) {
 }
 
 function putReactorState({ req, res }) {
-  let key = url2key(req.url, this.fetch('basePath'))
+  let key = url2key(req.url, this.get('basePath'))
   this.warn('not yet supported')
 }
 
 function deleteReactorState({ req, res }) {
-  let key = url2key(req.url, this.fetch('basePath'))
+  let key = url2key(req.url, this.get('basePath'))
   this.warn('not yet supported')
 }
 
 function postReactorState({ req, res }) {
-  let key = url2key(req.url, this.fetch('basePath'))
+  let key = url2key(req.url, this.get('basePath'))
   let io = this.parent.io()
   io.write(key + ' ')
   req.pipe(io)

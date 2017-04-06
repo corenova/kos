@@ -34,7 +34,7 @@ module.exports = kos.reactor('mqtt')
   .in('mqtt/message/*').out('mqtt/message').bind(convert)
 
 function connect(opts) {
-  const [ mqtt, {parse}, protocols ] = this.fetch('module/mqtt', 'module/url', 'protocols')
+  const [ mqtt, {parse}, protocols ] = this.get('module/mqtt', 'module/url', 'protocols')
   let { url, options } = opts
   try { url = parse(url) }
   catch (e) { return this.throw(e) }

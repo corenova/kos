@@ -43,7 +43,7 @@ function addItemToCart(item) {
 function itemizeReactionCart(cart={ items: [] }) {
   this.send('cart/items', cart.items.map(x => {
     let shopId = x.shopId || 'default'
-    let shop = this.fetch('reaction/shop/' + shopId)
+    let shop = this.get('reaction/shop/' + shopId)
     return Object.assign({
       taxable: true,
       discountable: true

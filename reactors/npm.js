@@ -30,7 +30,7 @@ function triggerLoad(npm) {
 }
 
 function initialize(options) {
-  let npm = this.fetch('module/npm')
+  let npm = this.get('module/npm')
   npm.load(options, (err, res) => {
     if (err) this.throw(err)
     else {
@@ -45,7 +45,7 @@ function queueCommands(defer) {
 }
 
 function sendCommands() {
-  let pending = this.fetch('pending')
+  let pending = this.get('pending')
   let install = new Set
   for (let cmd of pending) {
     let [ key, arg ] = cmd
@@ -62,7 +62,7 @@ function sendCommands() {
 }
 
 function install(pkgs) {
-  let [ npm, loaded ] = this.fetch('module/npm', 'loaded')
+  let [ npm, loaded ] = this.get('module/npm', 'loaded')
   pkgs = [].concat(pkgs).filter(String)
   if (!loaded) this.send('npm/defer', [ this.trigger, pkgs ])
   else {

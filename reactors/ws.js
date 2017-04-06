@@ -29,8 +29,8 @@ module.exports = kos.reactor('ws')
   .bind(listenByUrl)
 
 function connect(opts) {
-  const WebSocket = this.fetch('module/simple-websocket')
-  const protocols = this.fetch('protocols')
+  const WebSocket = this.get('module/simple-websocket')
+  const protocols = this.get('protocols')
 
   let { protocol, hostname, port, path, retry, max } = normalizeOptions(opts)
   if (!protocols.includes(protocol)) 
@@ -61,8 +61,8 @@ function connect(opts) {
 }
 
 function listen(opts) {
-  const Server = this.fetch('module/simple-websocket/server')
-  const protocols = this.fetch('protocols')
+  const Server = this.get('module/simple-websocket/server')
+  const protocols = this.get('protocols')
 
   let { protocol, hostname, port, path, server } = normalizeOptions(opts)
   if (!protocols.includes(protocol)) 
@@ -91,14 +91,14 @@ function listen(opts) {
 }
 
 function connectByUrl(dest) {
-  let url = this.fetch('module/url')
+  let url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.protocol) opts = url.parse('ws:'+dest, true)
   this.send('ws/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
-  let url = this.fetch('module/url')
+  let url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.protocol) opts = url.parse('ws:'+dest, true)
   this.send('ws/listen', Object.assign(opts, opts.query))

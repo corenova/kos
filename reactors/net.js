@@ -30,7 +30,7 @@ module.exports = kos.reactor('net')
 
 
 function connect(opts) {
-  const [ net, protocols ] = this.fetch('module/net', 'protocols')
+  const [ net, protocols ] = this.get('module/net', 'protocols')
 
   let { protocol, hostname, port, retry, max } = normalizeOptions.call(this, opts)
   if (!protocols.includes(protocol)) 
@@ -67,7 +67,7 @@ function connect(opts) {
 }
 
 function listen(opts) {
-  const net = this.fetch('module/net')
+  const net = this.get('module/net')
   let { protocol, hostname, port, retry, max } = normalizeOptions(opts)
 
   let server = net.createServer(sock => {
@@ -87,14 +87,14 @@ function listen(opts) {
 }
 
 function connectByUrl(dest) {
-  let url = this.fetch('module/url')
+  let url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
   this.send('net/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
-  let url = this.fetch('module/url')
+  let url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
   this.send('net/listen', Object.assign(opts, opts.query))

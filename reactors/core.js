@@ -12,7 +12,7 @@ module.exports = kos.reactor('core')
   .in('reactor').bind(chainReactor)
 
 function loadReactor(name) {
-  let path = this.fetch('module/path')
+  let path = this.get('module/path')
   let reactor = {}
   let search = [ 
     path.resolve(name),
@@ -33,7 +33,7 @@ function loadReactor(name) {
 }
 
 function chainReactor(reactor) { 
-  let reactors = this.fetch('reactors')
+  let reactors = this.get('reactors')
   this.parent.chain(reactor)
   reactors.set(reactor.name, reactor)
 }

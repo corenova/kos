@@ -33,7 +33,7 @@ function simpleGet(url) {
 }
 
 function clientRequest(req) {
-  let agent = this.fetch('module/superagent')
+  let agent = this.get('module/superagent')
   let { url, method, data } = req
   switch (method.toLowerCase()) {
   case 'get':
@@ -55,7 +55,7 @@ function clientRequest(req) {
 }
 
 function createServer(opts) {
-  let http = this.fetch('module/http')
+  let http = this.get('module/http')
   let { protocol, hostname, port } = normalizeOptions.call(this, opts)
 
   let server = http.createServer((request, response) => {
@@ -85,7 +85,7 @@ function classifyServerTransaction(session) {
 
 function normalizeOptions(opts) {
   if (typeof opts === 'string') {
-    let url = this.fetch('module/url')
+    let url = this.get('module/url')
     if (!opts.includes('://'))
       opts = 'http://' + opts
     opts = url.parse(opts, true)

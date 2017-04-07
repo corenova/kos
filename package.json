@@ -31,7 +31,7 @@
   "homepage": "https://github.com/corenova/kos#readme",
   "scripts": {
     "clean": "rimraf dist/*",
-    "prebuild": "npm run clean -s && mkdir -p dist",
+    "prebuild": "npm run clean -s && mkdirp dist",
     "build:min": "browserify -t babelify -p [ minifyify --no-map ] . -o dist/kos.min.js",
     "build:full": "browserify -t babelify . -o dist/kos.js",
     "build": "npm run build:full && npm run build:min",
@@ -61,6 +61,7 @@
     "babelify": "^7.3.0",
     "browserify": "^14.1.0",
     "minifyify": "^7.3.5",
+    "mkdirp": "^0.5.1",
     "mocha": "^3.2.0",
     "rimraf": "^2.6.1",
     "should": "^11.2.0"

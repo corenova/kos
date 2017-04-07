@@ -75,7 +75,7 @@ if (!process.argv.slice(2).length) {
 
 // TODO: should convert to kos.reactor("tty")
 function commander(io) {
-  const reactors = core.fetch('reactors')
+  const reactors = core.get('reactors')
   const cmd = readline.createInterface({ 
     input:  process.stdin, 
     output: process.stderr,

@@ -2,12 +2,16 @@
 
 Simple, unopionated,
 [dataflow streaming](https://en.wikipedia.org/wiki/Dataflow) framework
-for creating **awesome** data pipelines and state machines for your
+for creating **autonomic** data pipelines and state machines for your
 apps.
 
-It's a **data-centric** paradigm for moving *objects* through a
+It's a **data-centric** and
+[reactive programming](https://en.wikipedia.org/wiki/Reactive_programming)
+paradigm that dynamically responds to *objects* in motion through a
 pipeline of computational actors that can execute
-concurrently. Conduct
+concurrently.
+
+Conduct
 [data science](https://en.wikipedia.org/wiki/Data_science)
 experiments, share your flows, and embrace KOS.
 
@@ -18,7 +22,19 @@ experiments, share your flows, and embrace KOS.
 
 ## Introduction
 
-A **Kinetic Object Stream** contains a set of **Reactor(s)** and/or
+A **Kinetic Object Stream** enables dataflow transactions to be
+expressed as discrete atomic *actions* that automatically executes
+based on varying input conditions.
+
+> For example, in an *imperative* programming setting, `a:=b+c` would
+> mean that `a` is being assigned the result of `b+c` in the instant
+> the expression is evaluated, and later, the values of `b` and `c`
+> can be changed with no effect on the value of `a`. However, in
+> reactive programming, the value of `a` would be automatically
+> updated whenever the values of `b` and `c` change, without the
+> program executing the sentence `a:=b+c` again.
+
+A **Kineitc Reactor** contains a set of **Trigger(s)** and/or
 **Stream(s)** that operates on one or more *named input* **Object(s)**
 to produce one or more *named output* **Object(s)**.
 

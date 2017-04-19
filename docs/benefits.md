@@ -7,7 +7,7 @@ summarized by [Edward Lorenz](https://en.wikipedia.org/wiki/Edward_Norton_Lorenz
 > does not approximately determine the future
 
 In as much as we'd like to believe otherwise, our software systems
-misbehave in ways we cannot predict. No matter how throughly we
+*mis*behave in ways we cannot predict. No matter how throughly we
 attempt to define, analyze, and test our systems, we invariably fail
 to sufficiently control all the possible ways it can go wrong.
 
@@ -32,11 +32,15 @@ changes.
 This means that you can introduce any additional *reactive* behavior
 into an operating environment at any time while it is **actively
 running**. Basically, it has *inherent* facility to self-modify its
-own system behavior.
+own system behavior. It's also an **intrinsically chaotic** system,
+where *unexpected* outputs are *observable* and *actionable* at any
+point in time.
 
 Using **KOS** you can design and implement
 [autonomic computing](https://en.wikipedia.org/wiki/Autonomic_Computing)
-systems that can manage itself without direct human intervention.
+systems that can manage itself without direct human intervention. The
+sole expectation is that it will *eventually* learn how to do the
+right thing.
 
 > Intelligence is the ability to adapt to change
 >

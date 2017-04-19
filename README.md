@@ -135,19 +135,21 @@ below:
 The following reactor modules are included inside the `kos`
 repository (see [reactors](./reactors)):
 
-- [debug](./reactors/debug.md)
-- [engine](./reactors/engine.md)
-- [http](./reactors/http.md) - 
-- [link](./reactors/link.md)
-- [mqtt](./reactors/mqtt.md)
-- [net](./reactors/net.md)
-- [npm](./reactors/npm.md)
-- [pull](./reactors/pull.md)
-- [push](./reactors/push.md)
-- [require](./reactors/require.md)
-- [rest](./reactors/rest.md)
-- [sync](./reactors/sync.md)
-- [ws](./reactors/ws.md)
+name | description
+---  | ---
+[debug](./reactors/debug.md) | 
+[engine](./reactors/engine.md) | 
+[http](./reactors/http.md) | 
+[link](./reactors/link.md) |
+[mqtt](./reactors/mqtt.md) |
+[net](./reactors/net.md) |
+[npm](./reactors/npm.md) |
+[pull](./reactors/pull.md) |
+[push](./reactors/push.md) |
+[require](./reactors/require.md) |
+[rest](./reactors/rest.md) |
+[sync](./reactors/sync.md) |
+[ws](./reactors/ws.md) |
 
 ## License
   [Apache 2.0](LICENSE)

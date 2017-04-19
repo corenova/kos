@@ -3,7 +3,8 @@
 [Chaos Theory](https://en.wikipedia.org/wiki/Chaos_theory) was
 summarized by [Edward Lorenz](https://en.wikipedia.org/wiki/Edward_Norton_Lorenz) as:
 
-: When the present determines the future, but the approximate present does not approximately determine the future
+> When the present determines the future, but the approximate present
+> does not approximately determine the future
 
 In as much as we'd like to believe otherwise, our software systems
 misbehave in ways we cannot predict. No matter how throughly we
@@ -41,7 +42,7 @@ systems that can manage itself without direct human intervention.
 >
 > - Stephen Hawking
 
-## Relations to Imperative Approach
+## Relation to Imperative Programming
 
 When we take an
 [imperative](https://en.wikipedia.org/wiki/Imperative_programming)
@@ -55,7 +56,7 @@ With **KOS**, the discrete atomic functions can be declared
 it maintains deterministic behavior on a per function-level without
 affecting the overall program execution flow.
 
-## Relations to Object-Oriented Approach
+## Relation to Object-Oriented Programming
 
 When we take an
 [object-oriented](https://en.wikipedia.org/wiki/Object-oriented_programming)
@@ -66,7 +67,22 @@ taxonomy of entities. Because state is now bound to the *object* for
 which operations take effect and these *objects* are often
 hierarchical and relational to other *objects*, tracing the execution
 flow of a given system often requires peeling many layers of an onion
-**and** all of its friends. An *object* extracted out of context
-becomes meaningless.
+**and** all of its friends. An *object* extracted out of context in an
+[object-oriented](https://en.wikipedia.org/wiki/Object-oriented_programming)
+system often becomes meaningless.
 
-With **KOS**, the 
+With **KOS**, the state is bound to each of the *reactive function*
+and every incoming flow of data objects are treated as **immutable**
+entities. There is no expectation of any state inherent in such
+*objects* and no operation takes place on them (with the exception of
+library objects that contain *stateless* functions). While it can
+consume and produce *object-oriented* data entities, it must not rely
+on its internal state across *reactive function* executions.
+
+## Relations to Functional Programming
+
+TBD...
+
+## Relations to Declarative Programming
+
+TBD...

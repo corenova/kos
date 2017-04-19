@@ -97,8 +97,7 @@ When you [embrace KOS](./docs/benefits.md) you are embracing **chaos**
 itself by giving up your programmatic execution flow control
 logic. Instead of honing your *incantation* skills and declaring the
 chain of commands for fulfilling your desires, you've now become an
-**alchemist**, continually experimenting with chain reactions. And
-then... you irreversibly fall in love with your new art form.
+**alchemist**, continually experimenting with chain reactions.
 
 ## Installation
 
@@ -129,7 +128,7 @@ below:
 - [Chaining Reactors](./docs/chaining.md)
 - [Creating Reactors](./docs/developer.md)
 - [Discovering Reactors](./docs/discover.md)
-- [Managing State](./docs/state-machine.md)
+- [Managing State](./docs/state.md)
 
 ## Available Reactors
 
@@ -138,7 +137,7 @@ repository (see [reactors](./reactors)):
 
 - [debug](./reactors/debug.md)
 - [engine](./reactors/engine.md)
-- [http](./reactors/http.md)
+- [http](./reactors/http.md) - 
 - [link](./reactors/link.md)
 - [mqtt](./reactors/mqtt.md)
 - [net](./reactors/net.md)

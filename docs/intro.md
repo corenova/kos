@@ -1,4 +1,4 @@
-# Why embrace KOS?
+# Introduction
 
 [Chaos Theory](https://en.wikipedia.org/wiki/Chaos_theory) was
 summarized by [Edward Lorenz](https://en.wikipedia.org/wiki/Edward_Norton_Lorenz) as:
@@ -7,10 +7,20 @@ summarized by [Edward Lorenz](https://en.wikipedia.org/wiki/Edward_Norton_Lorenz
 > does not approximately determine the future
 
 In as much as we'd like to believe otherwise, our software systems
-*mis*behave in ways we cannot accurately predict. No matter how
-throughly we attempt to define, analyze, and test our systems, we
+*mis*behave in ways we cannot reliably predict. No matter how
+vigorously we attempt to define, analyze, and test our systems, we
 invariably fail to sufficiently control all the possible ways it can
 go wrong.
+
+Using **KOS** you can design and implement
+[autonomic computing](https://en.wikipedia.org/wiki/Autonomic_Computing)
+systems that can manage itself without direct human intervention.
+
+> Intelligence is the ability to adapt to change
+>
+> Stephen Hawking
+
+## Core Concepts
 
 The **KOS** framework adopts the
 [reactive programming](https://en.wikipedia.org/wiki/Reactive_programming)
@@ -22,30 +32,37 @@ paradigms.
 
 The resulting framework provides a structured methodology for defining
 discrete atomic *reactive functions* that represents system bahavior
-as a dynamic state machine composed from a collection of cohesive
+as a *dynamic* state machine composed from a collection of *cohesive*
 actors that collaborate over a distributed network.
 
 In other words, **KOS** is a system designed to continuously react to
-changes in its environment, where the environment itself (its network
+changes in its environment, where the environment itself (the network
 of distributed actors) effectively determines how it can react to
 changes.
 
 This means that you can introduce any additional *reactive* behavior
 into an operating environment at any time while it is **actively
-running**. Basically, it has *inherent* facility to self-modify its
+running**. Essentially, it has *inherent* facility to self-modify its
 own system behavior. It's also an **intrinsically chaotic** system,
-where *unexpected* outputs are *observable* and *actionable* to
-produce new outputs at any point in time.
+where *arbitrary* outputs are *observable* and *actionable* to produce
+new outputs at any point in time.
 
-Using **KOS** you can design and implement
-[autonomic computing](https://en.wikipedia.org/wiki/Autonomic_Computing)
-systems that can manage itself without direct human intervention. The
-sole expectation on system behavior is that it will *eventually* learn
-how to do the right thing.
+Furthermore, **KOS** is a
+[closed-loop feedback](https://en.wikipedia.org/wiki/Feedback) control
+system. This means that *outputs* of the system are routed back as
+*inputs* as part of a [chain of cause-and-effect](./chaining.md) that
+forms a circular loop. The framework *thrives* on
+[butterfly effect](https://en.wikipedia.org/wiki/Butterfly_effect),
+which is the concept that small causes can have large effects.
 
-> Intelligence is the ability to adapt to change
->
-> - Stephen Hawking
+> In chaos theory, the butterfly effect is the sensitive dependence on
+> initial conditions in which a small change in one state of a
+> deterministic nonlinear system can result in large differences in a
+> later state.
+
+When you work with **KOS**, you're experimenting with *chaotic*
+[chain reactions](./chaining.md). You must think like an **alchemist**
+and learn to harness the power of elemental compositions.
 
 ## Relation to Reactive Programming
 
@@ -113,8 +130,8 @@ example.feed('c', 50)  // resulting "a" is now 150
 ```
 
 With **KOS**, you can create and compose various reactors and triggers
-into the operating environment that can **pipe** flow of data objects
-between each other in a closed loop.
+into the operating environment that can **pipe** the flow of data
+objects between each other in a closed loop.
 
 ## Relation to Imperative Programming
 

@@ -1,4 +1,38 @@
-# KOS User's Guide
+# User's Guide
+
+## Using the `kos` command-line utility
+
+The quickest way to get started with **KOS** is to utilize the
+provided `kos` CLI utility to interact with various
+[available reactors](../README.md#available-reactors) included in the
+project repository.
+
+### kos -h
+
+```
+  Usage: kos [options] [command] <reactors...>
+
+
+  Commands:
+
+    list|ls            List locally available reactors
+    show|sh <reactor>  Show detailed information about a reactor
+    
+
+  Options:
+
+    -h, --help            output usage information
+    -V, --version         output the version number
+    -v, --verbose         enable more verbose output
+    -i, --input <file>    load KSON file(s) as initial input(s)
+    -t, --trigger <kson>  feed arbitrary KSON trigger(s)
+    -s, --silent          suppress all debug/info/warn/error log
+    -messages
+```
+
+
+
+
 
 ## Using Flows
 

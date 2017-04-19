@@ -13,7 +13,7 @@ pipeline of computational actors that can execute concurrently.
 
 Conduct [data science](https://en.wikipedia.org/wiki/Data_science)
 experiments, [share your reactors](./docs/sharing.md), and
-[embrace KOS](./docs/benefits.md).
+[embrace KOS](./docs/intro.md).
 
 <!---
   [![NPM Version][npm-image]][npm-url]
@@ -24,26 +24,27 @@ experiments, [share your reactors](./docs/sharing.md), and
 
 The **KOS** framework enables dataflow transactions to be expressed as
 a set of discrete atomic *trigger(s)* that *automatically* executes
-based on varying inputs it observes from its incoming flow of data
-objects.
+based on one or more *desired* input(s) it observes from its incoming
+flow of data objects.
 
-One of the most important construct in **KOS** is that the *reactive*
-functions are **never explicitly called** by other functions.
+One of the most important construct in **KOS** is that these
+*reactive* functions are **never explicitly called** by other
+functions.
 
-Instead, the respective functions are invoked automatically when its
+Instead, the respective functions are invoked *automatically* when its
 input states are *eventually* satisfied. Its operating behavior is
 very similar to how a **runtime garbage collector** works tirelessly
 behind the scenes in a given software instance. You don't need to
 explicitly tell the *garbage collector* to clean-up, it simply *reacts
 autonomously* based on its environmental observations.
 
-When you [embrace KOS](./docs/benefits.md) you are embracing **chaos**
+When you [embrace KOS](./docs/intro.md) you are embracing **chaos**
 itself by giving up your programmatic execution flow control
 logic. Instead of honing your *incantation* skills and declaring the
 chain of commands for fulfilling your desires, you've now become an
-**alchemist**, continually experimenting with chain reactions and
-tinkering with *elements* you inject into the system until you get the
-desired result.
+**alchemist**, continually experimenting with
+[chain reactions](./docs/chaining.md) and tinkering with *elements*
+you inject into the system until you get your desired result.
 
 ## Installation
 
@@ -69,7 +70,7 @@ for expressing software itself, it is **highly** advised that
 first-time users carefully read all of the included documentation
 below:
 
-- [Why embrace KOS?](./docs/benefits.md)
+- [Introduction to KOS](./docs/intro.md)
 - [Using Reactors](./docs/usage.md)
 - [Chaining Reactors](./docs/chaining.md)
 - [Creating Reactors](./docs/developer.md)

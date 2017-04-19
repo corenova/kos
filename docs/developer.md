@@ -1,4 +1,4 @@
-# KOS Developer's Guide
+# Developer's Guide
 
 Welcome to [Dataflow Programming](https://en.wikipedia.org/wiki/Dataflow_programming).
 

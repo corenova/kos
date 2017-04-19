@@ -2,7 +2,7 @@
 
 Welcome to [Dataflow Programming](https://en.wikipedia.org/wiki/Dataflow_programming).
 
-## Creating Flows
+## Creating a new Reactor
 
 Let's make things a bit more **interesting** and say you now want to
 find images from the requested URL.
@@ -105,4 +105,12 @@ There you have it! You now have a web scraper that can find pictures
 of people at arbitrary URLs. You can find a more complete version of
 this in the [examples](./examples) folder of this repository.
 
+
+As discussed in
+[Managing Dependencies](./docs/usage.md#managing-dependencies) section
+of the [Using Reactors](./docs/usage.md) guide, properly created KOS
+modules do NOT contain any *explicit* external module dependencies at
+the module-level but instead receive them via the stream from the
+upstream consumer. As such, maintaining `package.json` or publishing
+the KOS modules to NPM is completely optional.
 

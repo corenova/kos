@@ -1,6 +1,6 @@
 # Kinetic Object Stream
 
-Simple, unopionated,
+Simple, adaptive,
 [dataflow streaming](https://en.wikipedia.org/wiki/Dataflow) framework
 for creating
 [autonomic](https://en.wikipedia.org/wiki/Autonomic_Computing) data

@@ -20,31 +20,61 @@ experiments, [share your reactors](./docs/sharing.md), and
   [![NPM Downloads][downloads-image]][downloads-url]
 --->
 
-## Introduction
+## Overview
 
-The **KOS** framework enables dataflow transactions to be expressed as
-a set of discrete atomic *trigger(s)* that *automatically* executes
-based on one or more *desired* input(s) it observes from its incoming
-flow of data objects.
+The **KOS** framework enables
+[dataflow](https://en.wikipedia.org/wiki/Dataflow) transactions to be
+expressed as a set of discrete atomic *trigger(s)* that
+*automatically* executes based on one or more *desired* input(s) it
+observes from its incoming flow of data objects.
 
-One of the most important construct in **KOS** is that these
-*reactive* functions are **never explicitly called** by other
-functions.
+Using **KOS**, you can create a new
+[Kinetic Reactor](./docs/intro.md#kinetic-reactor) instance with one
+or more [Kinetic Trigger](./docs/intro.md#kinetic-trigger) reactive
+functions and **feed/pipe** a stream of
+[Kinetic Token(s)](./docs/intro.md#kinetic-token) into the
+reactor. The [Kinetic Reactor](./docs/intro.md#kinetic-reactor) and
+[Kinetic Trigger](./docs/intro.md#kinetic-trigger) are both instances
+of [Kinetic Stream](./docs/intro.md#kinetic-stream) and natively
+support data streaming API (i.e. read/write).
 
-Instead, the respective functions are invoked *automatically* when its
-input states are *eventually* satisfied. Its operating behavior is
-very similar to how a **runtime garbage collector** works tirelessly
-behind the scenes in a given software instance. You don't need to
-explicitly tell the *garbage collector* to clean-up, it simply *reacts
-autonomously* based on its environmental observations.
+One of the most important concept in **KOS** is that these *reactive*
+trigger functions are **never explicitly called** by other
+functions. Instead, the *reactive* trigger functions are invoked
+*automatically* by the **KOS** framework when its input states are
+*eventually* satisfied by one or more observed flow of data
+tokens. Its operating behavior is very similar to how a
+[runtime garbage collector](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science))
+works tirelessly behind the scenes in a given software instance. You
+don't need to explicitly tell the *garbage collector* to clean-up, it
+simply *reacts autonomously* based on its environmental observations.
 
 When you [embrace KOS](./docs/intro.md) you are embracing **chaos**
 itself by giving up your programmatic execution flow control
 logic. Instead of honing your *incantation* skills and declaring the
 chain of commands for fulfilling your desires, you've now become an
 **alchemist**, continually experimenting with
-[chain reactions](./docs/chaining.md) and tinkering with *elements*
+[chain reactions](./docs/chaining.md) and tinkering with *tokens*
 you inject into the system until you get your desired result.
+
+## Reference Guides
+
+Since `kos` encapsulates a number of fundamentally different paradigms
+for expressing software itself, it is **highly** advised that
+first-time users carefully read **all** of the included documentation
+below:
+
+- [Introduction to KOS](./docs/intro.md)
+ - [Core Concepts](./docs/intro.md#core-concepts)
+ - [Core Entities](./docs/intro.md#core-entities)
+ - [Programming Paradigms](./docs/intro.md#programming-paradigms)
+- [Using KOS](./docs/usage.md)
+ - [Getting Started](./docs/usage.md#getting-started)
+ - [Chaining Reactors](./docs/usage.md#chaining-reactors)
+ - [Discovering Reactors](./docs/discover.md)
+- [Developing KOS](./docs/developer.md)
+ - [Creating Reactors](./docs/developer.md#creating-reactors)
+ - [Managing State](./docs/developer.md#managing-state)
 
 ## Installation
 
@@ -63,20 +93,6 @@ repo from:
 $ git clone https://github.com/corenova/kos
 ```
 
-## Reference Guides
-
-Since `kos` encapsulates a number of fundamentally different paradigms
-for expressing software itself, it is **highly** advised that
-first-time users carefully read all of the included documentation
-below:
-
-- [Introduction to KOS](./docs/intro.md)
-- [Using Reactors](./docs/usage.md)
-- [Chaining Reactors](./docs/chaining.md)
-- [Creating Reactors](./docs/developer.md)
-- [Discovering Reactors](./docs/discover.md)
-- [Managing State](./docs/state.md)
-
 ## Available Reactors
 
 The following reactor modules are included inside the `kos`
@@ -84,19 +100,19 @@ repository (see [reactors](./reactors)):
 
 name | description
 ---  | ---
-[debug](./reactors/debug.md) | 
-[engine](./reactors/engine.md) | 
-[http](./reactors/http.md) | 
-[link](./reactors/link.md) |
-[mqtt](./reactors/mqtt.md) |
-[net](./reactors/net.md) |
-[npm](./reactors/npm.md) |
-[pull](./reactors/pull.md) |
-[push](./reactors/push.md) |
-[require](./reactors/require.md) |
-[rest](./reactors/rest.md) |
-[sync](./reactors/sync.md) |
-[ws](./reactors/ws.md) |
+[debug](./reactors/debug.md) | reactions to 
+[engine](./reactors/engine.md) | reactions to load/start an instance
+[http](./reactors/http.md) | reactions to http client/server transactions
+[link](./reactors/link.md) | reactions to dynamic client/server flows
+[mqtt](./reactors/mqtt.md) | reactions to mqtt client/server transactions
+[net](./reactors/net.md) | reactions to tcp/udp client/server transactions
+[npm](./reactors/npm.md) | reactions to drive NPM operations
+[pull](./reactors/pull.md) | reactions to pull dataflow from peers
+[push](./reactors/push.md) | reactions to push dataflow to peers
+[require](./reactors/require.md) | reactions to load JS modules
+[rest](./reactors/rest.md) | reactions to RESTful transactions
+[sync](./reactors/sync.md) | reactions to sync dataflow to/from peers
+[ws](./reactors/ws.md) | reactions to websockets client/server flows
 
 ## License
   [Apache 2.0](LICENSE)

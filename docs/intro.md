@@ -22,15 +22,7 @@ systems that can manage itself without direct human intervention.
 
 ## Core Concepts
 
-The **KOS** framework adopts the
-[reactive programming](https://en.wikipedia.org/wiki/Reactive_programming)
-paradigm and combines
-[event-driven programming](https://en.wikipedia.org/wiki/Event-driven_programming)
-together with *asynchronous*
-[dataflow programming](https://en.wikipedia.org/wiki/Dataflow_programming)
-paradigms.
-
-The resulting framework provides a structured methodology for defining
+The **KOS** framework provides a structured methodology for defining
 discrete atomic *reactive functions* that represents system bahavior
 as a *dynamic* state machine composed from a collection of *cohesive*
 actors that collaborate over a distributed network.
@@ -40,20 +32,22 @@ changes in its environment, where the environment itself (the network
 of distributed actors) effectively determines how it can react to
 changes.
 
-This means that you can introduce any additional *reactive* behavior
-into an operating environment at any time while it is **actively
-running**. Essentially, it has *inherent* facility to self-modify its
+Essentially, it has *inherent* facility to self-modify its
 own system behavior. It's also an **intrinsically chaotic** system,
 where *arbitrary* outputs are *observable* and *actionable* to produce
 new outputs at any point in time.
+
+This means that you can introduce any additional *reactive* behavior
+into an operating environment at any time while it is **actively
+running**. 
 
 Furthermore, **KOS** is a
 [closed-loop feedback](https://en.wikipedia.org/wiki/Feedback) control
 system. This means that *outputs* of the system are routed back as
 *inputs* as part of a [chain of cause-and-effect](./chaining.md) that
-forms a circular loop. The framework *thrives* on
-[butterfly effect](https://en.wikipedia.org/wiki/Butterfly_effect),
-which is the concept that small causes can have large effects.
+forms a circular loop. The framework *thrives* on the
+[butterfly effect](https://en.wikipedia.org/wiki/Butterfly_effect), a
+concept that small causes can have large effects.
 
 > In chaos theory, the butterfly effect is the sensitive dependence on
 > initial conditions in which a small change in one state of a
@@ -64,7 +58,115 @@ When you work with **KOS**, you're experimenting with *chaotic*
 [chain reactions](./chaining.md). You must think like an **alchemist**
 and learn to harness the power of elemental compositions.
 
-## Relation to Reactive Programming
+## Core Entities
+
+Before you can embrace the **KOS** framework, it is important to
+understand the core entities within **KOS** and their respective
+roles.
+
+### Kinetic Token
+
+The **kinetic token** provides primary encapsulation of data
+objects. The actual *data object* is a property of the *token*. The
+*token* is the main entity that flows throughout the **KOS** data
+pipeline.
+
+Every *token* has a **key**, which serves as the data *type* label for
+the *actual* data object being transmitted. The token's key is the
+**sole identifier** used for fulfilling input state condition(s) for
+the *reactive* functions.
+
+It also serves the essential role of tracing the *path* of the data
+object throughout the **KOS** data pipeline. It tracks the `origin` of
+the data object and ensures that each of the
+[Kinetic Stream](#kinetic-stream) instances in a data pipeline *never*
+reacts to a given data object more than once.
+
+The *tokens* are internally created to encapsulate the data object by
+the underlying [Kinetic Stream](#kinetic-stream) instance.
+
+You can reference the source code [here](../lib/token.js).
+
+### Kinetic Stream
+
+The **kinetic stream** provides the underlying dataflow plumbing. It
+extends the [Node.js](http://nodejs.org)
+[stream](http://nodejs.org/api/stream.html) interface to streamline
+the flow of [Kinetic Tokens](#kinetic-token).
+
+It also provides **state management** facilities for preserving
+necessary operational context.
+
+You can use the **kinetic stream** interface to directly
+[feed](./usage.md#feeding-kinetic-tokens) additional labeled data
+objects into the stream.
+
+It serves as the base class for the
+[Kinetic Trigger](#kinetic-trigger) and
+[Kinetic Reactor](#kinetic-reactor) entities.
+
+You can reference the source code [here](../lib/stream.js).
+
+### Kinetic Trigger
+
+The **kinetic trigger** provides the essence of a *reactive*
+function. It extends the [Kinetic Stream](#kinetic-stream) interface
+and enables declarations of `inputs` that will fire the transition
+function, data objects that it `requires` as dependencies, as well as
+`outputs` that it can generate.
+
+It utilizes the **state management** facilities of the underlying
+[Kinetic Stream](#kinetic-stream) interface to track the incoming flow
+of data objects and handles the *automatic* execution of the *bound*
+function once its trigger state is satisfied.
+
+When the *bound* function is *reactively* invoked, the function
+executes with the `this` context bound to an instance of
+[Kinetic Context](#kinetic-context).
+
+The *triggers* are usually created as part of a
+[Kinetic Reactor](#kinetic-reactor) declaration but can be utilized
+independently if desired.
+
+You can reference the source code [here](../lib/trigger.js).
+
+### Kinetic Context
+
+The **kinetic context** provides the execution context for performing
+the *reaction*. It exposes useful interfaces to the
+[Kinetic Stream](#kinetic-stream) that it is operating on.
+
+You can reference the source code [here](../lib/context.js).
+
+### Kinetic Reactor
+
+The **kinetic reactor** provides the control logic for managing
+dataflow streams. It extends the [Kinetic Stream](#kinetic-stream)
+interface and enables loading of one or more
+[Kinetic Trigger(s)](#kinetic-trigger) as well as other
+[Kinetic Reactor(s)](#kinetic-reactor).
+
+The *reactor* is a **continuously flowing** data stream. It contains
+an internal `core` stream that is used to form a
+[closed-loop feedback](https://en.wikipedia.org/wiki/Feedback) route
+back to itself.
+
+It's primary role is to be a *logical* container for declaring related
+*reactive* functions.
+
+You can reference the source code [here](../lib/reactor.js).
+
+## Programming Paradigms
+
+The **KOS** framework adopts the
+[reactive programming](https://en.wikipedia.org/wiki/Reactive_programming)
+paradigm and combines
+[event-driven programming](https://en.wikipedia.org/wiki/Event-driven_programming)
+together with *asynchronous*
+[dataflow programming](https://en.wikipedia.org/wiki/Dataflow_programming)
+paradigms.
+
+### Reactive Programming
 
 Let's start with an excerpt from wikipedia:
 
@@ -109,8 +211,9 @@ to produce a new output labeled `a`.  In addition, we express a simple
 **chain reaction** that will trigger once `a` is observed within the
 reactor to print its value to the console.
 
-We can then explicitly trigger the reactions by *feeding* the reactor
-instance with input objects:
+We can then explicitly trigger the reactions by
+[feeding](./usage.md#feeding-kinetic-tokens) the reactor instance with
+input objects:
 
 ```js
 example.feed('b', 10) // nothing happens, missing 'c'
@@ -133,7 +236,7 @@ With **KOS**, you can create and compose various reactors and triggers
 into the operating environment that can **pipe** the flow of data
 objects between each other in a closed loop.
 
-## Relation to Imperative Programming
+### Imperative Programming
 
 When we take an
 [imperative](https://en.wikipedia.org/wiki/Imperative_programming)
@@ -147,7 +250,7 @@ With **KOS**, the discrete atomic functions can be declared
 it maintains deterministic behavior on a per function-level without
 affecting the overall program execution flow.
 
-## Relation to Object-Oriented Programming
+### Object-Oriented Programming
 
 When we take an
 [object-oriented](https://en.wikipedia.org/wiki/Object-oriented_programming)
@@ -170,10 +273,10 @@ library objects that contain *stateless* functions). While it can
 consume and produce *object-oriented* data entities, it must not rely
 on its internal state across *reactive function* executions.
 
-## Relations to Functional Programming
+### Functional Programming
 
 TBD...
 
-## Relations to Declarative Programming
+### Declarative Programming
 
 TBD...

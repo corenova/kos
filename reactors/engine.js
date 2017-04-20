@@ -8,7 +8,7 @@ const colors = require('colors')
 const readline = require('readline')
 
 module.exports = kos.reactor('engine')
-  .desc('Provides KOS engine process/load/start reactions')
+  .desc('Provides KOS engine load/start reactions')
   .init('reactors', new Map)
   .chain(requireReactor)
 
@@ -49,11 +49,11 @@ function pipelineIO(stdio) {
   const { stdin, stdout, stderr } = stdio
   const engine = this.parent
 
-  // handle kinetic objects seen by this reactor
-  engine.on('data', ko => {
-    if (ko.origin !== engine.id &&
-        !ko.match([ 'module/*', 'reactor', 'error', 'warn', 'info', 'debug' ])) {
-      stdout.write(ko.toKSON() + "\n")
+  // handle tokens seen by this reactor
+  engine.on('data', token => {
+    if (token.origin !== engine.id &&
+        !token.match([ 'module/*', 'reactor', 'error', 'warn', 'info', 'debug' ])) {
+      stdout.write(token.toKSON() + "\n")
     }
   })
 }

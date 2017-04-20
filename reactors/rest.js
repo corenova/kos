@@ -22,7 +22,7 @@ function runInstance(opts) {
   this.send('http/listen', opts)
   // Note: for now tap into the stream and "publish" every kinetic
   // object into runtime state. Should make this hierarchical...
-  this.parent.on('data', ko => this.post(ko.key, ko.value))
+  this.parent.on('data', token => this.post(token.key, token.value))
 }
 
 function runWebSocketServer(server) {

@@ -65,16 +65,16 @@ first-time users carefully read **all** of the included documentation
 below:
 
 - [Introduction to KOS](./docs/intro.md)
- - [Core Concepts](./docs/intro.md#core-concepts)
- - [Core Entities](./docs/intro.md#core-entities)
- - [Programming Paradigms](./docs/intro.md#programming-paradigms)
+  - [Core Concepts](./docs/intro.md#core-concepts)
+  - [Core Entities](./docs/intro.md#core-entities)
+  - [Programming Paradigms](./docs/intro.md#programming-paradigms)
 - [Using KOS](./docs/usage.md)
- - [Getting Started](./docs/usage.md#getting-started)
- - [Chaining Reactors](./docs/usage.md#chaining-reactors)
- - [Discovering Reactors](./docs/discover.md)
+  - [Getting Started](./docs/usage.md#getting-started)
+  - [Chaining Reactors](./docs/usage.md#chaining-reactors)
+  - [Discovering Reactors](./docs/discover.md)
 - [Developing KOS](./docs/developer.md)
- - [Creating Reactors](./docs/developer.md#creating-reactors)
- - [Managing State](./docs/developer.md#managing-state)
+  - [Creating Reactors](./docs/developer.md#creating-reactors)
+  - [Managing State](./docs/developer.md#managing-state)
 
 ## Installation
 

@@ -13,32 +13,28 @@ The quickest way to get started with **KOS** is to use the provided
 ### kos -h
 
 ```
-  Usage: kos [options] [command] <reactors...>
-
-  Commands:
-
-    list|ls            List locally available reactors
-    show|sh <reactor>  Show detailed information about a reactor
+  Usage: kos [options] <reactors...>
 
   Options:
 
-    -h, --help            output usage information
-    -V, --version         output the version number
-    -i, --input <file>    load KSON file(s) as initial input(s)
-    -t, --trigger <kson>  feed arbitrary KSON trigger(s)
-    -s, --silent          suppress all debug/info/warn/error log messages
-    -v, --verbose         enable more verbose output
+    -h, --help         output usage information
+    -V, --version      output the version number
+    -e, --eval <kson>  eval KSON statement and feed into KOS
+    -d, --data <file>  feed KSON file contents into KOS
+    -s, --show         print detailed info about reactor(s)
+    -v, --verbose      enable more verbose output
+    --silent           suppress all debug/info/warn/error log messages
 ```
 
 The `kos` utility internally uses the [engine](../reactors/engine.md)
 reactor to dynamically load reactor modules from the local filesystem.
 
-### kos show
+### kos --show
 
-The `show` command provides a visual rendering of a reactor module.
+The `show` option provides a visual rendering of a reactor module.
 
 ```bash
-$ kos show engine
+$ kos --show engine
 ├─ name: engine
 ├─ purpose: Provides KOS engine load/start reactions
 ├─ requires

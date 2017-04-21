@@ -38,7 +38,7 @@ module.exports = kos.reactor('render')
   .out('render/tree/reactor')
   .bind(renderReactorAsTree)
 
-  .in('render/tree/reactor').and.has('process')
+  .in('render/tree/reactor')
   .bind(outputTreeReactor)
 
 function indent(str, count=1, sep=' ') {
@@ -209,6 +209,7 @@ function renderReactorAsTree(reactor) {
 }
 
 function outputTreeReactor(tree) {
-  const { stderr } = this.get('process')
-  stderr.write(tree + "\n")
+  //const { stderr } = this.get('process')
+  console.error(tree)
+  //stderr.write(tree + "\n")
 }

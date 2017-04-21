@@ -52,7 +52,9 @@ function runProgram(program) {
   args.forEach(x => this.send('load', x))
   eval.forEach(x => engine.write(x + "\n"))
   data.forEach(x => this.send('read', x))
-  
+
+  if (show) return
+
   if (stdin.isTTY) {
     this.send('prompt', {
       input: stdin,

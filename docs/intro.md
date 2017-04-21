@@ -168,7 +168,8 @@ paradigms.
 
 ### Reactive Programming
 
-Let's start with an excerpt from wikipedia:
+Let's start with an excerpt from
+[wikipedia](https://en.wikipedia.org/wiki/Reactive_programming):
 
 > In computing, **reactive programming** is an asynchronous
 > programming paradigm oriented around data streams and the

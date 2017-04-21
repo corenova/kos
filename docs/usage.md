@@ -1,14 +1,14 @@
 # User's Guide
 
 This documentation provides information on interacting with
-[available reactors](../README.md#available-reactors).
+[Kinetic Reactor](./intro.md#kinetic-reactor) modules.
 
 ## Getting Started
 
-The quickest way to get started with **KOS** is to utilize the
-provided `kos` CLI utility to interact with various
+The quickest way to get started with **KOS** is to use the provided
+`kos` CLI utility to interact with various
 [available reactors](../README.md#available-reactors) included in the
-project repository.
+**KOS** project repository.
 
 ### kos -h
 
@@ -29,6 +29,45 @@ project repository.
     -s, --silent          suppress all debug/info/warn/error log messages
     -v, --verbose         enable more verbose output
 ```
+
+The `kos` utility internally uses the [engine](../reactors/engine.md)
+reactor to dynamically load reactor modules from the local filesystem.
+
+### kos show
+
+The `show` command provides a visual rendering of a reactor module.
+
+```bash
+$ kos show engine
+├─ name: engine
+├─ purpose: Provides KOS engine load/start reactions
+├─ requires
+│  ├─ module/path
+│  ├─ stdio
+│  └─ module/fs
+├─ triggers
+│  ├─ ƒ(loadReactor)
+│  ├─ ƒ(chainReactor)
+│  ├─ ƒ(pipelineIO)
+│  └─ ƒ(startEngine)
+└──┐
+   ├┬╼ module/path ╾┬╼ ƒ(loadReactor)  ╾─╼ reactor
+   │└╼ load        ╾┘
+   ├─╼ reactor     ╾─╼ ƒ(chainReactor)
+   ├─╼ stdio       ╾─╼ ƒ(pipelineIO)
+   │┌╼ stdio       ╾┐
+   └┼╼ module/fs   ╾┼╼ ƒ(startEngine)
+    └╼ start       ╾┘
+```
+
+It's a handy way to extract useful information regarding data objects
+that the reactor `requires`, the various `triggers` contained inside
+the reactor, as well as `inputs` and `outputs` for each of the
+reactions.
+
+## Loading Reactors
+
+
 
 
 
@@ -57,28 +96,10 @@ output* `http/response/body`. Underneath the hood, a number of
 **Action(s)** are triggered until you get back the *named data* of
 interest.
 
-### Managing Dependencies
+## Chaining Reactors
 
-An **important** concept here is that the
-[superagent](http://npmjs.com/package/superagent) library for
-transacting the HTTP Client requests is being *fed* into the flow by
-the consumer of the `Flow`. What this means is that the Flow
-**dependency** is resolved dynamically and can be updated dynamically
-by the consumer on-demand. In fact, it doesn't even have to be the
-actual `superagent` module itself, only something that provides
-similar API interfaces that the `superagent` module provides.
-
-The de-coupling of *module dependencies* from the flow module package
-enables fluid runtime resolution and adaptation.
-
-You can also check out [kos-flow-require](../flows/require.md) module
-which automates package installation and provides the `module/*`
-output. The next section will describe how it can be *combined* with
-other flows such as [kos-flow-http](../flows/http.md) module.
-
-## Using Multiple Flows
-
-There are **two** primary ways of working with multiple flows:
+There are **two** primary ways for building data pipelines across
+multiple reactors: hierarchical or 
 building data pipelines or embedding as a subflow.
 
 ### Building Data Pipelines

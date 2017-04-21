@@ -1,8 +1,6 @@
-'use strict';
+'use strict'
 
-const tree = require('treeify').asTree
-
-// TODO: need to revisit this module and tune it...
+const { kos = require('..') } = global
 
 const BOX = {
   L: {
@@ -32,6 +30,16 @@ const BOX = {
 
 const FUNC = 'ƒ'
 const SEP = ' '
+
+module.exports = kos.reactor('render')
+  .desc('Provides visual rendering of KOS reactors')
+
+  .in('reactor').and.has('module/treeify')
+  .out('render/tree/reactor')
+  .bind(renderReactorAsTree)
+
+  .in('render/tree/reactor').and.has('process')
+  .bind(outputTreeReactor)
 
 function indent(str, count=1, sep=' ') {
   return str.replace(/^(?!\s*$)/mg, sep.repeat(count))
@@ -73,11 +81,12 @@ function renderListItem(item, i, options={}) {
 }
 
 function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
-  let { inputs, outputs, handler={} } = trigger
+  const { inputs, requires, outputs, handler={} } = trigger
+  let accepts = requires.concat(inputs)
   // BOX for consumed inputs
   let inbox = {
-	height: inputs.length,
-	width: inputWidth || findLongest(inputs).length,
+	height: accepts.length,
+	width: inputWidth || findLongest(accepts).length,
 	start: 0
   }
   let funcName = handler.name || ''
@@ -105,7 +114,7 @@ function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
   for (let idx=0, i=0, o=0; idx < block.height; idx++) {
 	let line = ''
 	if (idx >= inbox.start && i < inbox.height) {
-	  line += renderListItem(inputs[i], i++, {
+	  line += renderListItem(accepts[i], i++, {
 		height: inbox.height,
 		width:  inbox.width,
 		isMiddle: (idx === block.middle)
@@ -137,8 +146,8 @@ function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
   return block
 }
 
-function renderTriggers(stream) {
-  let { triggers, inputs, outputs } = stream
+function renderTriggers(reactor) {
+  const { triggers, inputs, outputs } = reactor
   let inputWidth  = findLongest(Array.from(inputs)).length
   let outputWidth = findLongest(Array.from(outputs)).length
   let funcWidth   = findLongest(triggers.map((x => x.handler.name))).length
@@ -166,17 +175,18 @@ function renderTriggers(stream) {
   return lines.join("\n")
 }
 
-function renderStream(stream, level=1) {
+function renderReactorAsTree(reactor) {
+  const treeify = this.get('module/treeify')
   let str = ''
   let info = {
-	name:     stream.name,
-	purpose:  stream.purpose,
-	requires: stream.requires,
-    reactors: stream.reactors.map(x => x.name),
-    triggers: stream.triggers.map(x => FUNC + '(' + x.handler.name + ')'),
+	name:     reactor.name,
+	purpose:  reactor.purpose,
+	requires: reactor.requires.sort(),
+    reactors: reactor.reactors.map(x => x.name),
+    triggers: reactor.triggers.map(x => FUNC + '(' + x.handler.name + ')'),
     '': null
   }
-  if (level > 1) delete info.name
+  if (reactor.parent) delete info.name
   for (let key in info) {
 	if (Array.isArray(info[key])) {
 	  if (info[key].length)
@@ -186,14 +196,19 @@ function renderStream(stream, level=1) {
 	  else delete info[key]
 	}
   }
-  str += tree(info, true)
-  for (let reactor of stream.reactors) {
-    str += '   ├─ '+reactor.name+"\n"
-    str += indent(renderStream(reactor, level+1), 1, '   │  ') + "\n"
+  str += treeify.asTree(info, true)
+  for (let sub of reactor.reactors) {
+    str += '   ├─ '+sub.name+"\n"
+    str += indent(renderReactorAsTree.call(this, sub), 1, '   │  ') + "\n"
     str += "   │\n"
   }
-  str += indent(renderTriggers(stream), 3)
+  str += indent(renderTriggers(reactor), 3)
+
+  reactor.parent || this.send('render/tree/reactor', str)
   return str
 }
 
-module.exports = renderStream
+function outputTreeReactor(tree) {
+  const { stderr } = this.get('process')
+  stderr.write(tree + "\n")
+}

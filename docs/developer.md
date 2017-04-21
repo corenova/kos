@@ -1,8 +1,9 @@
 # Developer's Guide
 
-Welcome to [Dataflow Programming](https://en.wikipedia.org/wiki/Dataflow_programming).
+This documentation provides information on developing new
+[Kinetic Reactor](./intro.md#kinetic-reactor) modules.
 
-## Creating a new Reactor
+## Creating Reactors
 
 Let's make things a bit more **interesting** and say you now want to
 find images from the requested URL.
@@ -113,4 +114,24 @@ modules do NOT contain any *explicit* external module dependencies at
 the module-level but instead receive them via the stream from the
 upstream consumer. As such, maintaining `package.json` or publishing
 the KOS modules to NPM is completely optional.
+
+
+### Managing Dependencies
+
+An **important** concept here is that the
+[superagent](http://npmjs.com/package/superagent) library for
+transacting the HTTP Client requests is being *fed* into the flow by
+the consumer of the `Flow`. What this means is that the Flow
+**dependency** is resolved dynamically and can be updated dynamically
+by the consumer on-demand. In fact, it doesn't even have to be the
+actual `superagent` module itself, only something that provides
+similar API interfaces that the `superagent` module provides.
+
+The de-coupling of *module dependencies* from the flow module package
+enables fluid runtime resolution and adaptation.
+
+You can also check out [kos-flow-require](../flows/require.md) module
+which automates package installation and provides the `module/*`
+output. The next section will describe how it can be *combined* with
+other flows such as [kos-flow-http](../flows/http.md) module.
 

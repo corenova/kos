@@ -4,14 +4,16 @@ const { kos = require('..') } = global
 
 module.exports = kos.reactor('debug')
   .desc('Provides KOS debug output facility')
-  .in('debug/config').and.has('module/debug').bind(setupLogger)
+  .in('debug/level').and.has('module/debug').bind(setupLogger)
 
-function setupLogger({ verbose=0 }) {
+function setupLogger(level) {
+  if (level < 0) return
+
   let debug = this.get('module/debug')
   let namespaces = [ 'kos:error', 'kos:warn' ]
-  if (verbose)     namespaces.push('kos:info')
-  if (verbose > 1) namespaces.push('kos:debug')
-  if (verbose > 2) namespaces.push('kos:trace')
+  if (level)     namespaces.push('kos:info')
+  if (level > 1) namespaces.push('kos:debug')
+  if (level > 2) namespaces.push('kos:trace')
   debug.enable(namespaces.join(','))
 
   let error = debug('kos:error')
@@ -24,15 +26,13 @@ function setupLogger({ verbose=0 }) {
     this.parent.on('data', ({ key, value }) => {
       switch (key) {
       case 'error':
-        if (verbose > 1) error(value)
+        if (level > 1) error(value)
         else error(value.message)
         break
       case 'warn':  warn(value.join(' ')); break
       case 'info':  info(value.join(' ')); break
       case 'debug': log(value.join(' ')); break
       default:
-        // if (key === 'kos')
-        //   trace(render(value)+"\n")
         switch (typeof value) {
         case 'function':
         case 'object':

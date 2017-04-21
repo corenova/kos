@@ -59,10 +59,10 @@ you inject into the system until you get your desired result.
 
 ## Reference Guides
 
-Since `kos` encapsulates a number of fundamentally different paradigms
-for expressing software itself, it is **highly** advised that
-first-time users carefully read **all** of the included documentation
-below:
+Since **KOS** encapsulates a number of fundamentally different
+paradigms for expressing software itself, it is **highly** advised
+that first-time users carefully read **all** of the included
+documentation below:
 
 - [Introduction to KOS](./docs/intro.md)
   - [Core Concepts](./docs/intro.md#core-concepts)
@@ -70,6 +70,7 @@ below:
   - [Programming Paradigms](./docs/intro.md#programming-paradigms)
 - [Using KOS](./docs/usage.md)
   - [Getting Started](./docs/usage.md#getting-started)
+  - [Loading Reactors](./docs/usage.md#loading-reactors)
   - [Chaining Reactors](./docs/usage.md#chaining-reactors)
   - [Discovering Reactors](./docs/discover.md)
 - [Developing KOS](./docs/developer.md)
@@ -95,13 +96,13 @@ $ git clone https://github.com/corenova/kos
 
 ## Available Reactors
 
-The following reactor modules are included inside the `kos`
+The following reactor modules are included inside the **KOS**
 repository (see [reactors](./reactors)):
 
 name | description
 ---  | ---
-[debug](./reactors/debug.md) | reactions to 
-[engine](./reactors/engine.md) | reactions to load/start an instance
+[debug](./reactors/debug.md) | reactions to output debug messages
+[engine](./reactors/engine.md) | reactions to dynamically load reactors 
 [http](./reactors/http.md) | reactions to http client/server transactions
 [link](./reactors/link.md) | reactions to dynamic client/server flows
 [mqtt](./reactors/mqtt.md) | reactions to mqtt client/server transactions

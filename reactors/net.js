@@ -9,7 +9,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.reactor('net')
-  .desc("Provides network client/server communication flows")
+  .desc("reactions to establish TCP/UDP client/server communication links")
   .init('protocols', ['tcp:', 'udp:'])
 
   .in('net/connect').and.has('module/net')

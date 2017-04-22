@@ -9,7 +9,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.reactor('ws')
-  .desc("Provides WebSocket transactions utilizing 'ws' module")
+  .desc("reactions to establish WebSocket client/server communication links")
   .init('protocols', ['ws:', 'wss:'])
 
   .in('ws/connect').and.has('module/simple-websocket')

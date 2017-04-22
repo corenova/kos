@@ -7,12 +7,12 @@
 'use strict'
 
 const { kos = require('..') } = global
-const netReactor = require('./net')
-const wsReactor = require('./ws')
+const net = require('./net')
+const ws  = require('./ws')
 
 module.exports = kos.reactor('link')
-  .desc('Provides dynamic client/server communication flows for various protocols')
-  .load(netReactor, wsReactor)
+  .desc('reactions to stream dynamic client/server links')
+  .load(net, ws)
   .init('streams', new Map)
 
   .in('link/connect').out('net/connect','ws/connect').bind(connect)

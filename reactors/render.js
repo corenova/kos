@@ -32,14 +32,11 @@ const FUNC = 'ƒ'
 const SEP = ' '
 
 module.exports = kos.reactor('render')
-  .desc('Provides visual rendering of KOS reactors')
+  .desc('reactions to visually render KOS reactors')
 
   .in('reactor').and.has('module/treeify')
-  .out('render/tree/reactor')
+  .out('reactor/tree')
   .bind(renderReactorAsTree)
-
-  .in('render/tree/reactor')
-  .bind(outputTreeReactor)
 
 function indent(str, count=1, sep=' ') {
   return str.replace(/^(?!\s*$)/mg, sep.repeat(count))
@@ -177,16 +174,14 @@ function renderTriggers(reactor) {
 
 function renderReactorAsTree(reactor) {
   const treeify = this.get('module/treeify')
+  const { name, purpose, requires, reactors, triggers } = reactor
   let str = ''
   let info = {
-	name:     reactor.name,
-	purpose:  reactor.purpose,
-	requires: reactor.requires.sort(),
-    reactors: reactor.reactors.map(x => x.name),
-    triggers: reactor.triggers.map(x => FUNC + '(' + x.handler.name + ')'),
+	requires: requires.sort(),
+    reactors: reactors.map(x => x.name),
+    triggers: triggers.map(x => FUNC + '(' + x.handler.name + ')'),
     '': null
   }
-  if (reactor.parent) delete info.name
   for (let key in info) {
 	if (Array.isArray(info[key])) {
 	  if (info[key].length)
@@ -197,19 +192,16 @@ function renderReactorAsTree(reactor) {
 	}
   }
   str += treeify.asTree(info, true)
-  for (let sub of reactor.reactors) {
-    str += '   ├─ '+sub.name+"\n"
+  for (let sub of reactors) {
+    str += '   ├─ ' + `${sub.name}: ${sub.purpose}` + "\n"
     str += indent(renderReactorAsTree.call(this, sub), 1, '   │  ') + "\n"
     str += "   │\n"
   }
   str += indent(renderTriggers(reactor), 3)
 
-  reactor.parent || this.send('render/tree/reactor', str)
+  if (!reactor.parent) {
+    str = `${name}: ${purpose}\n${str}`
+    this.send('reactor/tree', str)
+  }
   return str
-}
-
-function outputTreeReactor(tree) {
-  //const { stderr } = this.get('process')
-  console.error(tree)
-  //stderr.write(tree + "\n")
 }

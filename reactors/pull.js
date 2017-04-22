@@ -1,11 +1,11 @@
 'use strict'
 
 const { kos = require('..') } = global
-const linkReactor = require('./link')
+const link = require('./link')
 
 module.exports = kos.reactor('pull')
-  .desc('Provide dataflow object pull from remote stream(s)')
-  .load(linkReactor)
+  .desc('reactions to pull dataflow objects from remote stream(s)')
+  .load(link)
 
   .in('pull/connect').out('link/connect/url').bind(
     function pullConnect(url) { this.send('link/connect/url', url) }

@@ -8,7 +8,7 @@ const { kos = require('..') } = global
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
 module.exports = kos.reactor('http')
-  .desc('Provides HTTP client and server reactions')
+  .desc('reactions to HTTP client/server requests')
 
   .in('http/request').and.has('module/superagent')
   .out('http/response').bind(clientRequest)
@@ -35,7 +35,8 @@ function simpleGet(url) {
 function clientRequest(req) {
   let agent = this.get('module/superagent')
   let { url, method, data } = req
-  switch (method.toLowerCase()) {
+  method = method.toLowerCase()
+  switch (method) {
   case 'get':
   case 'delete':
     agent[method](url).end((err, res) => { 

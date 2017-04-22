@@ -15,7 +15,7 @@ Source code is [here](./require.js).
 ## Usage
 
 ```js
-const requireReactor = require('kos/reactors/require')
+const require = require('kos/reactors/require')
 ```
 
 Simple example:

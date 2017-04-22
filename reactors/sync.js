@@ -1,11 +1,11 @@
 'use strict'
 
 const { kos = require('..') } = global
-const linkReactor = require('./link')
+const link = require('./link')
 
 module.exports = kos.reactor('sync')
-  .desc('Provide dataflow object synchronization with remote stream(s)')
-  .load(linkReactor)
+  .desc('reactions to synchronize dataflow objects with remote stream(s)')
+  .load(link)
 
   .in('sync/connect').out('link/connect/url').bind(
     function syncConnect(url) { this.send('link/connect/url', url) }

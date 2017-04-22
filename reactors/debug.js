@@ -3,10 +3,18 @@
 const { kos = require('..') } = global
 
 module.exports = kos.reactor('debug')
-  .desc('Provides KOS debug output facility')
+  .desc('reactions to send debug output to stderr')
+  .init('loggers', new Map)
+
   .in('debug/level').and.has('module/debug').bind(setupLogger)
 
+  .in('error').and.has('debug/level').bind(outputError)
+  .in('warn').bind(outputMessage)
+  .in('info').bind(outputMessage)
+  .in('debug').bind(outputMessage)
+
 function setupLogger(level) {
+  const loggers = this.get('loggers')
   if (level < 0) return
 
   let debug = this.get('module/debug')
@@ -16,32 +24,39 @@ function setupLogger(level) {
   if (level > 2) namespaces.push('kos:trace')
   debug.enable(namespaces.join(','))
 
-  let error = debug('kos:error')
-  let warn  = debug('kos:warn')
-  let info  = debug('kos:info')
-  let log   = debug('kos:debug')
-  let trace = debug('kos:trace')
+  loggers.set('error', debug('kos:error'))
+  loggers.set('warn',  debug('kos:warn'))
+  loggers.set('info',  debug('kos:info'))
+  loggers.set('debug', debug('kos:debug'))
+  loggers.set('trace', debug('kos:trace'))
 
-  if (!this.get('initialized')) {
-    this.parent.on('data', ({ key, value }) => {
-      switch (key) {
-      case 'error':
-        if (level > 1) error(value)
-        else error(value.message)
-        break
-      case 'warn':  warn(value.join(' ')); break
-      case 'info':  info(value.join(' ')); break
-      case 'debug': log(value.join(' ')); break
-      default:
-        switch (typeof value) {
-        case 'function':
-        case 'object':
-          trace('%s\n%O\n', key, value)
-          break;
-        default: trace('%s %o', key, value)
-        }
+  if (level > 2 && !this.get('tracing')) {
+    this.parent.on('data', token => {
+      const trace = loggers.get('trace')
+      const { key, value } = token
+      switch (typeof value) {
+      case 'function':
+      case 'object':
+        trace('%s\n%O\n', key, value)
+        break;
+      default: 
+        trace('%s %o', key, value)
       }
     })
-    this.set('initialized', true)
+    this.set('tracing', true)
   }
+}
+
+function outputError(err) {
+  const error = this.get('loggers').get('error')
+  const level = this.get('debug/level')
+  if (typeof error !== 'function') return
+  if (level > 1) error(err)
+  else error(err.message)
+}
+
+function outputMessage(data) {
+  const logger = this.get('loggers').get(this.event)
+  if (typeof logger !== 'function') return
+  logger(data.join(' '))
 }

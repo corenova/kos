@@ -7,7 +7,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.reactor('npm')
-  .desc("Provides NPM registry transactions utilizing 'npm' module")
+  .desc("reactions to NPM package management requests")
   .init('loaded', false)
   .init('pending', new Set)
 

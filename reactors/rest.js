@@ -2,12 +2,12 @@
 
 const { kos = require('..') } = global
 
-const httpReactor = require('./http')
-const wsReactor = require('./ws')
+const http = require('./http')
+const ws   = require('./ws')
 
 module.exports = kos.reactor('rest')
-  .desc('Provides RElational State Transfer interactions with KOS reactors')
-  .load(httpReactor, wsReactor)
+  .desc('reactions to RElational State Transfer interactions with KOS reactors')
+  .load(http, ws)
   .init('basePath', '/')
 
   .in('rest/listen').out('http/listen','http/route').bind(runInstance)

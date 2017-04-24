@@ -36,7 +36,7 @@ function initEngine(process) {
 function startEngine(program, process) {
   const engine = this.parent
   const { stdin, stdout, stderr } = process
-  const { args, eval, data, show, silent, verbose=0 } = program
+  const { args, expr, data, show, silent, verbose=0 } = program
   const ignores = engine.inputs.concat([ 'module/*', 'debug/level', 'error', 'warn', 'info', 'debug' ])
 
   // write tokens seen by this reactor into stdout
@@ -51,7 +51,7 @@ function startEngine(program, process) {
   this.info('starting KOS...')
 
   args.forEach(x => this.send('load', x))
-  eval.forEach(x => engine.core.write(x + "\n"))
+  expr.forEach(x => engine.core.write(x + "\n"))
   data.forEach(x => this.send('read', x))
 
   if (show) {

@@ -25,11 +25,11 @@ systems that can manage itself without direct human intervention.
 The **KOS** framework provides a structured methodology for defining
 discrete atomic *reactive functions* that represents system bahavior
 as a *dynamic* state machine composed from a collection of *cohesive*
-actors that collaborate over a distributed network.
+actors that collaborate over a **distributed network**.
 
 In other words, **KOS** is a system designed to continuously react to
 changes in its environment, where the environment itself (the network
-of distributed actors) effectively determines how it can react to
+of *distributed* actors) effectively determines how it can react to
 changes.
 
 Essentially, it has *inherent* facility to self-modify its

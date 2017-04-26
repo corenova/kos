@@ -93,14 +93,14 @@ function listen(opts) {
 function connectByUrl(dest) {
   let url = this.get('module/url')
   let opts = url.parse(dest, true)
-  if (!opts.protocol) opts = url.parse('ws:'+dest, true)
+  if (!opts.slashes) opts = url.parse('ws://'+dest, true)
   this.send('ws/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
   let url = this.get('module/url')
   let opts = url.parse(dest, true)
-  if (!opts.protocol) opts = url.parse('ws:'+dest, true)
+  if (!opts.slashes) opts = url.parse('ws://'+dest, true)
   this.send('ws/listen', Object.assign(opts, opts.query))
 }
 

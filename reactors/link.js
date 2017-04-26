@@ -62,14 +62,14 @@ function listen(opts) {
 function connectByUrl(dest) {
   const url = this.get('module/url')
   let opts = url.parse(dest, true)
-  if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
+  if (!opts.slashes) opts = url.parse('tcp://'+dest, true)
   this.send('link/connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
   const url = this.get('module/url')
   let opts = url.parse(dest, true)
-  if (!opts.protocol) opts = url.parse('tcp:'+dest, true)
+  if (!opts.slashes) opts = url.parse('tcp://'+dest, true)
   this.send('link/listen', Object.assign(opts, opts.query))
 }
 

@@ -23,6 +23,10 @@ module.exports = kos.reactor('npm')
 
   .in('npm/defer').bind(queueCommands)
 
+  .in('require/error').out('npm/install').bind(autoFetchMissing)
+  .in('npm/installed').out('require').bind(handleAutoFetch)
+
+
 //--- Kinetic Actions Handlers
 
 function triggerLoad(npm) {
@@ -73,3 +77,28 @@ function install(pkgs) {
   }
 }
 
+function autoFetchMissing(error) {
+  let { target, code } = error
+  if (target === 'npm') return this.throw("cannot auto-resolve npm")
+  if (code === 'MODULE_NOT_FOUND') {
+    let pending = this.get('pending')
+    if (pending.has(target)) return
+    this.post('pending', target) // save at the flow-level
+    this.send('npm/install', target)
+  } else this.throw(error)
+}
+
+function handleAutoFetch() {
+  let pending = this.get('pending')
+  let pkgmap = new Map(this.get('npm/installed'))
+  for (let [pkg, path] of pkgmap) {
+    let [ name, version ] = pkg.split('@')
+    if (pending.has(name)) {
+      this.send('require', { 
+        name: name,
+        version: version,
+        path: path
+      })
+    }
+  }
+}

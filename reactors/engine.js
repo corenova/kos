@@ -18,6 +18,7 @@ module.exports = kos.reactor('engine')
   .out('reactor', 'debug/level', 'load', 'read', 'show', 'prompt')
   .bind(startEngine)
 
+  // TODO: consider making this a separate reactor
   .in('prompt').and.has('process','module/readline').bind(promptUser)
 
   .in('load').and.has('module/path').out('reactor').bind(loadReactor)

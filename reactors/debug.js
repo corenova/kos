@@ -3,7 +3,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.reactor('debug')
-  .desc('reactions to send debug output to stderr')
+  .desc('reactions to send debugging messages to an output stream')
   .init('loggers', new Map)
 
   .in('debug/level').and.has('module/debug').bind(setupLogger)

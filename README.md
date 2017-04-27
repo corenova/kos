@@ -101,8 +101,8 @@ repository (see [reactors](./reactors)):
 
 name | description
 ---  | ---
-[debug](./reactors/debug.md) | reactions to output debug messages
-[engine](./reactors/engine.md) | reactions to dynamically load reactors 
+[debug](./reactors/debug.md) | reactions to send debugging messages to an output stream
+[engine](./reactors/engine.md) | reactions to runtime context (see [kos](./bin/kos.js) cli)
 [http](./reactors/http.md) | reactions to http client/server transactions
 [link](./reactors/link.md) | reactions to dynamic client/server flows
 [mqtt](./reactors/mqtt.md) | reactions to mqtt client/server transactions
@@ -110,9 +110,8 @@ name | description
 [npm](./reactors/npm.md) | reactions to drive NPM operations
 [pull](./reactors/pull.md) | reactions to pull dataflow from peers
 [push](./reactors/push.md) | reactions to push dataflow to peers
-[require](./reactors/require.md) | reactions to load JS modules
 [rest](./reactors/rest.md) | reactions to RESTful transactions
-[sync](./reactors/sync.md) | reactions to sync dataflow to/from peers
+[sync](./reactors/sync.md) | reactions to sync dataflow with peers
 [ws](./reactors/ws.md) | reactions to websockets client/server flows
 
 ## License

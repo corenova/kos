@@ -102,7 +102,7 @@ repository (see [reactors](./reactors)):
 name | description
 ---  | ---
 [debug](./reactors/debug.md) | reactions to send debugging messages to an output stream
-[engine](./reactors/engine.md) | reactions to runtime context (see [kos](./bin/kos.js) cli)
+[core](./reactors/core.md) | reactions to runtime context (see [kos](./bin/kos.js) cli)
 [http](./reactors/http.md) | reactions to http client/server transactions
 [link](./reactors/link.md) | reactions to dynamic client/server flows
 [mqtt](./reactors/mqtt.md) | reactions to mqtt client/server transactions

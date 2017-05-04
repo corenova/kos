@@ -88,7 +88,6 @@ function createLinkStream(link) {
     stream.emit('active', socket)
   })
   if (!streams.has(addr)) {
-    stream.on('ready', () => this.debug("ready now!"))
     streams.set(addr, stream)
     this.send('link/stream', stream)
   }

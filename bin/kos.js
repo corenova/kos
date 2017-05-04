@@ -3,7 +3,7 @@
 
 const program = require('commander')
 const pkginfo = require('../package.json')
-const engine = require('../reactors/engine')
+const engine = require('../reactors/core')
 
 function collect(val, keys) { keys.push(val); return keys }
 

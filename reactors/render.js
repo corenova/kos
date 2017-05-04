@@ -147,7 +147,7 @@ function renderTriggers(reactor) {
   const { triggers, inputs, outputs } = reactor
   let inputWidth  = findLongest(Array.from(inputs)).length
   let outputWidth = findLongest(Array.from(outputs)).length
-  let funcWidth   = findLongest(triggers.map((x => x.handler.name))).length
+  let funcWidth   = findLongest(triggers.map((x => x.name))).length
   let lines = triggers.reduce(((acc, trigger, idx) => {
 	let item = renderTrigger(trigger, funcWidth, inputWidth, outputWidth)
 	let last = idx == (triggers.length - 1)
@@ -179,7 +179,7 @@ function renderReactorAsTree(reactor) {
   let info = {
 	requires: requires.sort(),
     reactors: reactors.map(x => x.name),
-    triggers: triggers.map(x => FUNC + '(' + x.handler.name + ')'),
+    triggers: triggers.map(x => FUNC + '(' + x.name + ')'),
     '': null
   }
   for (let key in info) {

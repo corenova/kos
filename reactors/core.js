@@ -7,16 +7,16 @@ const render = require('./render')
 // TODO: shouldn't be explicit dependency?
 const colors = require('colors')
 
-module.exports = kos.reactor('engine')
+module.exports = kos.reactor('core')
   .desc('reactions to runtime instantiation context')
   .load(debug, render)
   .init('modules', new Map)
 
-  .in('process').out('reactor').bind(initEngine)
+  .in('process').out('reactor').bind(initialize)
 
   .in('program','process')
   .out('reactor', 'debug/level', 'load', 'read', 'show', 'prompt')
-  .bind(startEngine)
+  .bind(start)
 
   // TODO: consider making this a separate reactor
   .in('prompt').and.has('process','module/readline').bind(promptUser)
@@ -30,18 +30,18 @@ module.exports = kos.reactor('engine')
   .bind(outputTreeReactor)
 
 // self-initialize
-function initEngine(process) { 
+function initialize(process) { 
   this.send('reactor', this.parent)
 }
 
-function startEngine(program, process) {
+function start(program, process) {
   const engine = this.parent
   const { stdin, stdout, stderr } = process
   const { args, expr, data, show, silent, verbose=0 } = program
   const ignores = engine.inputs.concat([ 'module/*', 'debug/level', 'error', 'warn', 'info', 'debug' ])
 
   // write tokens seen by this reactor into stdout
-  engine.on('flow', (token, flow) => {
+  engine.on('flow', token => {
     engine.emit('clear')
     if (token.origin !== engine.id) {
       token.match(ignores) || stdout.write(token.toKSON() + "\n")
@@ -65,7 +65,6 @@ function startEngine(program, process) {
 }
 
 function loadReactor(name) {
-  const engine = this.parent
   const path = this.get('module/path')
   let reactor = {}
   let search = [ 
@@ -83,13 +82,14 @@ function loadReactor(name) {
   if (reactor.type !== Symbol.for('kinetic.reactor'))
     throw new Error("unable to load KOS for " + name + " from " + search)
 
-  if (reactor.name !== 'engine') 
-    engine.load(reactor)
   this.send('reactor', reactor)
 }
 
 function requireReactor(reactor) { 
+  const engine = this.parent
   const regex = /^module\/(.+)$/
+  if (reactor.name !== 'core') 
+    engine.load(reactor)
   reactor.requires.forEach(key => {
     let match = key.match(regex, '$1')
     if (!match) return
@@ -132,20 +132,21 @@ function promptUser(prompt) {
     prompt: colors.grey(prompt),
     completer: (line) => {
       let inputs = engine.inputs.concat(...engine.reactors.map(x => x.inputs))
-      let completions = Array.from(new Set(inputs)).sort().concat('help','quit')
+      let completions = Array.from(new Set(inputs)).sort().concat('.help','.quit')
       const hits = completions.filter(c => c.indexOf(line) === 0)
       if (/\s+$/.test(line)) completions = []
       return [hits.length ? hits : completions, line]
     }
   })
+  // XXX - should only accept input that has a reaction
   cmd.on('line', (line) => {
     const input = line.trim()
     switch (input) {
     case '': break;
-    case 'help':
+    case '.help':
       console.error("sorry, you're on your own for now...")
       break;
-    case 'quit':
+    case '.quit':
       process.exit(0)
       break;
     default:

@@ -1,6 +1,7 @@
 'use strict'
 
 const kos   = require('./node')
+const core  = require('./reactors/core')
 const debug = require('./reactors/debug')
 const link  = require('./reactors/link')
 const http  = require('./reactors/http')
@@ -10,4 +11,4 @@ const pull  = require('./reactors/pull')
 const push  = require('./reactors/push')
 
 export default kos
-export { debug, link, http, ws, sync, pull, push }
+export { core, debug, link, http, ws, sync, pull, push }

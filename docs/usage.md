@@ -112,8 +112,8 @@ engine: reactions to runtime instantiation context
 
 Using the `--show` option, you can easily extract useful information
 regarding data objects that the reactor `requires`, the various
-`triggers` contained inside the reactor, as well as `inputs` and
-`outputs` for each of the reactions.
+`triggers` and `reactors` contained inside the reactor, as well as
+`inputs` and `outputs` for each of the reactions.
 
 The [engine](../reactors/engine.md) reactor is one of the more
 interesting [available reactors](../README.md#available-reactors) and

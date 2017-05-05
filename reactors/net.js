@@ -8,9 +8,10 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.reactor('net')
+module.exports = kos.create('net')
   .desc("reactions to establish TCP/UDP client/server communication links")
   .init('protocols', ['tcp:', 'udp:'])
+  .init('links', new Map)
 
   .in('net/connect').and.has('module/net')
   .out('net/socket','link','net/connect')
@@ -30,16 +31,20 @@ module.exports = kos.reactor('net')
 
 
 function connect(opts) {
-  const [ net, protocols ] = this.get('module/net', 'protocols')
+  const [ net, protocols, links ] = this.get('module/net', 'protocols', 'links')
 
   let { protocol, hostname, port, retry, max } = normalizeOptions.call(this, opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
-  let addr = `${protocol}//${hostname}:${port}`
-  let sock = new net.Socket
+  const addr = `${protocol}//${hostname}:${port}`
+  if (links.has(addr)) return this.send('link', links.get(addr))
 
-  this.send('link', { addr: addr, socket: sock })
+  const sock = new net.Socket
+  const link = { addr: addr, socket: sock }
+
+  links.set(addr, link)
+  this.send('link', link)
 
   sock.setNoDelay()
   sock.on('connect', () => {
@@ -55,6 +60,7 @@ function connect(opts) {
         retry: Math.round(Math.min(max, retry * 1.5))
       })
       this.debug("attempt reconnect", addr)
+      links.delete(addr)
       // NOTE: we use send with id=null since KOs that can trigger
       // itself are automatically filtered to prevent infinite loops
       this.send('net/connect', opts, { id: null })

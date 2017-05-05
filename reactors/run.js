@@ -7,9 +7,9 @@ const render = require('./render')
 // TODO: shouldn't be explicit dependency?
 const colors = require('colors')
 
-module.exports = kos.reactor('core')
-  .desc('reactions to runtime instantiation context')
-  .load(debug, render)
+module.exports = kos.create('run')
+  .desc('reactions to runtime context')
+  .load(render)
   .init('modules', new Map)
 
   .in('process').out('reactor').bind(initialize)
@@ -26,8 +26,7 @@ module.exports = kos.reactor('core')
   .in('read').and.has('module/fs').bind(readKSONFile)
 
   .in('reactor').out('require').bind(requireReactor)
-  .in('reactor/tree').and.has('show')
-  .bind(outputTreeReactor)
+  .in('reactor').and.has('process','show').out('render').bind(renderReactor)
 
 // self-initialize
 function initialize(process) { 
@@ -37,31 +36,35 @@ function initialize(process) {
 function start(program, process) {
   const engine = this.parent
   const { stdin, stdout, stderr } = process
-  const { args, expr, data, show, silent, verbose=0 } = program
+  const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
   const ignores = engine.inputs.concat([ 'module/*', 'debug/level', 'error', 'warn', 'info', 'debug' ])
 
   // write tokens seen by this reactor into stdout
-  engine.on('flow', token => {
-    engine.emit('clear')
-    if (token.origin !== engine.id) {
+  kos.on('flow', (token, flow) => {
+    kos.emit('clear')
+    if (token.origin !== kos.id) {
       token.match(ignores) || stdout.write(token.toKSON() + "\n")
     }
+    if (flow.includes('accept') && flow.includes('reject')) {
+      this.warn(`unrecognized token "${token.key}"`)
+    }
   })
-  this.send('debug/level', silent ? -1 : verbose)
+  silent || kos.pipe(debug)
+  debug.feed('debug/level', silent ? -1 : verbose)
 
   this.info('starting KOS...')
 
   args.forEach(x => this.send('load', x))
-  expr.forEach(x => engine.core.write(x + "\n"))
+  expr.forEach(x => kos.write(x + "\n"))
   data.forEach(x => this.send('read', x))
 
   if (show) {
-    this.send('show', stderr)
+    this.send('show', true)
     return
   }
 
   if (stdin.isTTY) this.send('prompt', 'kos> ')
-  else stdin.pipe(engine.core, { end: false })
+  else stdin.pipe(kos, { end: false })
 }
 
 function loadReactor(name) {
@@ -86,10 +89,7 @@ function loadReactor(name) {
 }
 
 function requireReactor(reactor) { 
-  const engine = this.parent
   const regex = /^module\/(.+)$/
-  if (reactor.name !== 'core') 
-    engine.load(reactor)
   reactor.requires.forEach(key => {
     let match = key.match(regex, '$1')
     if (!match) return
@@ -98,11 +98,10 @@ function requireReactor(reactor) {
 }
 
 function readKSONFile(filename) {
-  const engine = this.parent
   const fs = this.get('module/fs')
   const kson = fs.createReadStream(filename)
   kson.on('error', this.error.bind(this))
-  kson.pipe(engine, { end: false })
+  kson.pipe(kos, { end: false })
 }
 
 function tryRequire(opts) {
@@ -120,7 +119,7 @@ function tryRequire(opts) {
 }
 
 function promptUser(prompt) {
-  const engine = this.parent
+  const regex = /^module\//
   const readline = this.get('module/readline')
   const { stdin, stdout, stderr } = this.get('process')
 
@@ -131,7 +130,7 @@ function promptUser(prompt) {
     output: stderr,
     prompt: colors.grey(prompt),
     completer: (line) => {
-      let inputs = engine.inputs.concat(...engine.reactors.map(x => x.inputs))
+      let inputs = kos.inputs.filter(x => !regex.test(x))
       let completions = Array.from(new Set(inputs)).sort().concat('.help','.quit')
       const hits = completions.filter(c => c.indexOf(line) === 0)
       if (/\s+$/.test(line)) completions = []
@@ -150,12 +149,12 @@ function promptUser(prompt) {
       process.exit(0)
       break;
     default:
-      engine.core.write(input + "\n")
+      kos.write(input + "\n")
     }
     cmd.prompt()
   })
-  engine.on('data', clearPrompt)
-  engine.on('clear', clearPrompt)
+  kos.on('data', clearPrompt)
+  kos.on('clear', clearPrompt)
   this.set('active', true)
   cmd.prompt()
 
@@ -166,6 +165,12 @@ function promptUser(prompt) {
   }
 }
 
-function outputTreeReactor(tree) {
-  this.get('show').write(tree + "\n")
+function renderReactor(reactor) {
+  if (!this.get('show')) return
+  const { stderr } = this.get('process')
+  this.send('render', {
+    reactor: reactor,
+    output: stderr
+  })
 }
+

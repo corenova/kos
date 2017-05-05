@@ -2,6 +2,24 @@
 
 const { kos = require('..') } = global
 
+module.exports = kos.create('render')
+  .desc('reactions to visually render KOS reactors')
+
+  .in('render').out('render/reactor','render/output').bind(renderReactor)
+
+  .in('render/reactor').and.has('module/treeify')
+  .out('reactor/tree')
+  .bind(renderReactorAsTree)
+
+  .in('reactor/tree','render/output')
+  .bind(outputTreeReactor)
+
+function renderReactor(opts) {
+  const { reactor, output } = opts
+  this.send('render/output', output)
+  this.send('render/reactor', reactor)
+}
+
 const BOX = {
   L: {
 	top:  '┌╼ ',
@@ -30,13 +48,6 @@ const BOX = {
 
 const FUNC = 'ƒ'
 const SEP = ' '
-
-module.exports = kos.reactor('render')
-  .desc('reactions to visually render KOS reactors')
-
-  .in('reactor').and.has('module/treeify')
-  .out('reactor/tree')
-  .bind(renderReactorAsTree)
 
 function indent(str, count=1, sep=' ') {
   return str.replace(/^(?!\s*$)/mg, sep.repeat(count))
@@ -205,3 +216,5 @@ function renderReactorAsTree(reactor) {
   }
   return str
 }
+
+function outputTreeReactor(tree, output) { output.write(tree + "\n") }

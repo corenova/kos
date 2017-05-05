@@ -3,8 +3,8 @@
 
 const { kos = require('kos') } = global
 
-module.exports = kos.reactor('reaction-checkout')
-  .desc('Provides reaction commerce checkout workflow')
+module.exports = kos.create('reaction-checkout')
+  .desc('reactions to Reaction Commerce checkout workflow')
 
 // flow reactors
   .in('cart/items').out('cart/subtotal').bind(calculateSubTotal)

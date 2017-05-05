@@ -10,7 +10,7 @@ const { kos = require('..') } = global
 const net = require('./net')
 const ws  = require('./ws')
 
-module.exports = kos.reactor('link')
+module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
   .load(net, ws)
   .init('streams', new Map)
@@ -74,9 +74,16 @@ function listenByUrl(dest) {
 }
 
 function createLinkStream(link) {
-  let { addr, socket } = link
-  let streams = this.get('streams')
-  let stream = streams.has(addr) ? streams.get(addr) : new kos.Stream
+  const { addr, socket } = link
+  const streams = this.get('streams')
+  const stream = 
+    streams.has(addr) ? 
+    streams.get(addr) : 
+    new kos.Stream({
+      // XXX - this is a bit hackish but necessary until more generic
+      // loop detection is in place
+      filter: token => !token.match(['sync/*','push/*','pull/*','load'])
+    })
 
   socket.on('active', () => {
     let io = stream.io()

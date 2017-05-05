@@ -5,7 +5,7 @@ const { kos = require('..') } = global
 const http = require('./http')
 const ws   = require('./ws')
 
-module.exports = kos.reactor('rest')
+module.exports = kos.create('rest')
   .desc('reactions to RElational State Transfer interactions with KOS reactors')
   .load(http, ws)
   .init('basePath', '/')

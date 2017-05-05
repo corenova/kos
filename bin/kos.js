@@ -3,7 +3,8 @@
 
 const program = require('commander')
 const pkginfo = require('../package.json')
-const engine = require('../reactors/core')
+const kos = require('..')
+const run = require('../reactors/run')
 
 function collect(val, keys) { keys.push(val); return keys }
 
@@ -17,7 +18,8 @@ program
   .option('--silent', 'suppress all debug/info/warn/error log messages')
   .parse(process.argv)
 
-engine
+kos
+  .load(run)
   .feed('process', process)
   .feed('program', program)
 

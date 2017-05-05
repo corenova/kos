@@ -1,8 +1,8 @@
 // Avalara Tax Rate Stream
 
-const kos = require('kos')
+const { kos = require('kos') } = global
 
-module.exports = kos.reactor('reaction-avalara')
+module.exports = kos.create('reaction-avalara')
   .in('avalara/request/address').and.has('module/avalara-taxrates','avalara/access/key')
   .out('avalara/response').bind(calculateTaxRates)
 

@@ -13,7 +13,7 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.reactor('mqtt')
+module.exports = kos.create('mqtt')
   .desc("reactions to establish MQTT client/server communication links")
   .init('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
 

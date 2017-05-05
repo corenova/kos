@@ -26,7 +26,7 @@ delegate(proto, 'trigger').getter('state').getter('inputs').getter('outputs').ge
 
 delegate(proto, 'state').method('clear').method('delete').method('entries').method('forEach').method('has').method('set').method('keys').method('set').method('values');
 
-},{"delegates":26}],2:[function(require,module,exports){
+},{"delegates":15}],2:[function(require,module,exports){
 'use strict';
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -76,6 +76,8 @@ var KineticReactor = function (_KineticStream) {
     var _options = options,
         name = _options.name,
         purpose = _options.purpose,
+        _options$passive = _options.passive,
+        passive = _options$passive === undefined ? false : _options$passive,
         _options$reactors = _options.reactors,
         reactors = _options$reactors === undefined ? [] : _options$reactors,
         _options$triggers = _options.triggers,
@@ -86,6 +88,7 @@ var KineticReactor = function (_KineticStream) {
 
     _this._name = name;
     _this._purpose = purpose;
+    _this._passive = passive;
     _this._reactors = new Map();
     _this._triggers = new Set();
 
@@ -139,20 +142,26 @@ var KineticReactor = function (_KineticStream) {
 
     _this.load.apply(_this, _toConsumableArray(reactors));
     _this.add.apply(_this, _toConsumableArray(triggers));
-
-    // save a reference to this reactor in global KOS object
-    kos.register(_this);
     debug(_this.identity, 'new', _this.id);
     return _this;
   }
 
   _createClass(KineticReactor, [{
+    key: 'create',
+    value: function create() {
+      return new (Function.prototype.bind.apply(KineticReactor, [null].concat(Array.prototype.slice.call(arguments))))();
+    }
+  }, {
     key: 'desc',
     value: function desc() {
       var description = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-
-      this._purpose = description;
-      return this;
+      this._purpose = description;return this;
+    }
+  }, {
+    key: 'pass',
+    value: function pass() {
+      var enable = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+      this._passive = enable;return this;
     }
   }, {
     key: 'load',
@@ -309,8 +318,9 @@ var KineticReactor = function (_KineticStream) {
     key: 'inspect',
     value: function inspect() {
       return Object.assign(_get(KineticReactor.prototype.__proto__ || Object.getPrototypeOf(KineticReactor.prototype), 'inspect', this).call(this), {
-        name: this._name,
-        purpose: this._purpose,
+        name: this.name,
+        purpose: this.purpose,
+        passive: this.passive,
         requires: this.requires,
         reactors: this.reactors.map(function (x) {
           return x.inspect();
@@ -324,8 +334,9 @@ var KineticReactor = function (_KineticStream) {
     key: 'toJSON',
     value: function toJSON() {
       return Object.assign(_get(KineticReactor.prototype.__proto__ || Object.getPrototypeOf(KineticReactor.prototype), 'toJSON', this).call(this), {
-        name: this._name,
-        purpose: this._purpose,
+        name: this.name,
+        purpose: this.purpose,
+        passive: this.passive,
         requires: this.requires,
         reactors: this.reactors.map(function (x) {
           return x.toJSON();
@@ -359,6 +370,11 @@ var KineticReactor = function (_KineticStream) {
       return this._purpose;
     }
   }, {
+    key: 'passive',
+    get: function get() {
+      return this._passive;
+    }
+  }, {
     key: 'triggers',
     get: function get() {
       return Array.from(this._triggers);
@@ -376,7 +392,8 @@ var KineticReactor = function (_KineticStream) {
   }, {
     key: 'inputs',
     get: function get() {
-      return extractUniqueKeys(this.triggers, 'inputs', 'requires');
+      var streams = this.passive ? this.triggers.concat(this.reactors) : this.triggers;
+      return extractUniqueKeys(streams, 'inputs', 'requires');
     }
   }, {
     key: 'outputs',
@@ -410,7 +427,7 @@ function extractUniqueKeys() {
   return Array.from(new Set(keys));
 }
 
-},{"./stream":3,"./trigger":5,"debug":24}],3:[function(require,module,exports){
+},{"./stream":3,"./trigger":5,"debug":13}],3:[function(require,module,exports){
 'use strict';
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -747,7 +764,7 @@ var KineticStream = function (_Transform) {
 
 module.exports = KineticStream;
 
-},{"./token":4,"debug":24,"stream":46,"uuid":49}],4:[function(require,module,exports){
+},{"./token":4,"debug":13,"stream":35,"uuid":38}],4:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
@@ -1235,7 +1252,7 @@ var KineticTrigger = function (_KineticStream) {
 
 module.exports = KineticTrigger;
 
-},{"./context":1,"./stream":3,"./token":4,"debug":24}],6:[function(require,module,exports){
+},{"./context":1,"./stream":3,"./token":4,"debug":13}],6:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1243,22 +1260,21 @@ var KineticStream = require('./lib/stream');
 var KineticReactor = require('./lib/reactor');
 var KineticTrigger = require('./lib/trigger');
 
-var kos = {
-  reactor: function reactor() {
-    return new (Function.prototype.bind.apply(KineticReactor, [null].concat(Array.prototype.slice.call(arguments))))();
-  },
+var kos = new KineticReactor({
+  name: 'kos',
+  purpose: 'primary consumer of chaos',
+  passive: true,
+  triggers: [{ inputs: 'reactor', handler: fuse }]
+});
 
+function fuse(reactor) {
+  this.parent.load(reactor);
+}
 
-  reactors: new Map(),
-  register: function register(reactor) {
-    if (reactor instanceof KineticReactor) kos.reactors.set(reactor.id, reactor);
-  },
-
-
-  Stream: KineticStream,
-  Reactor: KineticReactor,
-  Trigger: KineticTrigger
-};
+// expose Kinetic class definitions
+kos.Stream = KineticStream;
+kos.Reactor = KineticReactor;
+kos.Trigger = KineticTrigger;
 
 global.kos = module.exports = kos['default'] = kos.kos = kos;
 
@@ -3201,7 +3217,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":7,"ieee754":28}],11:[function(require,module,exports){
+},{"base64-js":7,"ieee754":17}],11:[function(require,module,exports){
 /*!
 Copyright (C) 2013 by WebReflection
 
@@ -3388,659 +3404,6 @@ function parseRecursion(text, reviver) {
 this.stringify = stringifyRecursion;
 this.parse = parseRecursion;
 },{}],12:[function(require,module,exports){
-/*
-
-The MIT License (MIT)
-
-Original Library 
-  - Copyright (c) Marak Squires
-
-Additional functionality
- - Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-*/
-
-var colors = {};
-module['exports'] = colors;
-
-colors.themes = {};
-
-var ansiStyles = colors.styles = require('./styles');
-var defineProps = Object.defineProperties;
-
-colors.supportsColor = require('./system/supports-colors');
-
-if (typeof colors.enabled === "undefined") {
-  colors.enabled = colors.supportsColor;
-}
-
-colors.stripColors = colors.strip = function(str){
-  return ("" + str).replace(/\x1B\[\d+m/g, '');
-};
-
-
-var stylize = colors.stylize = function stylize (str, style) {
-  if (!colors.enabled) {
-    return str+'';
-  }
-
-  return ansiStyles[style].open + str + ansiStyles[style].close;
-}
-
-var matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
-var escapeStringRegexp = function (str) {
-  if (typeof str !== 'string') {
-    throw new TypeError('Expected a string');
-  }
-  return str.replace(matchOperatorsRe,  '\\$&');
-}
-
-function build(_styles) {
-  var builder = function builder() {
-    return applyStyle.apply(builder, arguments);
-  };
-  builder._styles = _styles;
-  // __proto__ is used because we must return a function, but there is
-  // no way to create a function with a different prototype.
-  builder.__proto__ = proto;
-  return builder;
-}
-
-var styles = (function () {
-  var ret = {};
-  ansiStyles.grey = ansiStyles.gray;
-  Object.keys(ansiStyles).forEach(function (key) {
-    ansiStyles[key].closeRe = new RegExp(escapeStringRegexp(ansiStyles[key].close), 'g');
-    ret[key] = {
-      get: function () {
-        return build(this._styles.concat(key));
-      }
-    };
-  });
-  return ret;
-})();
-
-var proto = defineProps(function colors() {}, styles);
-
-function applyStyle() {
-  var args = arguments;
-  var argsLen = args.length;
-  var str = argsLen !== 0 && String(arguments[0]);
-  if (argsLen > 1) {
-    for (var a = 1; a < argsLen; a++) {
-      str += ' ' + args[a];
-    }
-  }
-
-  if (!colors.enabled || !str) {
-    return str;
-  }
-
-  var nestedStyles = this._styles;
-
-  var i = nestedStyles.length;
-  while (i--) {
-    var code = ansiStyles[nestedStyles[i]];
-    str = code.open + str.replace(code.closeRe, code.open) + code.close;
-  }
-
-  return str;
-}
-
-function applyTheme (theme) {
-  for (var style in theme) {
-    (function(style){
-      colors[style] = function(str){
-        if (typeof theme[style] === 'object'){
-          var out = str;
-          for (var i in theme[style]){
-            out = colors[theme[style][i]](out);
-          }
-          return out;
-        }
-        return colors[theme[style]](str);
-      };
-    })(style)
-  }
-}
-
-colors.setTheme = function (theme) {
-  if (typeof theme === 'string') {
-    try {
-      colors.themes[theme] = require(theme);
-      applyTheme(colors.themes[theme]);
-      return colors.themes[theme];
-    } catch (err) {
-      console.log(err);
-      return err;
-    }
-  } else {
-    applyTheme(theme);
-  }
-};
-
-function init() {
-  var ret = {};
-  Object.keys(styles).forEach(function (name) {
-    ret[name] = {
-      get: function () {
-        return build([name]);
-      }
-    };
-  });
-  return ret;
-}
-
-var sequencer = function sequencer (map, str) {
-  var exploded = str.split(""), i = 0;
-  exploded = exploded.map(map);
-  return exploded.join("");
-};
-
-// custom formatter methods
-colors.trap = require('./custom/trap');
-colors.zalgo = require('./custom/zalgo');
-
-// maps
-colors.maps = {};
-colors.maps.america = require('./maps/america');
-colors.maps.zebra = require('./maps/zebra');
-colors.maps.rainbow = require('./maps/rainbow');
-colors.maps.random = require('./maps/random')
-
-for (var map in colors.maps) {
-  (function(map){
-    colors[map] = function (str) {
-      return sequencer(colors.maps[map], str);
-    }
-  })(map)
-}
-
-defineProps(colors, init());
-},{"./custom/trap":13,"./custom/zalgo":14,"./maps/america":17,"./maps/rainbow":18,"./maps/random":19,"./maps/zebra":20,"./styles":21,"./system/supports-colors":22}],13:[function(require,module,exports){
-module['exports'] = function runTheTrap (text, options) {
-  var result = "";
-  text = text || "Run the trap, drop the bass";
-  text = text.split('');
-  var trap = {
-    a: ["\u0040", "\u0104", "\u023a", "\u0245", "\u0394", "\u039b", "\u0414"],
-    b: ["\u00df", "\u0181", "\u0243", "\u026e", "\u03b2", "\u0e3f"],
-    c: ["\u00a9", "\u023b", "\u03fe"],
-    d: ["\u00d0", "\u018a", "\u0500" , "\u0501" ,"\u0502", "\u0503"],
-    e: ["\u00cb", "\u0115", "\u018e", "\u0258", "\u03a3", "\u03be", "\u04bc", "\u0a6c"],
-    f: ["\u04fa"],
-    g: ["\u0262"],
-    h: ["\u0126", "\u0195", "\u04a2", "\u04ba", "\u04c7", "\u050a"],
-    i: ["\u0f0f"],
-    j: ["\u0134"],
-    k: ["\u0138", "\u04a0", "\u04c3", "\u051e"],
-    l: ["\u0139"],
-    m: ["\u028d", "\u04cd", "\u04ce", "\u0520", "\u0521", "\u0d69"],
-    n: ["\u00d1", "\u014b", "\u019d", "\u0376", "\u03a0", "\u048a"],
-    o: ["\u00d8", "\u00f5", "\u00f8", "\u01fe", "\u0298", "\u047a", "\u05dd", "\u06dd", "\u0e4f"],
-    p: ["\u01f7", "\u048e"],
-    q: ["\u09cd"],
-    r: ["\u00ae", "\u01a6", "\u0210", "\u024c", "\u0280", "\u042f"],
-    s: ["\u00a7", "\u03de", "\u03df", "\u03e8"],
-    t: ["\u0141", "\u0166", "\u0373"],
-    u: ["\u01b1", "\u054d"],
-    v: ["\u05d8"],
-    w: ["\u0428", "\u0460", "\u047c", "\u0d70"],
-    x: ["\u04b2", "\u04fe", "\u04fc", "\u04fd"],
-    y: ["\u00a5", "\u04b0", "\u04cb"],
-    z: ["\u01b5", "\u0240"]
-  }
-  text.forEach(function(c){
-    c = c.toLowerCase();
-    var chars = trap[c] || [" "];
-    var rand = Math.floor(Math.random() * chars.length);
-    if (typeof trap[c] !== "undefined") {
-      result += trap[c][rand];
-    } else {
-      result += c;
-    }
-  });
-  return result;
-
-}
-
-},{}],14:[function(require,module,exports){
-// please no
-module['exports'] = function zalgo(text, options) {
-  text = text || "   he is here   ";
-  var soul = {
-    "up" : [
-      '̍', '̎', '̄', '̅',
-      '̿', '̑', '̆', '̐',
-      '͒', '͗', '͑', '̇',
-      '̈', '̊', '͂', '̓',
-      '̈', '͊', '͋', '͌',
-      '̃', '̂', '̌', '͐',
-      '̀', '́', '̋', '̏',
-      '̒', '̓', '̔', '̽',
-      '̉', 'ͣ', 'ͤ', 'ͥ',
-      'ͦ', 'ͧ', 'ͨ', 'ͩ',
-      'ͪ', 'ͫ', 'ͬ', 'ͭ',
-      'ͮ', 'ͯ', '̾', '͛',
-      '͆', '̚'
-    ],
-    "down" : [
-      '̖', '̗', '̘', '̙',
-      '̜', '̝', '̞', '̟',
-      '̠', '̤', '̥', '̦',
-      '̩', '̪', '̫', '̬',
-      '̭', '̮', '̯', '̰',
-      '̱', '̲', '̳', '̹',
-      '̺', '̻', '̼', 'ͅ',
-      '͇', '͈', '͉', '͍',
-      '͎', '͓', '͔', '͕',
-      '͖', '͙', '͚', '̣'
-    ],
-    "mid" : [
-      '̕', '̛', '̀', '́',
-      '͘', '̡', '̢', '̧',
-      '̨', '̴', '̵', '̶',
-      '͜', '͝', '͞',
-      '͟', '͠', '͢', '̸',
-      '̷', '͡', ' ҉'
-    ]
-  },
-  all = [].concat(soul.up, soul.down, soul.mid),
-  zalgo = {};
-
-  function randomNumber(range) {
-    var r = Math.floor(Math.random() * range);
-    return r;
-  }
-
-  function is_char(character) {
-    var bool = false;
-    all.filter(function (i) {
-      bool = (i === character);
-    });
-    return bool;
-  }
-  
-
-  function heComes(text, options) {
-    var result = '', counts, l;
-    options = options || {};
-    options["up"] =   typeof options["up"]   !== 'undefined' ? options["up"]   : true;
-    options["mid"] =  typeof options["mid"]  !== 'undefined' ? options["mid"]  : true;
-    options["down"] = typeof options["down"] !== 'undefined' ? options["down"] : true;
-    options["size"] = typeof options["size"] !== 'undefined' ? options["size"] : "maxi";
-    text = text.split('');
-    for (l in text) {
-      if (is_char(l)) {
-        continue;
-      }
-      result = result + text[l];
-      counts = {"up" : 0, "down" : 0, "mid" : 0};
-      switch (options.size) {
-      case 'mini':
-        counts.up = randomNumber(8);
-        counts.mid = randomNumber(2);
-        counts.down = randomNumber(8);
-        break;
-      case 'maxi':
-        counts.up = randomNumber(16) + 3;
-        counts.mid = randomNumber(4) + 1;
-        counts.down = randomNumber(64) + 3;
-        break;
-      default:
-        counts.up = randomNumber(8) + 1;
-        counts.mid = randomNumber(6) / 2;
-        counts.down = randomNumber(8) + 1;
-        break;
-      }
-
-      var arr = ["up", "mid", "down"];
-      for (var d in arr) {
-        var index = arr[d];
-        for (var i = 0 ; i <= counts[index]; i++) {
-          if (options[index]) {
-            result = result + soul[index][randomNumber(soul[index].length)];
-          }
-        }
-      }
-    }
-    return result;
-  }
-  // don't summon him
-  return heComes(text, options);
-}
-
-},{}],15:[function(require,module,exports){
-var colors = require('./colors');
-
-module['exports'] = function () {
-
-  //
-  // Extends prototype of native string object to allow for "foo".red syntax
-  //
-  var addProperty = function (color, func) {
-    String.prototype.__defineGetter__(color, func);
-  };
-
-  var sequencer = function sequencer (map, str) {
-      return function () {
-        var exploded = this.split(""), i = 0;
-        exploded = exploded.map(map);
-        return exploded.join("");
-      }
-  };
-
-  addProperty('strip', function () {
-    return colors.strip(this);
-  });
-
-  addProperty('stripColors', function () {
-    return colors.strip(this);
-  });
-
-  addProperty("trap", function(){
-    return colors.trap(this);
-  });
-
-  addProperty("zalgo", function(){
-    return colors.zalgo(this);
-  });
-
-  addProperty("zebra", function(){
-    return colors.zebra(this);
-  });
-
-  addProperty("rainbow", function(){
-    return colors.rainbow(this);
-  });
-
-  addProperty("random", function(){
-    return colors.random(this);
-  });
-
-  addProperty("america", function(){
-    return colors.america(this);
-  });
-
-  //
-  // Iterate through all default styles and colors
-  //
-  var x = Object.keys(colors.styles);
-  x.forEach(function (style) {
-    addProperty(style, function () {
-      return colors.stylize(this, style);
-    });
-  });
-
-  function applyTheme(theme) {
-    //
-    // Remark: This is a list of methods that exist
-    // on String that you should not overwrite.
-    //
-    var stringPrototypeBlacklist = [
-      '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__', 'charAt', 'constructor',
-      'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString', 'valueOf', 'charCodeAt',
-      'indexOf', 'lastIndexof', 'length', 'localeCompare', 'match', 'replace', 'search', 'slice', 'split', 'substring',
-      'toLocaleLowerCase', 'toLocaleUpperCase', 'toLowerCase', 'toUpperCase', 'trim', 'trimLeft', 'trimRight'
-    ];
-
-    Object.keys(theme).forEach(function (prop) {
-      if (stringPrototypeBlacklist.indexOf(prop) !== -1) {
-        console.log('warn: '.red + ('String.prototype' + prop).magenta + ' is probably something you don\'t want to override. Ignoring style name');
-      }
-      else {
-        if (typeof(theme[prop]) === 'string') {
-          colors[prop] = colors[theme[prop]];
-          addProperty(prop, function () {
-            return colors[theme[prop]](this);
-          });
-        }
-        else {
-          addProperty(prop, function () {
-            var ret = this;
-            for (var t = 0; t < theme[prop].length; t++) {
-              ret = colors[theme[prop][t]](ret);
-            }
-            return ret;
-          });
-        }
-      }
-    });
-  }
-
-  colors.setTheme = function (theme) {
-    if (typeof theme === 'string') {
-      try {
-        colors.themes[theme] = require(theme);
-        applyTheme(colors.themes[theme]);
-        return colors.themes[theme];
-      } catch (err) {
-        console.log(err);
-        return err;
-      }
-    } else {
-      applyTheme(theme);
-    }
-  };
-
-};
-},{"./colors":12}],16:[function(require,module,exports){
-var colors = require('./colors');
-module['exports'] = colors;
-
-// Remark: By default, colors will add style properties to String.prototype
-//
-// If you don't wish to extend String.prototype you can do this instead and native String will not be touched
-//
-//   var colors = require('colors/safe);
-//   colors.red("foo")
-//
-//
-require('./extendStringPrototype')();
-},{"./colors":12,"./extendStringPrototype":15}],17:[function(require,module,exports){
-var colors = require('../colors');
-
-module['exports'] = (function() {
-  return function (letter, i, exploded) {
-    if(letter === " ") return letter;
-    switch(i%3) {
-      case 0: return colors.red(letter);
-      case 1: return colors.white(letter)
-      case 2: return colors.blue(letter)
-    }
-  }
-})();
-},{"../colors":12}],18:[function(require,module,exports){
-var colors = require('../colors');
-
-module['exports'] = (function () {
-  var rainbowColors = ['red', 'yellow', 'green', 'blue', 'magenta']; //RoY G BiV
-  return function (letter, i, exploded) {
-    if (letter === " ") {
-      return letter;
-    } else {
-      return colors[rainbowColors[i++ % rainbowColors.length]](letter);
-    }
-  };
-})();
-
-
-},{"../colors":12}],19:[function(require,module,exports){
-var colors = require('../colors');
-
-module['exports'] = (function () {
-  var available = ['underline', 'inverse', 'grey', 'yellow', 'red', 'green', 'blue', 'white', 'cyan', 'magenta'];
-  return function(letter, i, exploded) {
-    return letter === " " ? letter : colors[available[Math.round(Math.random() * (available.length - 1))]](letter);
-  };
-})();
-},{"../colors":12}],20:[function(require,module,exports){
-var colors = require('../colors');
-
-module['exports'] = function (letter, i, exploded) {
-  return i % 2 === 0 ? letter : colors.inverse(letter);
-};
-},{"../colors":12}],21:[function(require,module,exports){
-/*
-The MIT License (MIT)
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-*/
-
-var styles = {};
-module['exports'] = styles;
-
-var codes = {
-  reset: [0, 0],
-
-  bold: [1, 22],
-  dim: [2, 22],
-  italic: [3, 23],
-  underline: [4, 24],
-  inverse: [7, 27],
-  hidden: [8, 28],
-  strikethrough: [9, 29],
-
-  black: [30, 39],
-  red: [31, 39],
-  green: [32, 39],
-  yellow: [33, 39],
-  blue: [34, 39],
-  magenta: [35, 39],
-  cyan: [36, 39],
-  white: [37, 39],
-  gray: [90, 39],
-  grey: [90, 39],
-
-  bgBlack: [40, 49],
-  bgRed: [41, 49],
-  bgGreen: [42, 49],
-  bgYellow: [43, 49],
-  bgBlue: [44, 49],
-  bgMagenta: [45, 49],
-  bgCyan: [46, 49],
-  bgWhite: [47, 49],
-
-  // legacy styles for colors pre v1.0.0
-  blackBG: [40, 49],
-  redBG: [41, 49],
-  greenBG: [42, 49],
-  yellowBG: [43, 49],
-  blueBG: [44, 49],
-  magentaBG: [45, 49],
-  cyanBG: [46, 49],
-  whiteBG: [47, 49]
-
-};
-
-Object.keys(codes).forEach(function (key) {
-  var val = codes[key];
-  var style = styles[key] = [];
-  style.open = '\u001b[' + val[0] + 'm';
-  style.close = '\u001b[' + val[1] + 'm';
-});
-},{}],22:[function(require,module,exports){
-(function (process){
-/*
-The MIT License (MIT)
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-*/
-
-var argv = process.argv;
-
-module.exports = (function () {
-  if (argv.indexOf('--no-color') !== -1 ||
-    argv.indexOf('--color=false') !== -1) {
-    return false;
-  }
-
-  if (argv.indexOf('--color') !== -1 ||
-    argv.indexOf('--color=true') !== -1 ||
-    argv.indexOf('--color=always') !== -1) {
-    return true;
-  }
-
-  if (process.stdout && !process.stdout.isTTY) {
-    return false;
-  }
-
-  if (process.platform === 'win32') {
-    return true;
-  }
-
-  if ('COLORTERM' in process.env) {
-    return true;
-  }
-
-  if (process.env.TERM === 'dumb') {
-    return false;
-  }
-
-  if (/^screen|^xterm|^vt100|color|ansi|cygwin|linux/i.test(process.env.TERM)) {
-    return true;
-  }
-
-  return false;
-})();
-}).call(this,require('_process'))
-},{"_process":34}],23:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -4151,7 +3514,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":30}],24:[function(require,module,exports){
+},{"../../is-buffer/index.js":19}],13:[function(require,module,exports){
 (function (process){
 /**
  * This is the web browser implementation of `debug()`.
@@ -4340,7 +3703,7 @@ function localstorage() {
 }
 
 }).call(this,require('_process'))
-},{"./debug":25,"_process":34}],25:[function(require,module,exports){
+},{"./debug":14,"_process":23}],14:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -4544,7 +3907,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":32}],26:[function(require,module,exports){
+},{"ms":21}],15:[function(require,module,exports){
 
 /**
  * Expose `Delegator`.
@@ -4667,7 +4030,7 @@ Delegator.prototype.fluent = function (name) {
   return this;
 };
 
-},{}],27:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4971,7 +4334,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],28:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -5057,7 +4420,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],29:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -5082,7 +4445,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],30:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /*!
  * Determine if an object is a Buffer
  *
@@ -5105,14 +4468,14 @@ function isSlowBuffer (obj) {
   return typeof obj.readFloatLE === 'function' && typeof obj.slice === 'function' && isBuffer(obj.slice(0, 0))
 }
 
-},{}],31:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 var toString = {}.toString;
 
 module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],32:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -5263,7 +4626,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's'
 }
 
-},{}],33:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -5310,7 +4673,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":34}],34:[function(require,module,exports){
+},{"_process":23}],23:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -5492,10 +4855,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],35:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":36}],36:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":25}],25:[function(require,module,exports){
 // a duplex stream is just a stream that is both readable and writable.
 // Since JS doesn't have multiple prototypal inheritance, this class
 // prototypally inherits from Readable, and then parasitically from
@@ -5571,7 +4934,7 @@ function forEach(xs, f) {
     f(xs[i], i);
   }
 }
-},{"./_stream_readable":38,"./_stream_writable":40,"core-util-is":23,"inherits":29,"process-nextick-args":33}],37:[function(require,module,exports){
+},{"./_stream_readable":27,"./_stream_writable":29,"core-util-is":12,"inherits":18,"process-nextick-args":22}],26:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -5598,7 +4961,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":39,"core-util-is":23,"inherits":29}],38:[function(require,module,exports){
+},{"./_stream_transform":28,"core-util-is":12,"inherits":18}],27:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -6542,7 +5905,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":36,"./internal/streams/BufferList":41,"_process":34,"buffer":10,"buffer-shims":9,"core-util-is":23,"events":27,"inherits":29,"isarray":31,"process-nextick-args":33,"string_decoder/":47,"util":8}],39:[function(require,module,exports){
+},{"./_stream_duplex":25,"./internal/streams/BufferList":30,"_process":23,"buffer":10,"buffer-shims":9,"core-util-is":12,"events":16,"inherits":18,"isarray":20,"process-nextick-args":22,"string_decoder/":36,"util":8}],28:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -6725,7 +6088,7 @@ function done(stream, er, data) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":36,"core-util-is":23,"inherits":29}],40:[function(require,module,exports){
+},{"./_stream_duplex":25,"core-util-is":12,"inherits":18}],29:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -7279,7 +6642,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":36,"_process":34,"buffer":10,"buffer-shims":9,"core-util-is":23,"events":27,"inherits":29,"process-nextick-args":33,"util-deprecate":48}],41:[function(require,module,exports){
+},{"./_stream_duplex":25,"_process":23,"buffer":10,"buffer-shims":9,"core-util-is":12,"events":16,"inherits":18,"process-nextick-args":22,"util-deprecate":37}],30:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -7344,10 +6707,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":10,"buffer-shims":9}],42:[function(require,module,exports){
+},{"buffer":10,"buffer-shims":9}],31:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":37}],43:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":26}],32:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -7367,13 +6730,13 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":36,"./lib/_stream_passthrough.js":37,"./lib/_stream_readable.js":38,"./lib/_stream_transform.js":39,"./lib/_stream_writable.js":40,"_process":34}],44:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":25,"./lib/_stream_passthrough.js":26,"./lib/_stream_readable.js":27,"./lib/_stream_transform.js":28,"./lib/_stream_writable.js":29,"_process":23}],33:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
-},{"./lib/_stream_transform.js":39}],45:[function(require,module,exports){
+},{"./lib/_stream_transform.js":28}],34:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":40}],46:[function(require,module,exports){
+},{"./lib/_stream_writable.js":29}],35:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7502,7 +6865,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":27,"inherits":29,"readable-stream/duplex.js":35,"readable-stream/passthrough.js":42,"readable-stream/readable.js":43,"readable-stream/transform.js":44,"readable-stream/writable.js":45}],47:[function(require,module,exports){
+},{"events":16,"inherits":18,"readable-stream/duplex.js":24,"readable-stream/passthrough.js":31,"readable-stream/readable.js":32,"readable-stream/transform.js":33,"readable-stream/writable.js":34}],36:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7725,7 +7088,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":10}],48:[function(require,module,exports){
+},{"buffer":10}],37:[function(require,module,exports){
 (function (global){
 
 /**
@@ -7796,7 +7159,7 @@ function config (name) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],49:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var v1 = require('./v1');
 var v4 = require('./v4');
 
@@ -7806,7 +7169,7 @@ uuid.v4 = v4;
 
 module.exports = uuid;
 
-},{"./v1":52,"./v4":53}],50:[function(require,module,exports){
+},{"./v1":41,"./v4":42}],39:[function(require,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -7831,7 +7194,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],51:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 (function (global){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
@@ -7868,7 +7231,7 @@ if (!rng) {
 module.exports = rng;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],52:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 // Unique ID creation requires a high quality random # generator.  We feature
 // detect to determine the best RNG source, normalizing to a function that
 // returns 128-bits of randomness, since that's what's usually required
@@ -7973,7 +7336,7 @@ function v1(options, buf, offset) {
 
 module.exports = v1;
 
-},{"./lib/bytesToUuid":50,"./lib/rng":51}],53:[function(require,module,exports){
+},{"./lib/bytesToUuid":39,"./lib/rng":40}],42:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -8004,220 +7367,7 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":50,"./lib/rng":51}],54:[function(require,module,exports){
-(function (process,global,__dirname){
-'use strict';
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-var _global = global,
-    _global$kos = _global.kos,
-    kos = _global$kos === undefined ? require('..') : _global$kos;
-
-var debug = require('./debug');
-var render = require('./render');
-
-// TODO: shouldn't be explicit dependency?
-var colors = require('colors');
-
-module.exports = kos.reactor('core').desc('reactions to runtime instantiation context').load(debug, render).init('modules', new Map()).in('process').out('reactor').bind(initialize).in('program', 'process').out('reactor', 'debug/level', 'load', 'read', 'show', 'prompt').bind(start)
-
-// TODO: consider making this a separate reactor
-.in('prompt').and.has('process', 'module/readline').bind(promptUser).in('load').and.has('module/path').out('reactor').bind(loadReactor).in('require').out('module/*', 'require/error').bind(tryRequire).in('read').and.has('module/fs').bind(readKSONFile).in('reactor').out('require').bind(requireReactor).in('reactor/tree').and.has('show').bind(outputTreeReactor);
-
-// self-initialize
-function initialize(process) {
-  this.send('reactor', this.parent);
-}
-
-function start(program, process) {
-  var _this = this;
-
-  var engine = this.parent;
-  var stdin = process.stdin,
-      stdout = process.stdout,
-      stderr = process.stderr;
-  var args = program.args,
-      expr = program.expr,
-      data = program.data,
-      show = program.show,
-      silent = program.silent,
-      _program$verbose = program.verbose,
-      verbose = _program$verbose === undefined ? 0 : _program$verbose;
-
-  var ignores = engine.inputs.concat(['module/*', 'debug/level', 'error', 'warn', 'info', 'debug']);
-
-  // write tokens seen by this reactor into stdout
-  engine.on('flow', function (token) {
-    engine.emit('clear');
-    if (token.origin !== engine.id) {
-      token.match(ignores) || stdout.write(token.toKSON() + "\n");
-    }
-  });
-  this.send('debug/level', silent ? -1 : verbose);
-
-  this.info('starting KOS...');
-
-  args.forEach(function (x) {
-    return _this.send('load', x);
-  });
-  expr.forEach(function (x) {
-    return engine.core.write(x + "\n");
-  });
-  data.forEach(function (x) {
-    return _this.send('read', x);
-  });
-
-  if (show) {
-    this.send('show', stderr);
-    return;
-  }
-
-  if (stdin.isTTY) this.send('prompt', 'kos> ');else stdin.pipe(engine.core, { end: false });
-}
-
-function loadReactor(name) {
-  var path = this.get('module/path');
-  var reactor = {};
-  var search = [path.resolve(name), path.resolve(path.join('reactors', name)), path.resolve(__dirname, name), name];
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
-
-  try {
-    for (var _iterator = search[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-      var _name = _step.value;
-
-      try {
-        reactor = require(_name);break;
-      } catch (e) {
-        if (e.code !== 'MODULE_NOT_FOUND') throw e;
-      }
-    }
-  } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator.return) {
-        _iterator.return();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
-  }
-
-  if (reactor.type !== Symbol.for('kinetic.reactor')) throw new Error("unable to load KOS for " + name + " from " + search);
-
-  this.send('reactor', reactor);
-}
-
-function requireReactor(reactor) {
-  var _this2 = this;
-
-  var engine = this.parent;
-  var regex = /^module\/(.+)$/;
-  if (reactor.name !== 'core') engine.load(reactor);
-  reactor.requires.forEach(function (key) {
-    var match = key.match(regex, '$1');
-    if (!match) return;
-    _this2.send('require', match[1]);
-  });
-}
-
-function readKSONFile(filename) {
-  var engine = this.parent;
-  var fs = this.get('module/fs');
-  var kson = fs.createReadStream(filename);
-  kson.on('error', this.error.bind(this));
-  kson.pipe(engine, { end: false });
-}
-
-function tryRequire(opts) {
-  var modules = this.get('modules');
-  if (typeof opts === 'string') opts = { name: opts };
-  var _opts = opts,
-      name = _opts.name,
-      path = _opts.path;
-
-  try {
-    var m = modules.get(name) || require(path || name);
-    modules.has(name) || modules.set(name, m);
-    this.send('module/' + name, m);
-  } catch (e) {
-    e.target = name;
-    this.send('require/error', e);
-  }
-}
-
-function promptUser(prompt) {
-  var engine = this.parent;
-  var readline = this.get('module/readline');
-
-  var _get = this.get('process'),
-      stdin = _get.stdin,
-      stdout = _get.stdout,
-      stderr = _get.stderr;
-
-  if (this.get('active')) return;
-
-  var cmd = readline.createInterface({
-    input: stdin,
-    output: stderr,
-    prompt: colors.grey(prompt),
-    completer: function completer(line) {
-      var _engine$inputs;
-
-      var inputs = (_engine$inputs = engine.inputs).concat.apply(_engine$inputs, _toConsumableArray(engine.reactors.map(function (x) {
-        return x.inputs;
-      })));
-      var completions = Array.from(new Set(inputs)).sort().concat('.help', '.quit');
-      var hits = completions.filter(function (c) {
-        return c.indexOf(line) === 0;
-      });
-      if (/\s+$/.test(line)) completions = [];
-      return [hits.length ? hits : completions, line];
-    }
-  });
-  // XXX - should only accept input that has a reaction
-  cmd.on('line', function (line) {
-    var input = line.trim();
-    switch (input) {
-      case '':
-        break;
-      case '.help':
-        console.error("sorry, you're on your own for now...");
-        break;
-      case '.quit':
-        process.exit(0);
-        break;
-      default:
-        engine.core.write(input + "\n");
-    }
-    cmd.prompt();
-  });
-  engine.on('data', clearPrompt);
-  engine.on('clear', clearPrompt);
-  this.set('active', true);
-  cmd.prompt();
-
-  function clearPrompt() {
-    readline.clearLine(stderr, -1);
-    readline.cursorTo(stderr, 0);
-    process.nextTick(function () {
-      return cmd.prompt();
-    });
-  }
-}
-
-function outputTreeReactor(tree) {
-  this.get('show').write(tree + "\n");
-}
-
-}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},"/reactors")
-},{"..":undefined,"./debug":55,"./render":61,"_process":34,"colors":16}],55:[function(require,module,exports){
+},{"./lib/bytesToUuid":39,"./lib/rng":40}],43:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -8228,11 +7378,13 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('debug').desc('reactions to send debugging messages to an output stream').init('loggers', new Map()).in('debug/level').and.has('module/debug').bind(setupLogger).in('error').and.has('debug/level').bind(outputError).in('warn').bind(outputMessage).in('info').bind(outputMessage).in('debug').bind(outputMessage);
+module.exports = kos.create('debug').desc('reactions to send debugging messages to an output stream').init('loggers', new Map()).init('level', 0).in('debug/level').and.has('module/debug').bind(setupLogger).in('error').bind(outputError).in('warn').bind(outputMessage).in('info').bind(outputMessage).in('debug').bind(outputMessage);
 
 function setupLogger(level) {
   var loggers = this.get('loggers');
   if (level < 0) return;
+
+  this.parent.init('level', level);
 
   var debug = this.get('module/debug');
   var namespaces = ['kos:error', 'kos:warn'];
@@ -8268,7 +7420,7 @@ function setupLogger(level) {
 
 function outputError(err) {
   var error = this.get('loggers').get('error');
-  var level = this.get('debug/level');
+  var level = this.get('level');
   if (typeof error !== 'function') return;
   if (level > 1) error(err);else error(err.message);
 }
@@ -8280,7 +7432,7 @@ function outputMessage(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined}],56:[function(require,module,exports){
+},{"..":undefined}],44:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -8296,7 +7448,7 @@ var _global = global,
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
 
-module.exports = kos.reactor('http').desc('reactions to HTTP client/server requests').in('http/request').and.has('module/superagent').out('http/response').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').and.has('module/http').out('http/server', 'http/socket', 'link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
+module.exports = kos.create('http').desc('reactions to HTTP client/server requests').in('http/request').and.has('module/superagent').out('http/response').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').and.has('module/http').out('http/server', 'http/socket', 'link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
 
 // TODO: future
 //.in('http/server/request','http/proxy').out('http/request').bind(proxy)
@@ -8389,7 +7541,7 @@ function proxy(req, proxy) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined}],57:[function(require,module,exports){
+},{"..":undefined}],45:[function(require,module,exports){
 (function (global){
 // Link transaction flow
 //
@@ -8406,7 +7558,7 @@ var _global = global,
 var net = require('./net');
 var ws = require('./ws');
 
-module.exports = kos.reactor('link').desc('reactions to stream dynamic client/server links').load(net, ws).init('streams', new Map()).in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).in('link/connect/url').and.has('module/url').out('link/connect').bind(connectByUrl).in('link/listen/url').and.has('module/url').out('link/listen').bind(listenByUrl).in('link').out('link/stream').bind(createLinkStream);
+module.exports = kos.create('link').desc('reactions to stream dynamic client/server links').load(net, ws).init('streams', new Map()).in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).in('link/connect/url').and.has('module/url').out('link/connect').bind(connectByUrl).in('link/listen/url').and.has('module/url').out('link/listen').bind(listenByUrl).in('link').out('link/stream').bind(createLinkStream);
 
 function connect(opts) {
   switch (opts.protocol) {
@@ -8477,7 +7629,7 @@ function createLinkStream(link) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined,"./net":58,"./ws":63}],58:[function(require,module,exports){
+},{"..":undefined,"./net":46,"./ws":50}],46:[function(require,module,exports){
 (function (global){
 // Network transaction flow
 //
@@ -8494,7 +7646,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('net').desc("reactions to establish TCP/UDP client/server communication links").init('protocols', ['tcp:', 'udp:']).in('net/connect').and.has('module/net').out('net/socket', 'link', 'net/connect').bind(connect).in('net/listen').and.has('module/net').out('net/server', 'net/socket', 'link').bind(listen).in('net/connect/url').and.has('module/url').out('net/connect').bind(connectByUrl).in('net/listen/url').and.has('module/url').out('net/listen').bind(listenByUrl);
+module.exports = kos.create('net').desc("reactions to establish TCP/UDP client/server communication links").init('protocols', ['tcp:', 'udp:']).in('net/connect').and.has('module/net').out('net/socket', 'link', 'net/connect').bind(connect).in('net/listen').and.has('module/net').out('net/server', 'net/socket', 'link').bind(listen).in('net/connect/url').and.has('module/url').out('net/connect').bind(connectByUrl).in('net/listen/url').and.has('module/url').out('net/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;
@@ -8596,7 +7748,7 @@ function normalizeOptions(opts) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined}],59:[function(require,module,exports){
+},{"..":undefined}],47:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -8606,7 +7758,7 @@ var _global = global,
 
 var link = require('./link');
 
-module.exports = kos.reactor('pull').desc('reactions to pull dataflow objects from remote stream(s)').load(link).in('pull/connect').out('link/connect/url').bind(function pullConnect(url) {
+module.exports = kos.create('pull').desc('reactions to pull dataflow objects from remote stream(s)').load(link).in('pull/connect').out('link/connect/url').bind(function pullConnect(url) {
   this.send('link/connect/url', url);
 }).in('pull/listen').out('link/listen/url').bind(function pullListen(url) {
   this.send('link/listen/url', url);
@@ -8615,7 +7767,7 @@ module.exports = kos.reactor('pull').desc('reactions to pull dataflow objects fr
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined,"./link":57}],60:[function(require,module,exports){
+},{"..":undefined,"./link":45}],48:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -8625,7 +7777,7 @@ var _global = global,
 
 var link = require('./link');
 
-module.exports = kos.reactor('push').desc('reactions to push dataflow object to remote stream(s)').load(link).in('push/connect').out('link/connect/url').bind(function pushConnect(url) {
+module.exports = kos.create('push').desc('reactions to push dataflow object to remote stream(s)').load(link).in('push/connect').out('link/connect/url').bind(function pushConnect(url) {
   this.send('link/connect/url', url);
 }).in('push/listen').out('link/listen/url').bind(function pushListen(url) {
   this.send('link/listen/url', url);
@@ -8634,246 +7786,7 @@ module.exports = kos.reactor('push').desc('reactions to push dataflow object to 
 });
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined,"./link":57}],61:[function(require,module,exports){
-(function (global){
-'use strict';
-
-var _global = global,
-    _global$kos = _global.kos,
-    kos = _global$kos === undefined ? require('..') : _global$kos;
-
-
-var BOX = {
-	L: {
-		top: '┌╼ ',
-		item: '├╼ ',
-		last: '└╼ ',
-		mid1: '┬╼ ',
-		mid2: '┼╼ ',
-		mid3: '┴╼ ',
-		one: '─╼ ',
-		dash: '╼ '
-	},
-	R: {
-		top: ' ╾┐',
-		item: ' ╾┤',
-		last: ' ╾┘',
-		mid1: ' ╾┬',
-		mid2: ' ╾┼',
-		mid3: ' ╾┴',
-		one: ' ╾─',
-		dash: ' ╾'
-	},
-	nest: '│',
-	item: '├',
-	last: '└'
-};
-
-var FUNC = 'ƒ';
-var SEP = ' ';
-
-module.exports = kos.reactor('render').desc('reactions to visually render KOS reactors').in('reactor').and.has('module/treeify').out('reactor/tree').bind(renderReactorAsTree);
-
-function indent(str) {
-	var count = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-	var sep = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : ' ';
-
-	return str.replace(/^(?!\s*$)/mg, sep.repeat(count));
-}
-
-function findLongest(a) {
-	var c = 0,
-	    d = 0,
-	    l = 0,
-	    i = a.length;
-	if (i) while (i--) {
-		d = a[i].length;
-		if (d > c) {
-			l = i;c = d;
-		}
-	}
-	return a[l] || '';
-}
-
-function renderListItem(item, i) {
-	var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-	var width = options.width,
-	    height = options.height,
-	    _options$isMiddle = options.isMiddle,
-	    isMiddle = _options$isMiddle === undefined ? false : _options$isMiddle,
-	    _options$left = options.left,
-	    left = _options$left === undefined ? BOX.L : _options$left,
-	    _options$right = options.right,
-	    right = _options$right === undefined ? BOX.R : _options$right;
-
-	var str = '';
-	var label = item + SEP.repeat(width - item.length);
-	if (height === 1) str += (left.one || '') + label + (right.one || '');else if (i === 0) {
-		if (isMiddle) str += (left.mid1 || '') + label + (right.mid1 || '');else str += (left.top || '') + label + (right.top || '');
-	} else if (i < height - 1) {
-		if (isMiddle) str += (left.mid2 || '') + label + (right.mid2 || '');else str += (left.item || '') + label + (right.item || '');
-	} else if (isMiddle) str += (left.mid3 || '') + label + (right.mid3 || '');else str += (left.last || '') + label + (right.last || '');
-	return str;
-}
-
-function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
-	var inputs = trigger.inputs,
-	    requires = trigger.requires,
-	    outputs = trigger.outputs,
-	    _trigger$handler = trigger.handler,
-	    handler = _trigger$handler === undefined ? {} : _trigger$handler;
-
-	var accepts = requires.concat(inputs);
-	// BOX for consumed inputs
-	var inbox = {
-		height: accepts.length,
-		width: inputWidth || findLongest(accepts).length,
-		start: 0
-	};
-	var funcName = handler.name || '';
-	if (!funcWidth) funcWidth = funcName.length;
-	// BOX for provided outputs
-	var outbox = {
-		height: outputs.length,
-		width: outputWidth || findLongest(outputs).length,
-		start: 0
-	};
-	var height = inbox.height > outbox.height ? inbox.height : outbox.height;
-	var block = {
-		height: height,
-		width: 0,
-		middle: Math.floor((height - 1) / 2),
-		lines: []
-	};
-
-	if (inbox.height > outbox.height) {
-		outbox.start = Math.floor((inbox.height - outbox.height) / 2);
-	}
-	if (outbox.height > inbox.height) {
-		inbox.start = Math.floor((outbox.height - inbox.height) / 2);
-	}
-	for (var idx = 0, i = 0, o = 0; idx < block.height; idx++) {
-		var line = '';
-		if (idx >= inbox.start && i < inbox.height) {
-			line += renderListItem(accepts[i], i++, {
-				height: inbox.height,
-				width: inbox.width,
-				isMiddle: idx === block.middle
-			});
-		} else {
-			line += SEP.repeat(inbox.width + 6);
-		}
-		if (idx === block.middle) {
-			var label = FUNC + '(' + funcName + ')' + SEP.repeat(funcWidth - funcName.length);
-			if (outbox.height) line += BOX.L.dash + label + BOX.R.dash;else line += BOX.L.dash + label;
-		} else {
-			line += SEP.repeat(funcWidth + 7);
-		}
-		if (idx >= outbox.start && o < outbox.height) {
-			line += renderListItem(outputs[o], o++, {
-				height: outbox.height,
-				width: outbox.width,
-				right: {},
-				isMiddle: idx === block.middle
-			});
-		}
-		block.lines.push(line);
-		if (line.length > block.width) block.width = line.length;
-	}
-	return block;
-}
-
-function renderTriggers(reactor) {
-	var triggers = reactor.triggers,
-	    inputs = reactor.inputs,
-	    outputs = reactor.outputs;
-
-	var inputWidth = findLongest(Array.from(inputs)).length;
-	var outputWidth = findLongest(Array.from(outputs)).length;
-	var funcWidth = findLongest(triggers.map(function (x) {
-		return x.name;
-	})).length;
-	var lines = triggers.reduce(function (acc, trigger, idx) {
-		var item = renderTrigger(trigger, funcWidth, inputWidth, outputWidth);
-		var last = idx == triggers.length - 1;
-		for (var i = 0; i < item.lines.length; i++) {
-			var line = item.lines[i];
-			if (i < item.middle) line = BOX.nest + line;else if (i === item.middle) {
-				if (last) line = BOX.last + line;else line = BOX.item + line;
-			} else if (last) line = SEP + line;else line = BOX.nest + line;
-			acc.push(line);
-		}
-		return acc;
-	}, []);
-	if (!lines.length) lines.push(BOX.last + BOX.L.dash + 'no triggers');
-	return lines.join("\n");
-}
-
-function renderReactorAsTree(reactor) {
-	var treeify = this.get('module/treeify');
-	var name = reactor.name,
-	    purpose = reactor.purpose,
-	    requires = reactor.requires,
-	    reactors = reactor.reactors,
-	    triggers = reactor.triggers;
-
-	var str = '';
-	var info = {
-		requires: requires.sort(),
-		reactors: reactors.map(function (x) {
-			return x.name;
-		}),
-		triggers: triggers.map(function (x) {
-			return FUNC + '(' + x.name + ')';
-		}),
-		'': null
-	};
-	for (var key in info) {
-		if (Array.isArray(info[key])) {
-			if (info[key].length) info[key] = info[key].reduce(function (a, b) {
-				a[b] = null;return a;
-			}, {});else delete info[key];
-		}
-	}
-	str += treeify.asTree(info, true);
-	var _iteratorNormalCompletion = true;
-	var _didIteratorError = false;
-	var _iteratorError = undefined;
-
-	try {
-		for (var _iterator = reactors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-			var sub = _step.value;
-
-			str += '   ├─ ' + (sub.name + ': ' + sub.purpose) + "\n";
-			str += indent(renderReactorAsTree.call(this, sub), 1, '   │  ') + "\n";
-			str += "   │\n";
-		}
-	} catch (err) {
-		_didIteratorError = true;
-		_iteratorError = err;
-	} finally {
-		try {
-			if (!_iteratorNormalCompletion && _iterator.return) {
-				_iterator.return();
-			}
-		} finally {
-			if (_didIteratorError) {
-				throw _iteratorError;
-			}
-		}
-	}
-
-	str += indent(renderTriggers(reactor), 3);
-
-	if (!reactor.parent) {
-		str = name + ': ' + purpose + '\n' + str;
-		this.send('reactor/tree', str);
-	}
-	return str;
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined}],62:[function(require,module,exports){
+},{"..":undefined,"./link":45}],49:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -8885,7 +7798,7 @@ var _global = global,
 
 var link = require('./link');
 
-module.exports = kos.reactor('sync').desc('reactions to synchronize dataflow objects with remote stream(s)').load(link).init('reactors', new Map()).in('sync/connect').out('link/connect/url').bind(syncConnect).in('sync/listen').out('link/listen/url').bind(syncListen).in('link/stream').bind(syncStream).in('reactor').bind(collectReactors);
+module.exports = kos.create('sync').desc('reactions to synchronize dataflow objects with remote stream(s)').load(link).init('reactors', new Map()).in('sync/connect').out('link/connect/url').bind(syncConnect).in('sync/listen').out('link/listen/url').bind(syncListen).in('link/stream').bind(syncStream).in('reactor').bind(collectReactors);
 
 function syncConnect(url) {
   this.send('link/connect/url', url);
@@ -8911,7 +7824,7 @@ function collectReactors(reactor) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined,"./link":57}],63:[function(require,module,exports){
+},{"..":undefined,"./link":45}],50:[function(require,module,exports){
 (function (global){
 // WebSocket transaction flow
 //
@@ -8926,7 +7839,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.reactor('ws').desc("reactions to establish WebSocket client/server communication links").init('protocols', ['ws:', 'wss:']).in('ws/connect').and.has('module/simple-websocket').out('ws/socket', 'link', 'ws/connect').bind(connect).in('ws/listen').and.has('module/simple-websocket/server').out('ws/server', 'ws/socket', 'link').bind(listen).in('ws/connect/url').and.has('module/url').out('ws/connect').bind(connectByUrl).in('ws/listen/url').and.has('module/url').out('ws/listen').bind(listenByUrl);
+module.exports = kos.create('ws').desc("reactions to establish WebSocket client/server communication links").init('protocols', ['ws:', 'wss:']).in('ws/connect').and.has('module/simple-websocket').out('ws/socket', 'link', 'ws/connect').bind(connect).in('ws/listen').and.has('module/simple-websocket/server').out('ws/server', 'ws/socket', 'link').bind(listen).in('ws/connect/url').and.has('module/url').out('ws/connect').bind(connectByUrl).in('ws/listen/url').and.has('module/url').out('ws/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;
@@ -9032,14 +7945,13 @@ function normalizeOptions(opts) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined}],64:[function(require,module,exports){
+},{"..":undefined}],51:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 var kos = require('./node');
-var core = require('./reactors/core');
 var debug = require('./reactors/debug');
 var link = require('./reactors/link');
 var http = require('./reactors/http');
@@ -9049,7 +7961,6 @@ var pull = require('./reactors/pull');
 var push = require('./reactors/push');
 
 exports.default = kos;
-exports.core = core;
 exports.debug = debug;
 exports.link = link;
 exports.http = http;
@@ -9058,4 +7969,4 @@ exports.sync = sync;
 exports.pull = pull;
 exports.push = push;
 
-},{"./node":6,"./reactors/core":54,"./reactors/debug":55,"./reactors/http":56,"./reactors/link":57,"./reactors/pull":59,"./reactors/push":60,"./reactors/sync":62,"./reactors/ws":63}]},{},[64]);
+},{"./node":6,"./reactors/debug":43,"./reactors/http":44,"./reactors/link":45,"./reactors/pull":47,"./reactors/push":48,"./reactors/sync":49,"./reactors/ws":50}]},{},[51]);

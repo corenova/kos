@@ -102,7 +102,6 @@ repository (see [reactors](./reactors)):
 name | description
 ---  | ---
 [debug](./reactors/debug.md) | reactions to send debugging messages to an output stream
-[core](./reactors/core.md) | reactions to runtime context (see [kos](./bin/kos.js) cli)
 [http](./reactors/http.md) | reactions to http client/server transactions
 [link](./reactors/link.md) | reactions to dynamic client/server flows
 [mqtt](./reactors/mqtt.md) | reactions to mqtt client/server transactions
@@ -111,6 +110,7 @@ name | description
 [pull](./reactors/pull.md) | reactions to pull dataflow from peers
 [push](./reactors/push.md) | reactions to push dataflow to peers
 [rest](./reactors/rest.md) | reactions to RESTful transactions
+[run](./reactors/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
 [sync](./reactors/sync.md) | reactions to sync dataflow with peers
 [ws](./reactors/ws.md) | reactions to websockets client/server flows
 

@@ -1,14 +1,16 @@
 'use strict'
 
 const { kos = require('..') } = global
+const debug = require('debug')
 
-module.exports = kos.reactor('debug')
+module.exports = kos.create('debug')
   .desc('reactions to send debugging messages to an output stream')
   .init('loggers', new Map)
+  .init('level', 0)
 
-  .in('debug/level').and.has('module/debug').bind(setupLogger)
+  .in('debug/level').bind(setupLogger)
 
-  .in('error').and.has('debug/level').bind(outputError)
+  .in('error').bind(outputError)
   .in('warn').bind(outputMessage)
   .in('info').bind(outputMessage)
   .in('debug').bind(outputMessage)
@@ -17,7 +19,8 @@ function setupLogger(level) {
   const loggers = this.get('loggers')
   if (level < 0) return
 
-  let debug = this.get('module/debug')
+  this.parent.init('level', level)
+
   let namespaces = [ 'kos:error', 'kos:warn' ]
   if (level)     namespaces.push('kos:info')
   if (level > 1) namespaces.push('kos:debug')
@@ -32,6 +35,7 @@ function setupLogger(level) {
 
   if (level > 2 && !this.get('tracing')) {
     this.parent.on('data', token => {
+      if (token.match(['error','warn','info','debug'])) return
       const trace = loggers.get('trace')
       const { key, value } = token
       switch (typeof value) {
@@ -49,7 +53,7 @@ function setupLogger(level) {
 
 function outputError(err) {
   const error = this.get('loggers').get('error')
-  const level = this.get('debug/level')
+  const level = this.get('level')
   if (typeof error !== 'function') return
   if (level > 1) error(err)
   else error(err.message)

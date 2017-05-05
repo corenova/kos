@@ -3,7 +3,7 @@
 const { kos = require('..') } = global
 const link = require('./link')
 
-module.exports = kos.reactor('push')
+module.exports = kos.create('push')
   .desc('reactions to push dataflow object to remote stream(s)')
   .load(link)
 

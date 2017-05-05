@@ -8,9 +8,10 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.reactor('ws')
+module.exports = kos.create('ws')
   .desc("reactions to establish WebSocket client/server communication links")
   .init('protocols', ['ws:', 'wss:'])
+  .init('links', new Map)
 
   .in('ws/connect').and.has('module/simple-websocket')
   .out('ws/socket','link','ws/connect')
@@ -31,14 +32,20 @@ module.exports = kos.reactor('ws')
 function connect(opts) {
   const WebSocket = this.get('module/simple-websocket')
   const protocols = this.get('protocols')
+  const links = this.get('links')
 
   let { protocol, hostname, port, path, retry, max } = normalizeOptions(opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
-  let addr = `${protocol}//${hostname}:${port}/${path}`
-  let wsock = new WebSocket(addr)
-  this.send('link', { addr: addr, socket: wsock })
+  const addr = `${protocol}//${hostname}:${port}/${path}`
+  if (links.has(addr)) return this.send('link', links.get(addr))
+
+  const wsock = new WebSocket(addr)
+  const link = { addr: addr, socket: wsock }
+
+  links.set(addr, link)
+  this.send('link', link)
 
   wsock.on('connect', () => {
     this.info("connected to", addr)
@@ -50,11 +57,12 @@ function connect(opts) {
     // find out if explicitly being closed?
     retry && setTimeout(() => {
       this.debug("attempt reconnect", addr)
+      links.delete(addr)
       // NOTE: we use send with id=null since KOs that can trigger
       // itself are automatically filtered to prevent infinite loops
       this.send('ws/connect', Object.assign({}, opts, {
         retry: Math.round(Math.min(max, retry * 1.5))
-      }), null)
+      }), { id: null })
     }, retry)
   })
   wsock.on('error', this.error.bind(this))
@@ -68,16 +76,15 @@ function listen(opts) {
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
+  this.debug('attempt', hostname, port)
   if (server) {
     server = new Server({ server })
     this.info('listening on existing server instance')
     this.send('ws/server', server)
   } else {
     server = new Server({ host: hostname, port: port, path: path })
-    server.on('listening', () => {
-      this.info('listening', hostname, port, path)
-      this.send('ws/server', server)
-    })
+    this.info('listening', hostname, port, path)
+    this.send('ws/server', server)
   }
   server.on('connection', wsock => {
     let sock = wsock._ws._socket

@@ -1,11 +1,11 @@
 // TaxCloud Tax Rate Stream
 
 const { kos = require('kos') } = global
-const httpReactor = require('kos/reactors/http')
+const http = require('kos/reactors/http')
 
 // TaxCloud service subflow (should be defined as a separate flow module)
-const TaxCloud = kos.reactor('service-taxcloud')
-  .load(httpReactor)
+const TaxCloud = kos.create('service-taxcloud')
+  .load(http)
   .init('taxcloud/access/url', 'https://api.taxcloud.net/1.0/TaxCloud/Lookup')
   .init('requests', new Map)
 
@@ -30,7 +30,8 @@ const TaxCloud = kos.reactor('service-taxcloud')
   })
 
 // Reaction Commerce TaxCloud flow
-module.exports = kos.reactor('reaction-taxcloud')
+module.exports = kos.create('reaction-taxcloud')
+  .desc('reactions to Reaction Commerce TaxCloud workflow')
   .load(TaxCloud)
 
   .in('reaction/shipping/address').out('taxcloud/destination').bind(normalizeDestination)

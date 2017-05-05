@@ -15,8 +15,8 @@ const defaultShop = {
   ]
 }
 
-module.exports = kos.reactor('reaction-cart')
-  .desc('Provides reaction commerce cart management workflow')
+module.exports = kos.create('reaction-cart')
+  .desc('reactions to Reaction Commerce cart management workflow')
   .init('reaction/shop/default', defaultShop)
 
   // flow reactors

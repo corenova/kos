@@ -50,6 +50,9 @@ var KineticTrigger = require('./trigger');
 // NOTE: this is not a hard limit, but a warning will be generated if exceeded
 var KINETIC_MAX_RECEIVERS = 30;
 
+// module bound private mapping of all Reactor Instances
+var KineticReactors = new Map();
+
 var KineticReactor = function (_KineticStream) {
   _inherits(KineticReactor, _KineticStream);
 
@@ -63,10 +66,6 @@ var KineticReactor = function (_KineticStream) {
   function KineticReactor(options) {
     _classCallCheck(this, KineticReactor);
 
-    if (options instanceof KineticReactor) {
-      options = options.inspect();
-      debug(options.name, 'cloning');
-    }
     if (typeof options === 'string') options = { name: options };
 
     if (!options.name) throw new Error("must supply 'name' to create a new KineticReactor");
@@ -105,7 +104,7 @@ var KineticReactor = function (_KineticStream) {
             debug(_this.identity, '<==', token.key);
             // update the token that it's been accepted into this flow
             _this.mark(token, true);
-            flow.push('consume');
+            if (token.match(_this.consumes)) flow.push('consume');
             if (token.match(_this.absorbs)) flow.push('absorb');
           } else {
             if (token.match(['error', 'warn', 'info', 'debug'])) return false;
@@ -118,7 +117,7 @@ var KineticReactor = function (_KineticStream) {
           if (token.match(['error', 'warn', 'info', 'debug'])) return true;
 
           flow.push('feedback');
-          token.match(_this.inputs) ? flow.push('consume') : flow.push('reject');
+          token.match(_this.consumes) ? flow.push('consume') : flow.push('reject');
           if (token.match(_this.absorbs)) {
             debug(_this.identity, '<->', token.key);
             _this.mark(token, true); // prevent external propagation
@@ -142,6 +141,7 @@ var KineticReactor = function (_KineticStream) {
 
     _this.load.apply(_this, _toConsumableArray(reactors));
     _this.add.apply(_this, _toConsumableArray(triggers));
+    KineticReactors.set(_this.id, _this);
     debug(_this.identity, 'new', _this.id);
     return _this;
   }
@@ -166,6 +166,8 @@ var KineticReactor = function (_KineticStream) {
   }, {
     key: 'load',
     value: function load() {
+      var loaded = [];
+
       for (var _len = arguments.length, reactors = Array(_len), _key = 0; _key < _len; _key++) {
         reactors[_key] = arguments[_key];
       }
@@ -183,6 +185,7 @@ var KineticReactor = function (_KineticStream) {
           reactor = new KineticReactor(reactor).join(this);
           this._reactors.set(reactor.name, reactor);
           this.core.pipe(reactor).pipe(this.core);
+          loaded.push(reactor);
         }
       } catch (err) {
         _didIteratorError = true;
@@ -199,6 +202,7 @@ var KineticReactor = function (_KineticStream) {
         }
       }
 
+      loaded.length && this.emit('load', loaded);
       return this;
     }
   }, {
@@ -309,6 +313,39 @@ var KineticReactor = function (_KineticStream) {
       })) return true;
       return false;
     }
+  }, {
+    key: 'find',
+    value: function find(id) {
+      if (this.id === id) return this;
+      if (this._reactors.has(id)) return this._reactors.get(id);
+      var _iteratorNormalCompletion3 = true;
+      var _didIteratorError3 = false;
+      var _iteratorError3 = undefined;
+
+      try {
+        for (var _iterator3 = this.reactors[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+          var reactor = _step3.value;
+
+          var match = reactor.find(id);
+          if (match) return match;
+        }
+      } catch (err) {
+        _didIteratorError3 = true;
+        _iteratorError3 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion3 && _iterator3.return) {
+            _iterator3.return();
+          }
+        } finally {
+          if (_didIteratorError3) {
+            throw _iteratorError3;
+          }
+        }
+      }
+
+      return;
+    }
 
     //---------------------------------------------
     // Collection of Getters for inspecting KOS 
@@ -401,6 +438,11 @@ var KineticReactor = function (_KineticStream) {
       return extractUniqueKeys(this.triggers, 'outputs');
     }
   }, {
+    key: 'consumes',
+    get: function get() {
+      return extractUniqueKeys(this.triggers, 'inputs', 'requires');
+    }
+  }, {
     key: 'absorbs',
     get: function get() {
       return extractUniqueKeys(this.reactors, 'inputs');
@@ -469,13 +511,14 @@ var KineticStream = function (_Transform) {
 
     if (options instanceof KineticStream) {
       options = options.inspect();
+      delete options.id;
     }
     options.objectMode = true;
     delete options.transform; // disallow override for default transform
 
     var _this = _possibleConstructorReturn(this, (KineticStream.__proto__ || Object.getPrototypeOf(KineticStream)).call(this, options));
 
-    _this.id = uuid();
+    _this.id = options.id || uuid();
     if (options.filter instanceof Function) _this.filter = options.filter;
 
     if (options.state instanceof Map) _this.state = options.state;else _this.state = new Map(options.state);
@@ -971,6 +1014,8 @@ var KineticTrigger = function (_KineticStream) {
     _this._outputs = new Set(outputs);
     _this._requires = new Set(requires);
     _this._handler = handler;
+
+    handler !== KineticTrigger.none && debug(_this.identity, 'new', _this.id);
     return _this;
   }
 
@@ -979,7 +1024,7 @@ var KineticTrigger = function (_KineticStream) {
     value: function filter(token) {
       var _this2 = this;
 
-      if (this.handler === KineticTrigger.none) return false;
+      if (typeof this.handler !== 'function') return false;
       if (this.ready(token)) {
         var ctx = this.context;
         ctx.event = token.key;
@@ -1199,6 +1244,13 @@ var KineticTrigger = function (_KineticStream) {
       });
     }
   }, {
+    key: 'toJSON',
+    value: function toJSON() {
+      return Object.assign(_get(KineticTrigger.prototype.__proto__ || Object.getPrototypeOf(KineticTrigger.prototype), 'toJSON', this).call(this), {
+        handler: { name: this.name }
+      });
+    }
+  }, {
     key: 'and',
     get: function get() {
       return this;
@@ -1256,19 +1308,26 @@ module.exports = KineticTrigger;
 (function (global){
 'use strict';
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 var KineticStream = require('./lib/stream');
 var KineticReactor = require('./lib/reactor');
 var KineticTrigger = require('./lib/trigger');
 
 var kos = new KineticReactor({
   name: 'kos',
-  purpose: 'primary consumer of chaos',
+  purpose: 'reactions to kinetic object streams',
   passive: true,
-  triggers: [{ inputs: 'reactor', handler: fuse }]
+  triggers: [{ inputs: 'reactor', handler: fuseReactor }, { inputs: 'reactors', handler: fuseReactors }]
 });
 
-function fuse(reactor) {
+function fuseReactor(reactor) {
   this.parent.load(reactor);
+}
+function fuseReactors(reactors) {
+  var _parent;
+
+  (_parent = this.parent).load.apply(_parent, _toConsumableArray(reactors));
 }
 
 // expose Kinetic class definitions
@@ -7377,8 +7436,9 @@ var _global = global,
     _global$kos = _global.kos,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
+var debug = require('debug');
 
-module.exports = kos.create('debug').desc('reactions to send debugging messages to an output stream').init('loggers', new Map()).init('level', 0).in('debug/level').and.has('module/debug').bind(setupLogger).in('error').bind(outputError).in('warn').bind(outputMessage).in('info').bind(outputMessage).in('debug').bind(outputMessage);
+module.exports = kos.create('debug').desc('reactions to send debugging messages to an output stream').init('loggers', new Map()).init('level', 0).in('debug/level').bind(setupLogger).in('error').bind(outputError).in('warn').bind(outputMessage).in('info').bind(outputMessage).in('debug').bind(outputMessage);
 
 function setupLogger(level) {
   var loggers = this.get('loggers');
@@ -7386,7 +7446,6 @@ function setupLogger(level) {
 
   this.parent.init('level', level);
 
-  var debug = this.get('module/debug');
   var namespaces = ['kos:error', 'kos:warn'];
   if (level) namespaces.push('kos:info');
   if (level > 1) namespaces.push('kos:debug');
@@ -7401,6 +7460,7 @@ function setupLogger(level) {
 
   if (level > 2 && !this.get('tracing')) {
     this.parent.on('data', function (token) {
+      if (token.match(['error', 'warn', 'info', 'debug'])) return;
       var trace = loggers.get('trace');
       var key = token.key,
           value = token.value;
@@ -7432,7 +7492,7 @@ function outputMessage(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"..":undefined}],44:[function(require,module,exports){
+},{"..":undefined,"debug":13}],44:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -7611,7 +7671,13 @@ function createLinkStream(link) {
       socket = link.socket;
 
   var streams = this.get('streams');
-  var stream = streams.has(addr) ? streams.get(addr) : new kos.Stream();
+  var stream = streams.has(addr) ? streams.get(addr) : new kos.Stream({
+    // XXX - this is a bit hackish but necessary until more generic
+    // loop detection is in place
+    filter: function filter(token) {
+      return !token.match(['sync/*', 'push/*', 'pull/*', 'load']);
+    }
+  });
 
   socket.on('active', function () {
     var io = stream.io();
@@ -7646,15 +7712,16 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.create('net').desc("reactions to establish TCP/UDP client/server communication links").init('protocols', ['tcp:', 'udp:']).in('net/connect').and.has('module/net').out('net/socket', 'link', 'net/connect').bind(connect).in('net/listen').and.has('module/net').out('net/server', 'net/socket', 'link').bind(listen).in('net/connect/url').and.has('module/url').out('net/connect').bind(connectByUrl).in('net/listen/url').and.has('module/url').out('net/listen').bind(listenByUrl);
+module.exports = kos.create('net').desc("reactions to establish TCP/UDP client/server communication links").init('protocols', ['tcp:', 'udp:']).init('links', new Map()).in('net/connect').and.has('module/net').out('net/socket', 'link', 'net/connect').bind(connect).in('net/listen').and.has('module/net').out('net/server', 'net/socket', 'link').bind(listen).in('net/connect/url').and.has('module/url').out('net/connect').bind(connectByUrl).in('net/listen/url').and.has('module/url').out('net/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;
 
-  var _get = this.get('module/net', 'protocols'),
-      _get2 = _slicedToArray(_get, 2),
+  var _get = this.get('module/net', 'protocols', 'links'),
+      _get2 = _slicedToArray(_get, 3),
       net = _get2[0],
-      protocols = _get2[1];
+      protocols = _get2[1],
+      links = _get2[2];
 
   var _normalizeOptions$cal = normalizeOptions.call(this, opts),
       protocol = _normalizeOptions$cal.protocol,
@@ -7666,9 +7733,13 @@ function connect(opts) {
   if (!protocols.includes(protocol)) return this.error('unsupported protocol', protocol);
 
   var addr = protocol + '//' + hostname + ':' + port;
-  var sock = new net.Socket();
+  if (links.has(addr)) return this.send('link', links.get(addr));
 
-  this.send('link', { addr: addr, socket: sock });
+  var sock = new net.Socket();
+  var link = { addr: addr, socket: sock };
+
+  links.set(addr, link);
+  this.send('link', link);
 
   sock.setNoDelay();
   sock.on('connect', function () {
@@ -7684,6 +7755,7 @@ function connect(opts) {
         retry: Math.round(Math.min(max, retry * 1.5))
       });
       _this.debug("attempt reconnect", addr);
+      links.delete(addr);
       // NOTE: we use send with id=null since KOs that can trigger
       // itself are automatically filtered to prevent infinite loops
       _this.send('net/connect', opts, { id: null });
@@ -7790,15 +7862,13 @@ module.exports = kos.create('push').desc('reactions to push dataflow object to r
 (function (global){
 'use strict';
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 var _global = global,
     _global$kos = _global.kos,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 var link = require('./link');
 
-module.exports = kos.create('sync').desc('reactions to synchronize dataflow objects with remote stream(s)').load(link).init('reactors', new Map()).in('sync/connect').out('link/connect/url').bind(syncConnect).in('sync/listen').out('link/listen/url').bind(syncListen).in('link/stream').bind(syncStream).in('reactor').bind(collectReactors);
+module.exports = kos.create('sync').desc('reactions to synchronize dataflow objects with remote stream(s)').load(link).in('sync/connect').out('link/connect/url').bind(syncConnect).in('sync/listen').out('link/listen/url').bind(syncListen).in('link/stream').bind(syncStream);
 
 function syncConnect(url) {
   this.send('link/connect/url', url);
@@ -7809,18 +7879,12 @@ function syncListen(url) {
 function syncStream(stream) {
   var _this = this;
 
-  var reactors = this.get('reactors');
-  stream.feed.apply(stream, ['reactor'].concat(_toConsumableArray(Array.from(reactors.values()))));
+  stream.feed('reactors', kos.reactors);
   this.parent.pipe(stream);
   stream.on('active', function () {
     stream.pipe(_this.parent);
     _this.debug('synchronizing');
   });
-}
-
-function collectReactors(reactor) {
-  var reactors = this.get('reactors');
-  reactors.set(reactor.id, reactor);
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -7839,13 +7903,14 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.create('ws').desc("reactions to establish WebSocket client/server communication links").init('protocols', ['ws:', 'wss:']).in('ws/connect').and.has('module/simple-websocket').out('ws/socket', 'link', 'ws/connect').bind(connect).in('ws/listen').and.has('module/simple-websocket/server').out('ws/server', 'ws/socket', 'link').bind(listen).in('ws/connect/url').and.has('module/url').out('ws/connect').bind(connectByUrl).in('ws/listen/url').and.has('module/url').out('ws/listen').bind(listenByUrl);
+module.exports = kos.create('ws').desc("reactions to establish WebSocket client/server communication links").init('protocols', ['ws:', 'wss:']).init('links', new Map()).in('ws/connect').and.has('module/simple-websocket').out('ws/socket', 'link', 'ws/connect').bind(connect).in('ws/listen').and.has('module/simple-websocket/server').out('ws/server', 'ws/socket', 'link').bind(listen).in('ws/connect/url').and.has('module/url').out('ws/connect').bind(connectByUrl).in('ws/listen/url').and.has('module/url').out('ws/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;
 
   var WebSocket = this.get('module/simple-websocket');
   var protocols = this.get('protocols');
+  var links = this.get('links');
 
   var _normalizeOptions = normalizeOptions(opts),
       protocol = _normalizeOptions.protocol,
@@ -7858,8 +7923,13 @@ function connect(opts) {
   if (!protocols.includes(protocol)) return this.error('unsupported protocol', protocol);
 
   var addr = protocol + '//' + hostname + ':' + port + '/' + path;
+  if (links.has(addr)) return this.send('link', links.get(addr));
+
   var wsock = new WebSocket(addr);
-  this.send('link', { addr: addr, socket: wsock });
+  var link = { addr: addr, socket: wsock };
+
+  links.set(addr, link);
+  this.send('link', link);
 
   wsock.on('connect', function () {
     _this.info("connected to", addr);
@@ -7871,11 +7941,12 @@ function connect(opts) {
     // find out if explicitly being closed?
     retry && setTimeout(function () {
       _this.debug("attempt reconnect", addr);
+      links.delete(addr);
       // NOTE: we use send with id=null since KOs that can trigger
       // itself are automatically filtered to prevent infinite loops
       _this.send('ws/connect', Object.assign({}, opts, {
         retry: Math.round(Math.min(max, retry * 1.5))
-      }), null);
+      }), { id: null });
     }, retry);
   });
   wsock.on('error', this.error.bind(this));
@@ -7896,16 +7967,15 @@ function listen(opts) {
 
   if (!protocols.includes(protocol)) return this.error('unsupported protocol', protocol);
 
+  this.debug('attempt', hostname, port);
   if (server) {
     server = new Server({ server: server });
     this.info('listening on existing server instance');
     this.send('ws/server', server);
   } else {
     server = new Server({ host: hostname, port: port, path: path });
-    server.on('listening', function () {
-      _this2.info('listening', hostname, port, path);
-      _this2.send('ws/server', server);
-    });
+    this.info('listening', hostname, port, path);
+    this.send('ws/server', server);
   }
   server.on('connection', function (wsock) {
     var sock = wsock._ws._socket;

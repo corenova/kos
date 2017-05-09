@@ -15,7 +15,7 @@ module.exports = kos.create('run')
   .in('process').out('reactor').bind(initialize)
 
   .in('program','process')
-  .out('reactor', 'debug/level', 'load', 'read', 'show', 'prompt')
+  .out('load', 'read', 'show', 'prompt')
   .bind(start)
 
   // TODO: consider making this a separate reactor
@@ -37,7 +37,7 @@ function start(program, process) {
   const engine = this.parent
   const { stdin, stdout, stderr } = process
   const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
-  const ignores = engine.inputs.concat([ 'module/*', 'debug/level', 'error', 'warn', 'info', 'debug' ])
+  const ignores = engine.inputs.concat([ 'module/*', 'error', 'warn', 'info', 'debug' ])
 
   // write tokens seen by this reactor into stdout
   kos.on('flow', (token, flow) => {
@@ -49,10 +49,7 @@ function start(program, process) {
       this.warn(`unrecognized token "${token.key}"`)
     }
   })
-  silent || kos.pipe(debug)
-  debug.feed('debug/level', silent ? -1 : verbose)
-
-  this.info('starting KOS...')
+  silent || kos.pipe(debug).feed('debug/level', verbose)
 
   args.forEach(x => this.send('load', x))
   expr.forEach(x => kos.write(x + "\n"))
@@ -85,7 +82,7 @@ function loadReactor(name) {
   if (reactor.type !== Symbol.for('kinetic.reactor'))
     throw new Error("unable to load KOS for " + name + " from " + search)
 
-  this.send('reactor', reactor)
+  this.send('reactor', kos._load(reactor))
 }
 
 function requireReactor(reactor) { 
@@ -125,6 +122,7 @@ function promptUser(prompt) {
 
   if (this.get('active')) return
 
+  this.debug('starting KOS...')
   const cmd = readline.createInterface({
     input: stdin,
     output: stderr,
@@ -169,8 +167,8 @@ function renderReactor(reactor) {
   if (!this.get('show')) return
   const { stderr } = this.get('process')
   this.send('render', {
-    reactor: reactor,
-    output: stderr
+    source: reactor,
+    target: stderr
   })
 }
 

@@ -11,6 +11,10 @@ module.exports = kos.create('sync')
   .in('sync/listen').out('link/listen/url').bind(syncListen)
   .in('link/stream').bind(syncStream)
 
+  .in('reactors').bind(syncReactors)
+  .in('reactor').bind(importReactor)
+
+
 function syncConnect(url) { this.send('link/connect/url', url) }
 function syncListen(url)  { this.send('link/listen/url', url) }
 function syncStream(stream) {
@@ -20,4 +24,11 @@ function syncStream(stream) {
     stream.pipe(this.parent)
     this.debug('synchronizing')
   })
+}
+function syncReactors(reactors) {
+  kos.load(...reactors)
+}
+function importReactor(reactor) {
+  if (reactor instanceof kos.Reactor) return
+  kos.load(reactor)
 }

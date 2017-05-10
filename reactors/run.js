@@ -42,7 +42,7 @@ function start(program, process) {
   // write tokens seen by this reactor into stdout
   kos.on('flow', (token, flow) => {
     kos.emit('clear')
-    if (token.origin !== kos.id) {
+    if (token.origin !== 'unknown') {
       token.match(ignores) || stdout.write(token.toKSON() + "\n")
     }
     if (flow.includes('accept') && flow.includes('reject')) {

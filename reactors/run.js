@@ -11,6 +11,7 @@ module.exports = kos.create('run')
   .desc('reactions to runtime context')
   .load(render)
   .init('modules', new Map)
+  .init('loadpath', new Set)
 
   .in('process').out('reactor').bind(initialize)
 
@@ -19,10 +20,12 @@ module.exports = kos.create('run')
   .bind(start)
 
   // TODO: consider making this a separate reactor
-  .in('prompt').and.has('process','module/readline').bind(promptUser)
+  .in('prompt').and.has('process','module/readline').out('render')
+  .bind(promptUser)
 
   .in('load').and.has('module/path').out('reactor').bind(loadReactor)
-  .in('require').out('module/*', 'require/error').bind(tryRequire)
+  .in('load/path').bind(updateLoadPath)
+  .in('require').out('module/*').bind(tryRequire)
   .in('read').and.has('module/fs').bind(readKSONFile)
 
   .in('reactor').out('require').bind(requireReactor)
@@ -37,7 +40,7 @@ function start(program, process) {
   const engine = this.parent
   const { stdin, stdout, stderr } = process
   const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
-  const ignores = engine.inputs.concat([ 'module/*', 'error', 'warn', 'info', 'debug' ])
+  const ignores = engine.inputs.concat([ 'module/*', 'sync', 'error', 'warn', 'info', 'debug' ])
 
   // write tokens seen by this reactor into stdout
   kos.on('flow', (token, flow) => {
@@ -65,14 +68,14 @@ function start(program, process) {
 }
 
 function loadReactor(name) {
-  const path = this.get('module/path')
-  let reactor = {}
-  let search = [ 
+  const [ path, loadpath ] = this.get('module/path','loadpath')
+  const search = [ 
     path.resolve(name),
-    path.resolve(path.join('reactors', name)),
+    path.resolve('reactors', name),
     path.resolve(__dirname, name),
     name
   ]
+  let reactor = {}
   for (let name of search) {
     try { reactor = require(name); break }
     catch (e) { 
@@ -83,6 +86,10 @@ function loadReactor(name) {
     throw new Error("unable to load KOS for " + name + " from " + search)
 
   this.send('reactor', kos._load(reactor))
+}
+
+function updateLoadPath(loadpath) {
+  
 }
 
 function requireReactor(reactor) { 
@@ -111,7 +118,7 @@ function tryRequire(opts) {
     this.send('module/'+name, m)
   } catch (e) {
     e.target = name
-    this.send('require/error', e)
+    this.error(e)
   }
 }
 
@@ -129,7 +136,7 @@ function promptUser(prompt) {
     prompt: colors.grey(prompt),
     completer: (line) => {
       let inputs = kos.inputs.filter(x => !regex.test(x))
-      let completions = Array.from(new Set(inputs)).sort().concat('.help','.quit')
+      let completions = Array.from(new Set(inputs)).sort().concat('.info','.help','.quit')
       const hits = completions.filter(c => c.indexOf(line) === 0)
       if (/\s+$/.test(line)) completions = []
       return [hits.length ? hits : completions, line]
@@ -140,6 +147,9 @@ function promptUser(prompt) {
     const input = line.trim()
     switch (input) {
     case '': break;
+    case '.info':
+      this.send('render', { source: kos, target: stderr })
+      break;
     case '.help':
       console.error("sorry, you're on your own for now...")
       break;

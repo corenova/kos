@@ -74,23 +74,24 @@ function listenByUrl(dest) {
 }
 
 function createLinkStream(link) {
-  const { addr, socket } = link
+  const { addr, socket, server } = link
   const streams = this.get('streams')
   const stream = 
     streams.has(addr) ? 
     streams.get(addr) : 
-    new kos.Stream({
-      // XXX - this is a bit hackish but necessary until more generic
-      // loop detection is in place
-      filter: token => !token.match(['sync/*','push/*','pull/*','load'])
-    })
+    (new kos.Stream).init('link', link)
 
   socket.on('active', () => {
     let io = stream.io()
     socket.pipe(io, { end: false }).pipe(socket)
     socket.on('close', () => {
+      stream.pause()
       io.unpipe(socket)
       socket.destroy()
+      if (server) {
+        stream.emit('destroy')
+        streams.delete(addr)
+      }
     })
     stream.emit('active', socket)
   })

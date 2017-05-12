@@ -91,7 +91,7 @@ function listen(opts) {
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
     this.info('accept', addr)
     this.send('ws/socket', wsock)
-    this.send('link', { addr: addr, socket: wsock })
+    this.send('link', { addr: addr, socket: wsock, server: server })
     wsock.emit('active')
   })
   server.on('error', this.error.bind(this))

@@ -185,9 +185,10 @@ function renderTriggers(reactor) {
 
 function renderReactor(reactor) {
   const treeify = this.get('module/treeify')
-  const { name, purpose, requires, reactors, triggers } = reactor
+  const { name, purpose, passive, requires, reactors, triggers } = reactor
   let str = ''
   let info = {
+    passive:  passive,
 	requires: requires.sort(),
     reactors: reactors.map(x => x.name),
     triggers: triggers.map(x => FUNC + '(' + x.name + ')'),
@@ -218,4 +219,7 @@ function renderReactorAsTree(reactor) {
   this.send('reactor/tree', str)
 }
 
-function outputTreeReactor(tree, output) { output.write(tree + "\n") }
+function outputTreeReactor(tree, output) { 
+  output.write(tree + "\n")
+  this.clear()
+}

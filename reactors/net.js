@@ -63,7 +63,7 @@ function connect(opts) {
       links.delete(addr)
       // NOTE: we use send with id=null since KOs that can trigger
       // itself are automatically filtered to prevent infinite loops
-      this.send('net/connect', opts, { id: null })
+      this.send('net/connect', opts, null)
     }, retry)
   })
   sock.on('error', this.error.bind(this))
@@ -80,7 +80,7 @@ function listen(opts) {
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
     this.info('accept', addr)
     this.send('net/socket', sock)
-    this.send('link', { addr: addr, socket: sock })
+    this.send('link', { addr: addr, socket: sock, server: server })
     sock.emit('active')
   })
   server.on('listening', () => {

@@ -56,13 +56,12 @@ function connect(opts) {
   wsock.on('close', () => {
     // find out if explicitly being closed?
     retry && setTimeout(() => {
+      opts = Object.assign({}, opts, {
+        retry: Math.round(Math.min(max, retry * 1.5))
+      })
       this.debug("attempt reconnect", addr)
       links.delete(addr)
-      // NOTE: we use send with id=null since KOs that can trigger
-      // itself are automatically filtered to prevent infinite loops
-      this.send('ws/connect', Object.assign({}, opts, {
-        retry: Math.round(Math.min(max, retry * 1.5))
-      }), { id: null })
+      this.feed('ws/connect', opts)
     }, retry)
   })
   wsock.on('error', this.error.bind(this))

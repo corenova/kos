@@ -74,7 +74,7 @@ function listenByUrl(dest) {
 }
 
 function createLinkStream(link) {
-  const { addr, socket, server } = link
+  const { addr, socket, server, opts } = link
   const streams = this.get('streams')
   const stream = 
     streams.has(addr) ? 
@@ -91,6 +91,8 @@ function createLinkStream(link) {
       if (server) {
         stream.emit('destroy')
         streams.delete(addr)
+      } else {
+        stream.emit('inactive')
       }
     })
     stream.emit('active', socket)

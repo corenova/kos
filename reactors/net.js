@@ -33,55 +33,56 @@ module.exports = kos.create('net')
 function connect(opts) {
   const [ net, protocols, links ] = this.get('module/net', 'protocols', 'links')
 
-  let { protocol, hostname, port, retry, max } = normalizeOptions.call(this, opts)
+  // TODO: should be handled via data model schema
+  let { protocol, hostname, port, retry, max } = opts = normalizeOptions.call(this, opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
   const addr = `${protocol}//${hostname}:${port}`
   if (links.has(addr)) return this.send('link', links.get(addr))
 
-  const sock = new net.Socket
-  const link = { addr: addr, socket: sock }
+  const socket = new net.Socket
+  const link = { addr, socket, opts }
 
   links.set(addr, link)
   this.send('link', link)
 
-  sock.setNoDelay()
-  sock.on('connect', () => {
+  socket.setNoDelay()
+  socket.on('connect', () => {
     this.info("connected to", addr)
-    this.send('net/socket', sock)
-    sock.emit('active')
+    this.send('net/socket', socket)
+    socket.emit('active')
     if (retry) retry = 100
   })
-  sock.on('close', () => {
-    if (sock.closing) return
+  socket.on('close', () => {
+    if (socket.closing) return
     retry && setTimeout(() => {
       opts = Object.assign({}, opts, {
         retry: Math.round(Math.min(max, retry * 1.5))
       })
       this.debug("attempt reconnect", addr)
       links.delete(addr)
-      // NOTE: we use send with id=null since KOs that can trigger
-      // itself are automatically filtered to prevent infinite loops
-      this.send('net/connect', opts, null)
+      this.feed('net/connect', opts)
     }, retry)
   })
-  sock.on('error', this.error.bind(this))
+  socket.on('error', this.error.bind(this))
 
   this.debug("attempt", addr)
-  sock.connect(port, hostname)
+  socket.connect(port, hostname)
 }
 
 function listen(opts) {
   const net = this.get('module/net')
-  let { protocol, hostname, port, retry, max } = normalizeOptions(opts)
 
-  let server = net.createServer(sock => {
-    let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
+  // TODO: should be handled via data model schema
+  let { protocol, hostname, port, retry, max } = opts = normalizeOptions.call(this, opts)
+
+  let server = net.createServer(socket => {
+    let addr = `${protocol}//${socket.remoteAddress}:${socket.remotePort}`
     this.info('accept', addr)
-    this.send('net/socket', sock)
-    this.send('link', { addr: addr, socket: sock, server: server })
-    sock.emit('active')
+    this.send('net/socket', socket)
+    this.send('link', { addr, socket, server, opts })
+    socket.emit('active')
   })
   server.on('listening', () => {
     this.info('listening', hostname, port)

@@ -44,14 +44,15 @@ function start(program, process) {
 
   // write tokens seen by this reactor into stdout
   kos.on('flow', (token, flow) => {
-    kos.emit('clear')
-    if (token.origin !== 'unknown') {
-      token.match(ignores) || stdout.write(token.toKSON() + "\n")
+    if (token.origin !== 'unknown' && !token.match(ignores)) {
+      kos.emit('clear')
+      stdout.write(token.toKSON() + "\n")
     }
     if (flow.includes('accept') && flow.includes('reject')) {
       this.warn(`unrecognized token "${token.key}"`)
     }
   })
+  kos.on('data', () => kos.emit('clear'))
   silent || kos.pipe(debug).feed('debug/level', verbose)
 
   args.forEach(x => this.send('load', x))
@@ -169,7 +170,10 @@ function promptUser(prompt) {
   function clearPrompt() {
     readline.clearLine(stderr, -1)
     readline.cursorTo(stderr, 0)
-    process.nextTick(() => cmd.prompt())
+    process.nextTick(() => {
+      cmd.prompt()
+      // TODO: figure out how to move cursor to the end
+    })
   }
 }
 

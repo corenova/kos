@@ -185,13 +185,15 @@ function renderTriggers(reactor) {
 
 function renderReactor(reactor) {
   const treeify = this.get('module/treeify')
-  const { name, purpose, passive, requires, reactors, triggers } = reactor
+  const { id, name, purpose, passive, requires, reactors, triggers } = reactor
+  let funcWidth = findLongest(triggers.map((x => x.name))).length
   let str = ''
   let info = {
+    id:       id,
     passive:  passive,
 	requires: requires.sort(),
     reactors: reactors.map(x => x.name),
-    triggers: triggers.map(x => FUNC + '(' + x.name + ')'),
+    triggers: triggers.map(x => FUNC + `(${x.name})` + SEP.repeat(funcWidth - x.name.length) + ` @ ${x.id}`),
     '': null
   }
   for (let key in info) {

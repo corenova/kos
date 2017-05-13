@@ -3,6 +3,7 @@
 const KineticStream  = require('./lib/stream')
 const KineticReactor = require('./lib/reactor')
 const KineticTrigger = require('./lib/trigger')
+const KineticToken   = require('./lib/token')
 
 const kos = new KineticReactor({
   name: 'kos',
@@ -14,5 +15,6 @@ const kos = new KineticReactor({
 kos.Stream  = KineticStream
 kos.Reactor = KineticReactor
 kos.Trigger = KineticTrigger
+kos.Token   = KineticToken
 
 global.kos = module.exports = kos['default'] = kos.kos = kos

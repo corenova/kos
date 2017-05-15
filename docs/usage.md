@@ -2,7 +2,7 @@
 
 This documentation provides information on interacting with [Kinetic Reactor](./intro.md#kinetic-reactor) modules utilizing the `kos` CLI utility.
 
-The `kos` utility provides an **interactive-prompt** interface for *operating* a running instance of the `kos` process. You can think of `kos` similarly to `node`, with the key difference being that instead of interacting with the JavaScript runtime, you are interacting with the [KOS runtime](#operating-system). You can also use `kos` *non-interactively* by supplying various arguments during execution of the CLI utility.  See [kos --help](#kos-help) for more details.
+The `kos` utility provides an **interactive-prompt** interface for *operating* a running instance of the `kos` process. You can think of `kos` similarly to `node`, with the key difference being that instead of interacting with the JavaScript runtime, you are interacting with the [KOS runtime](#operating-system). You can also use `kos` *non-interactively* by supplying various arguments during the execution of the CLI utility.  See [kos --help](#kos-help) for more details.
 
 ## Getting Started
 
@@ -10,11 +10,12 @@ The quickest way to get started with **KOS** is to start the `kos` program and b
 ```
 $ kos
 kos>
-load       load/path  process    program    prompt     reactor    read       require    show       .info      .help      .quit      
+load       load/path  process    program    prompt     reactor    
+read       require    show       .info      .help      .quit      
 ```
 The above output is generated when you press `<TAB>` for auto-completion after entering the `kos` interactive shell.
 
-Usually, the first **data token** you supply into the **KOS** runtime instance is the `load` token, which is used to *load* additional reactors into itself from the local filesystem.
+The first **data token** you typically supply into the **KOS** runtime instance is the `load` token in order to *load* additional reactors into itself from the local filesystem.
 
 ### Loading Reactors
 
@@ -24,9 +25,12 @@ The `kos` utility allows you to pass in one or more reactors as arguments during
 ```
 $ kos sync http
 kos> 
-http/listen          http/request         http/request/get     http/route           http/server          http/server/request  link/stream          load
-load/path            process              program              prompt               reactor              read                 require              show
-sync/connect         sync/listen          .info                .help                .quit                
+http/listen          http/request         http/request/get     http/route           
+http/server          http/server/request  link/stream          load
+load/path            process              program              prompt               
+reactor              read                 require              show
+sync/connect         sync/listen          .info                .help                
+.quit                
 ```
 You can also `load` after entering the `kos` interactive shell (see [Sending Tokens](#sending-tokens)):
 ```

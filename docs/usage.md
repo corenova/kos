@@ -2,7 +2,7 @@
 
 This documentation provides information on interacting with [Kinetic Reactor](./intro.md#kinetic-reactor) modules utilizing the `kos` CLI utility.
 
-The `kos` utility provides an **interactive-prompt** interface for operating a running instance of the `kos` process. You can think of `kos` similarly to `node`, with the key difference being that instead of interacting with the JavaScript runtime, you are interacting with the [KOS runtime](#operating-system). You can also use `kos` *non-interactively* by supplying various arguments during execution of the CLI utility.  See [kos --help](#kos-help) for more details.
+The `kos` utility provides an **interactive-prompt** interface for *operating* a running instance of the `kos` process. You can think of `kos` similarly to `node`, with the key difference being that instead of interacting with the JavaScript runtime, you are interacting with the [KOS runtime](#operating-system). You can also use `kos` *non-interactively* by supplying various arguments during execution of the CLI utility.  See [kos --help](#kos-help) for more details.
 
 ## Getting Started
 

@@ -43,11 +43,11 @@ From the `kos>` prompt, you can also use the `.info` command to check the state 
 
 ### Sending Tokens
 
-When you interact with the `kos>` prompt, you are sending **data tokens** that the underlying **KOS** runtime can react to.  If you send in **tokens** that it doesn't recognize, you will see an *error* message as a response.
+When you interact with the `kos>` prompt, you are sending **data tokens** that the underlying **KOS** runtime can react to.  If you send in a **token** that it doesn't recognize, you will get back an *error* token as a response.
 
-The **data token** is expressed using **KSON** (Kinetic Stream Object Notation).  It is basically JSON but *prefixed* with a single *token string* which is used as a **label** to describe the data.
+The **data token** in the `kos` interactive prompt is expressed using **KSON** (Kinetic Stream Object Notation).  It is basically JSON but *prefixed* with a single *token string* which is used as a **label** to describe the data.
 
-Here are some examples of KSON expressions:
+Here are some examples of KSON expressions (where `foo` is the keyword):
 ```
 foo "bar" // valid
 foo { } // valid
@@ -57,6 +57,9 @@ foo { "bar": true } // valid
 foo bar // invalid
 foo // invalid
 ```
+
+When you send a **data token** with a specific label, every [Kinetic Reactor](./intro.md#kinetic-reactor) that includes a *trigger* for that particular *token* will process that *token* and attempt to perform a *reaction*.
+
 
 ## Operating System 
 

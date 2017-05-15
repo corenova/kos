@@ -14,6 +14,8 @@ load       load/path  process    program    prompt     reactor    read       req
 ```
 The above output is generated when you press `<TAB>` for auto-completion after entering the `kos` interactive shell.
 
+Usually, the first **data token** you supply into the **KOS** runtime instance is the `load` token, which is used to *load* additional reactors into itself from the local filesystem.
+
 ### Loading Reactors
 
 Using **KOS** you can dynamically `load` reactors into itself at any time.  When you start the `kos` utility, the [run](../reactors/run.md) reactor is loaded as one of the reactors for the **KOS** operating environment.
@@ -26,7 +28,7 @@ http/listen          http/request         http/request/get     http/route       
 load/path            process              program              prompt               reactor              read                 require              show
 sync/connect         sync/listen          .info                .help                .quit                
 ```
-You can also `load` after entering the `kos` interactive shell:
+You can also `load` after entering the `kos` interactive shell (see [Sending Tokens](#sending-tokens)):
 ```
 $ kos
 kos> load "sync"
@@ -38,6 +40,23 @@ As you `load` more reactors into **KOS**, the runtime automatically attains addi
 The ability to `load` additional reactors from the local file system at any time provides **KOS** with *unbounded* adaptive characteristics. The `load` token can also be sent to the **KOS** instance from a remote source.
 
 From the `kos>` prompt, you can also use the `.info` command to check the state of all internally loaded reactors at any time.
+
+### Sending Tokens
+
+When you interact with the `kos>` prompt, you are sending **data tokens** that the underlying **KOS** runtime can react to.  If you send in **tokens** that it doesn't recognize, you will see an *error* message as a response.
+
+The **data token** is expressed using **KSON** (Kinetic Stream Object Notation).  It is basically JSON but *prefixed* with a single *token string* which is used as a **label** to describe the data.
+
+Here are some examples of KSON expressions:
+```
+foo "bar" // valid
+foo { } // valid
+foo [ ] // valid
+foo { "bar": true } // valid
+
+foo bar // invalid
+foo // invalid
+```
 
 ## Operating System 
 

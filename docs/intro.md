@@ -192,7 +192,7 @@ program* using `kos`:
 
 ```js
 const kos = require('kos')
-const example = kos.reactor('example')
+const example = kos.create('example')
   .desc('An example reactor that computes "b+c" to produce "a"')
   .in('b','c').out('a').bind(doAddition)
   .in('a').bind(printResult)

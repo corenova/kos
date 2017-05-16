@@ -10,27 +10,38 @@ The quickest way to get started with **KOS** is to start the `kos` program and b
 ```
 $ kos
 kos>
-load       load/path  process    program    prompt     reactor    
-read       require    show       .info      .help      .quit      
+load       load/path  process    program    prompt     reactor
+read       require    show       .info      .help      .quit 
 ```
 The above output is generated when you press `<TAB>` for auto-completion after entering the `kos` interactive shell.
 
-The first **data token** you typically supply into the **KOS** runtime instance is the `load` token in order to *load* additional reactors into itself from the local filesystem.
+When you start the `kos` utility, the [run](../reactors/run.md)
+reactor is loaded as one of the reactors for the initial **KOS**
+operating environment.
 
-### Loading Reactors
+A typical operating lifecycle for an instance of `kos` is to
+[load](#loading-reactors) one or more reactors, then to
+[send](#sending-tokens) one or more data tokens to trigger reactions
+on the *loaded* reactors.
 
-Using **KOS** you can dynamically `load` reactors into itself at any time.  When you start the `kos` utility, the [run](../reactors/run.md) reactor is loaded as one of the reactors for the **KOS** operating environment.
+The first **data token** you typically supply into the **KOS** runtime
+instance is the `load` token in order to [load](#loading-reactors)
+additional reactors into itself from the local filesystem.
+
+## Loading Reactors
+
+Using **KOS** you can dynamically `load` reactors into itself at any time.
 
 The `kos` utility allows you to pass in one or more reactors as arguments during instantiation:
 ```
 $ kos sync http
 kos> 
-http/listen          http/request         http/request/get     http/route           
+http/listen          http/request         http/request/get     http/route
 http/server          http/server/request  link/stream          load
-load/path            process              program              prompt               
+load/path            process              program              prompt 
 reactor              read                 require              show
-sync/connect         sync/listen          .info                .help                
-.quit                
+sync/connect         sync/listen          .info                .help 
+.quit 
 ```
 You can also `load` after entering the `kos` interactive shell (see [Sending Tokens](#sending-tokens)):
 ```
@@ -45,7 +56,7 @@ The ability to `load` additional reactors from the local file system at any time
 
 From the `kos>` prompt, you can also use the `.info` command to check the state of all internally loaded reactors at any time.
 
-### Sending Tokens
+## Sending Tokens
 
 When you interact with the `kos>` prompt, you are sending **data tokens** that the underlying **KOS** runtime can react to.  If you send in a **token** that it doesn't recognize, you will get back an *error* token as a response.
 
@@ -59,13 +70,43 @@ foo [ ] // valid
 foo { "bar": true } // valid
 
 foo bar // invalid
+foo 'bar' // invalid (JSON does not recognize single quote strings)
 foo // invalid
 ```
 
 When you send a **data token** with a specific label, every [Kinetic Reactor](./intro.md#kinetic-reactor) that includes a *trigger* for that particular *token* will process that *token* and attempt to perform a *reaction*.
 
+### Triggering a Reaction
 
-## Operating System 
+By the time the `kos>` prompt shows up after starting `kos`, there's
+already been several *reactions* that have taken place inside the KOS
+runtime.
+
+The [run](../reactors/run.md) reactor has already processed the
+`process` and `program` data tokens that have been **fed** into the
+`kos` runtime by the [kos](../bin/kos.js) CLI script when you executed
+the `kos` command. These initial data tokens triggered several chain
+reactions producing several additional data tokens that fired
+[Kinetic Trigger](./intro.md#kinetic-trigger) operations such as:
+
+- process -> f(initialize) -> reactor
+- program, process -> f(start) -> load, read, show, prompt
+- load -> f(loadReactor) -> reactor
+- reactor -> f(requireReactor) -> require
+- require -> f(tryRequire) -> module/*
+- prompt, process -> f(promptUser) -> render
+
+So the `kos>` prompt that you start your interactions with was simply
+produced as a *reaction* by the [run](../reactors/run.md) reactor
+which recognized that the current `process` data token contained
+`stdin.isTTY === true`. In addition, it was successfully generated
+because the current running system also was able to successfully
+`require "readline"` and produce `module/readline` data token (which
+is a condition for executing the `f(promptUser)` trigger with the
+`prompt` data token).
+
+
+### Operating System 
 
 The **KOS** runtime is an operating environment where one or more [Kinetic Reactor](./intro.md#kinetic-reactor) modules are *loaded and reacting* to the running environment.
 
@@ -100,8 +141,7 @@ The below output was generated by performing *introspection* of the [run](../rea
 ```bash
 $ kos --show run
 run: reactions to runtime context
-├─ id: 8c2054f0-f8eb-4a29-af89-3c906ce97ae3
-├─ passive: false
+├─ id: 2ca7c5a6-730a-4481-b93f-fd42ed9825a0
 ├─ requires
 │  ├─ module/fs
 │  ├─ module/path
@@ -112,51 +152,50 @@ run: reactions to runtime context
 ├─ reactors
 │  └─ render
 ├─ triggers
-│  ├─ ƒ(initialize)     @ 39f1acf5-6bf0-4fe6-ad20-ca843cbad46e
-│  ├─ ƒ(start)          @ b2f3970e-b515-483c-885e-912b21a6b9a4
-│  ├─ ƒ(promptUser)     @ 20f3853c-4dbf-4a42-b6f9-61b805d8da5b
-│  ├─ ƒ(loadReactor)    @ f43e9a95-1fef-4db2-8e55-523d052f81ea
-│  ├─ ƒ(updateLoadPath) @ 131342e1-45fc-4f09-b174-a3448ec4efe7
-│  ├─ ƒ(tryRequire)     @ 36faa6c9-4725-4bf6-9f0d-e71aa5d031ab
-│  ├─ ƒ(readKSONFile)   @ 9abb5a9d-f8d9-4439-86a7-cca39e50b9ad
-│  ├─ ƒ(requireReactor) @ d5dd34b0-ded3-499c-a305-fe8400792a84
-│  └─ ƒ(renderReactor)  @ 363a2db8-6b2e-4508-ba00-31b93d5e9640
+│  ├─ ƒ(initialize)
+│  ├─ ƒ(start)
+│  ├─ ƒ(promptUser)
+│  ├─ ƒ(loadReactor)
+│  ├─ ƒ(updateLoadPath)
+│  ├─ ƒ(tryRequire)
+│  ├─ ƒ(readKSONFile)
+│  ├─ ƒ(requireReactor)
+│  └─ ƒ(renderReactor)
 └──┐
    ├─ render: reactions to visually render KOS reactors
-   │  ├─ id: e383b95b-b282-4bad-812c-ac51f2438338
-   │  ├─ passive: false
+   │  ├─ id: 0db2c61c-6e5e-41d9-9dce-37356e84d5d1
    │  ├─ requires
    │  │  └─ module/treeify
    │  ├─ triggers
-   │  │  ├─ ƒ(render)              @ 15270bd8-22cb-4ea4-9551-bf47254b3f32
-   │  │  ├─ ƒ(renderReactorAsTree) @ e9dbc219-48fa-4315-ad78-8631e6047f15
-   │  │  └─ ƒ(outputTreeReactor)   @ 20d1d26e-b7cb-4449-b586-7fd9f1bfaa8a
+   │  │  ├─ ƒ(render)
+   │  │  ├─ ƒ(renderReactorAsTree)
+   │  │  └─ ƒ(outputTreeReactor)
    │  └──┐
    │     ├─╼ render         ╾─╼ ƒ(render)              ╾┬╼ render/reactor
-   │     │                                              └╼ render/output 
-   │     ├┬╼ module/treeify ╾┬╼ ƒ(renderReactorAsTree) ╾─╼ reactor/tree  
-   │     │└╼ render/reactor ╾┘                          
-   │     └┬╼ reactor/tree   ╾┬╼ ƒ(outputTreeReactor)  
-   │      └╼ render/output  ╾┘                          
+   │     │                                              └╼ render/output
+   │     ├┬╼ module/treeify ╾┬╼ ƒ(renderReactorAsTree) ╾─╼ reactor/tree
+   │     │└╼ render/reactor ╾┘
+   │     └┬╼ reactor/tree   ╾┬╼ ƒ(outputTreeReactor)
+   │      └╼ render/output  ╾┘
    │
-   ├─╼ process         ╾─╼ ƒ(initialize)     ╾─╼ reactor 
-   │                                          ┌╼ load    
-   ├┬╼ program         ╾┬╼ ƒ(start)          ╾┼╼ read    
-   │└╼ process         ╾┘                     ├╼ show    
-   │                                          └╼ prompt  
-   │┌╼ process         ╾┐                     
-   ├┼╼ module/readline ╾┼╼ ƒ(promptUser)     ╾─╼ render  
-   │└╼ prompt          ╾┘                     
-   ├┬╼ module/path     ╾┬╼ ƒ(loadReactor)    ╾─╼ reactor 
-   │└╼ load            ╾┘                     
+   ├─╼ process         ╾─╼ ƒ(initialize)     ╾─╼ reactor
+   │                                          ┌╼ load
+   ├┬╼ program         ╾┬╼ ƒ(start)          ╾┼╼ read
+   │└╼ process         ╾┘                     ├╼ show
+   │                                          └╼ prompt
+   │┌╼ process         ╾┐
+   ├┼╼ module/readline ╾┼╼ ƒ(promptUser)     ╾─╼ render
+   │└╼ prompt          ╾┘
+   ├┬╼ module/path     ╾┬╼ ƒ(loadReactor)    ╾─╼ reactor
+   │└╼ load            ╾┘
    ├─╼ load/path       ╾─╼ ƒ(updateLoadPath)
    ├─╼ require         ╾─╼ ƒ(tryRequire)     ╾─╼ module/*
-   ├┬╼ module/fs       ╾┬╼ ƒ(readKSONFile)  
-   │└╼ read            ╾┘                     
-   ├─╼ reactor         ╾─╼ ƒ(requireReactor) ╾─╼ require 
-   │┌╼ process         ╾┐                     
-   └┼╼ show            ╾┼╼ ƒ(renderReactor)  ╾─╼ render  
-    └╼ reactor         ╾┘                     
+   ├┬╼ module/fs       ╾┬╼ ƒ(readKSONFile)
+   │└╼ read            ╾┘
+   ├─╼ reactor         ╾─╼ ƒ(requireReactor) ╾─╼ require
+   │┌╼ process         ╾┐
+   └┼╼ show            ╾┼╼ ƒ(renderReactor)  ╾─╼ render
+    └╼ reactor         ╾┘
 ```
 
 Using the `--show` option, you can easily extract useful information regarding data objects that the reactor `requires`, the various `triggers` and `reactors` contained inside the reactor, as well as `inputs` and `outputs` for each of the reactions.

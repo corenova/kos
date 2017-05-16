@@ -190,10 +190,10 @@ function renderReactor(reactor) {
   let str = ''
   let info = {
     id:       id,
-    passive:  passive,
 	requires: requires.sort(),
     reactors: reactors.map(x => x.name),
-    triggers: triggers.map(x => FUNC + `(${x.name})` + SEP.repeat(funcWidth - x.name.length) + ` @ ${x.id}`),
+    triggers: triggers.map(x => FUNC + `(${x.name})`),
+    // + SEP.repeat(funcWidth - x.name.length) + ` @ ${x.id}`),
     '': null
   }
   for (let key in info) {

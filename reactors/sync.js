@@ -45,6 +45,11 @@ function syncStream(stream) {
       }
       return
     }
+    if (value.id === kos.id) {
+      kos.warn('detected circular sync loop from', addr)
+      kos.unload(reactor)
+      return
+    }
     this.info(`importing '${value.name}' reactor (${value.id}) from ${addr}`)
     if (value.name === 'kos') {
       // exclude locally available reactors

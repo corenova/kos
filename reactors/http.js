@@ -15,7 +15,7 @@ module.exports = kos.create('http')
 
   .in('http/request/get').out('http/request').bind(simpleGet)
 
-  .in('http/listen').and.has('module/http')
+  .in('http/listen').and.has('module/http','module/url')
   .out('http/server','http/socket','link','http/server/request')
   .bind(createServer)
 
@@ -33,7 +33,7 @@ function simpleGet(url) {
 }
 
 function clientRequest(req) {
-  let agent = this.get('module/superagent')
+  const agent = this.get('module/superagent')
   let { url, method, data } = req
   method = method.toLowerCase()
   switch (method) {
@@ -56,8 +56,15 @@ function clientRequest(req) {
 }
 
 function createServer(opts) {
-  let http = this.get('module/http')
-  let { protocol, hostname, port } = normalizeOptions.call(this, opts)
+  const [ http, url ] = this.get('module/http', 'module/url')
+  if (typeof opts === 'string') {
+    let dest = opts
+    opts = url.parse(dest, true)
+    if (!opts.slashes) opts = url.parse('http://'+dest, true)
+  }
+  let protocol = opts.protocol || 'http:'
+  let hostname = opts.hostname || '0.0.0.0'
+  let port     = parseInt(opts.port, 10) || 80
 
   let server = http.createServer((request, response) => {
     this.send('http/server/request', { req: request, res: response })
@@ -84,25 +91,12 @@ function classifyServerTransaction(session) {
   this.send('http/server/request/'+method, session)
 }
 
-function normalizeOptions(opts) {
-  if (typeof opts === 'string') {
-    let url = this.get('module/url')
-    if (!opts.includes('://'))
-      opts = 'http://' + opts
-    opts = url.parse(opts, true)
-  }
-  return {
-    protocol: opts.protocol || 'http:',
-    hostname: opts.hostname || '0.0.0.0',
-    port:     parseInt(opts.port, 10) || 80
-  }
-}
-
 function handleRoute(server, route) {
 
 }
 
 function proxy(req, proxy) {
-  req.host = proxy.host
-  this.send('http/request', req)
+  this.send('http/request', Object.assign({}, req, {
+    host: proxy.host
+  }))
 }

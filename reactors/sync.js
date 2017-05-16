@@ -84,8 +84,8 @@ function syncStream(stream) {
     function restore(target) {
       target.triggers.forEach(x => {
         if (x.handler instanceof Function) return
-        reactor.info("restoring", x.name)
-        try { x._handler = eval('(' + x.handler.source + ')') }
+        reactor.info(`restoring ${target.identity}:${x.name}`)
+        try { x._handler = new Function(`return (${x.handler.source})`)() }
         catch (e) { 
           reactor.error("unable to restore handler from source", x.handler.source, e) 
         }

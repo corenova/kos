@@ -156,6 +156,35 @@ It's primary role is to be a *logical* container for declaring related
 
 You can reference the source code [here](../lib/reactor.js).
 
+### Kinetic Runtime
+
+The **kinetic runtime** is a *singleton* instance of the
+[Kinetic Reactor](#kinetic-reactor) which serves as the primary
+operating environment where one or more
+[Kinetic Reactor](#kinetic-reactor) modules are *loaded and
+reacting* to the running environment.
+
+It's the `kos` library module itself, so when you `require("kos")` or
+`import "kos"`, you are simply accessing the **kinetic runtime**
+instance itself. It operates as a `passive` reactor, which means that
+it allows *passthrough* of [Kinetic Token](#kinetic-token) it observes
+directly to one or more of *loaded*
+[Kinetic Reactor](#kinetic-reactor) modules.
+
+It's primary role is to represent the *logical root* container for a
+given **KOS** instance as well as enabling *creation* of additional
+[Kinetic Reactor](#kinetic-reactor) modules for programmatic use.
+
+For most usage scenario, you should only have a single **kinetic
+runtime** operating inside a given application instance. Please note
+that *loading* [Kinetic Reactor](#kinetic-reactor) modules into the
+**kinetic runtime** is completely optional. You can *load/use* other
+[Kinetic Reactor](#kinetic-reactor) module instances directly without
+first loading them into the **kinetic runtime**. It's simply a matter
+of *convenience* to have them all *loaded* in one place.
+
+You can reference the source code [here](../node.js).
+
 ## Programming Paradigms
 
 The **KOS** framework adopts the

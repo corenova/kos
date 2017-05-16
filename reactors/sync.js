@@ -62,7 +62,8 @@ function syncStream(stream) {
       reactor.load(...reactors)
       this.debug(`imported ${reactors.length} new reactor(s):`, reactors.map(x => x.name))
     } else {
-      kos.reactors.some(x => x.name === value.name) || reactor.load(value)
+      if (kos.reactors.some(x => x.name === value.name)) return
+      reactor.load(value)
     }
     // Notify other remote peers about this reactor's new state
     reactor.send('sync', reactor)

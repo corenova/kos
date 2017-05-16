@@ -7799,7 +7799,7 @@ function connect(opts) {
   // TODO: should be handled via data model schema
 
 
-  var _opts = opts = normalizeOptions.call(this, opts),
+  var _opts = opts = normalizeOptions(opts),
       protocol = _opts.protocol,
       hostname = _opts.hostname,
       port = _opts.port,
@@ -7848,7 +7848,7 @@ function listen(opts) {
 
   // TODO: should be handled via data model schema
 
-  var _opts2 = opts = normalizeOptions.call(this, opts),
+  var _opts2 = opts = normalizeOptions(opts),
       protocol = _opts2.protocol,
       hostname = _opts2.hostname,
       port = _opts2.port,
@@ -7891,7 +7891,8 @@ function normalizeOptions(opts) {
     hostname: opts.hostname || '0.0.0.0',
     port: parseInt(opts.port, 10) || 12345,
     retry: parseInt(opts.retry, 10) || 100,
-    max: parseInt(opts.max, 10) || 5000
+    max: parseInt(opts.max, 10) || 5000,
+    persist: "persist" in opts
   };
 }
 
@@ -7961,7 +7962,8 @@ function syncStream(stream) {
   var _this = this;
 
   var _stream$state$get = stream.state.get('link'),
-      addr = _stream$state$get.addr;
+      addr = _stream$state$get.addr,
+      opts = _stream$state$get.opts;
 
   var reactor = kos.create({
     name: 'sync(' + addr + ')',
@@ -7970,7 +7972,7 @@ function syncStream(stream) {
     enabled: false
   });
   reactor.on('data', function (token) {
-    if (token.origin === reactor.id) return;
+    if (token.origin === reactor.id || reactor.active) return;
     // prevent propagation of locally supported token keys to the remote stream
     // TODO: optimize this via attribute of token itself
     var internal = kos.reactors.filter(function (x) {
@@ -7995,6 +7997,11 @@ function syncStream(stream) {
       }
       return;
     }
+    if (value.id === kos.id) {
+      kos.warn('detected circular sync loop from', addr);
+      kos.unload(reactor);
+      return;
+    }
     _this.info('importing \'' + value.name + '\' reactor (' + value.id + ') from ' + addr);
     if (value.name === 'kos') {
       // exclude locally available reactors
@@ -8015,21 +8022,39 @@ function syncStream(stream) {
         return x.name;
       }));
     } else {
-      kos.reactors.some(function (x) {
+      if (kos.reactors.some(function (x) {
         return x.name === value.name;
-      }) || reactor.load(value);
+      })) return;
+      reactor.load(value);
     }
     // Notify other remote peers about this reactor's new state
     reactor.send('sync', reactor);
   });
   stream.pause();
   stream.on('active', function () {
+    if (reactor.active) reactor.disable();
     stream.feed('sync', reactor.name).feed('sync', kos);
     stream.resume();
     _this.debug('synchronizing with:', addr);
   });
   stream.on('inactive', function () {
-    //this.send('reactor', reactor)
+    if (!opts.persist) return;
+    _this.info('maintaining capabilities from', reactor.name);
+    restore(reactor);
+    reactor.enable();
+    reactor.send('reactor', reactor);
+    function restore(target) {
+      target.triggers.forEach(function (x) {
+        if (x.handler instanceof Function) return;
+        reactor.info("restoring", x.name);
+        try {
+          x._handler = eval('(' + x.handler.source + ')');
+        } catch (e) {
+          reactor.error("unable to restore handler from source", x.handler.source, e);
+        }
+      });
+      target.reactors.forEach(restore);
+    }
   });
   stream.on('destroy', function () {
     _this.debug('destroying sync stream, unload:', reactor.name);
@@ -8065,32 +8090,32 @@ function connect(opts) {
   var protocols = this.get('protocols');
   var links = this.get('links');
 
-  var _normalizeOptions = normalizeOptions(opts),
-      protocol = _normalizeOptions.protocol,
-      hostname = _normalizeOptions.hostname,
-      port = _normalizeOptions.port,
-      path = _normalizeOptions.path,
-      retry = _normalizeOptions.retry,
-      max = _normalizeOptions.max;
+  var _opts = opts = normalizeOptions(opts),
+      protocol = _opts.protocol,
+      hostname = _opts.hostname,
+      port = _opts.port,
+      path = _opts.path,
+      retry = _opts.retry,
+      max = _opts.max;
 
   if (!protocols.includes(protocol)) return this.error('unsupported protocol', protocol);
 
   var addr = protocol + '//' + hostname + ':' + port + '/' + path;
   if (links.has(addr)) return this.send('link', links.get(addr));
 
-  var wsock = new WebSocket(addr);
-  var link = { addr: addr, socket: wsock };
+  var socket = new WebSocket(addr);
+  var link = { addr: addr, socket: socket, opts: opts };
 
   links.set(addr, link);
   this.send('link', link);
 
-  wsock.on('connect', function () {
+  socket.on('connect', function () {
     _this.info("connected to", addr);
-    _this.send('ws/socket', wsock);
-    wsock.emit('active');
+    _this.send('ws/socket', socket);
+    socket.emit('active');
     if (retry) retry = 100;
   });
-  wsock.on('close', function () {
+  socket.on('close', function () {
     // find out if explicitly being closed?
     retry && setTimeout(function () {
       opts = Object.assign({}, opts, {
@@ -8101,7 +8126,7 @@ function connect(opts) {
       _this.feed('ws/connect', opts);
     }, retry);
   });
-  wsock.on('error', this.error.bind(this));
+  socket.on('error', this.error.bind(this));
 }
 
 function listen(opts) {
@@ -8110,12 +8135,12 @@ function listen(opts) {
   var Server = this.get('module/simple-websocket/server');
   var protocols = this.get('protocols');
 
-  var _normalizeOptions2 = normalizeOptions(opts),
-      protocol = _normalizeOptions2.protocol,
-      hostname = _normalizeOptions2.hostname,
-      port = _normalizeOptions2.port,
-      path = _normalizeOptions2.path,
-      server = _normalizeOptions2.server;
+  var _opts2 = opts = normalizeOptions(opts),
+      protocol = _opts2.protocol,
+      hostname = _opts2.hostname,
+      port = _opts2.port,
+      path = _opts2.path,
+      server = _opts2.server;
 
   if (!protocols.includes(protocol)) return this.error('unsupported protocol', protocol);
 
@@ -8129,13 +8154,13 @@ function listen(opts) {
     this.info('listening', hostname, port, path);
     this.send('ws/server', server);
   }
-  server.on('connection', function (wsock) {
-    var sock = wsock._ws._socket;
+  server.on('connection', function (socket) {
+    var sock = socket._ws._socket;
     var addr = protocol + '//' + sock.remoteAddress + ':' + sock.remotePort;
     _this2.info('accept', addr);
-    _this2.send('ws/socket', wsock);
-    _this2.send('link', { addr: addr, socket: wsock, server: server });
-    wsock.emit('active');
+    _this2.send('ws/socket', socket);
+    _this2.send('link', { addr: addr, socket: socket, server: server, opts: opts });
+    socket.emit('active');
   });
   server.on('error', this.error.bind(this));
 }
@@ -8162,7 +8187,8 @@ function normalizeOptions(opts) {
     path: opts.path || '',
     server: opts.server,
     retry: parseInt(opts.retry, 10) || 100,
-    max: parseInt(opts.max, 10) || 5000
+    max: parseInt(opts.max, 10) || 5000,
+    persist: "persist" in opts
   };
 }
 

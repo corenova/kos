@@ -2,11 +2,11 @@
 
 This documentation provides information on interacting with [Kinetic Reactor](./intro.md#kinetic-reactor) modules utilizing the `kos` CLI utility.
 
-The `kos` utility provides an **interactive-prompt** interface for *operating* a running instance of the `kos` process. You can think of `kos` similarly to `node`, with the key difference being that instead of interacting with the JavaScript runtime, you are interacting with the [KOS runtime](#operating-system). You can also use `kos` *non-interactively* by supplying various arguments during the execution of the CLI utility.  See [kos --help](#kos-help) for more details.
+The `kos` utility provides an **interactive-prompt** interface for *feeding* a running instance of the `kos` process. You can think of `kos` similarly to `node`, with the key difference being that instead of interacting with the JavaScript runtime, you are interacting with the [KOS runtime](#kos-runtime). You can also use `kos` *non-interactively* by supplying various arguments during the execution of the CLI utility.  See [kos --help](#kos-help) for more details.
 
 ## Getting Started
 
-The quickest way to get started with **KOS** is to start the `kos` program and begin interacting with it.
+The quickest way to get started with **KOS** is to run the `kos` program and start interacting with it.
 ```
 $ kos
 kos>
@@ -15,7 +15,7 @@ read       require    show       .info      .help      .quit
 ```
 The above output is generated when you press `<TAB>` for auto-completion after entering the `kos` interactive shell.
 
-When you start the `kos` utility, the [run](../reactors/run.md)
+When you start the `kos` utility from the console, the [run](../reactors/run.md)
 reactor is loaded as one of the reactors for the initial **KOS**
 operating environment.
 
@@ -43,6 +43,8 @@ reactor              read                 require              show
 sync/connect         sync/listen          .info                .help 
 .quit 
 ```
+The above example issued `load "sync"` and `load "http"` during the startup initialization of the `kos` program.
+
 You can also `load` after entering the `kos` interactive shell (see [Sending Tokens](#sending-tokens)):
 ```
 $ kos
@@ -62,7 +64,7 @@ When you interact with the `kos>` prompt, you are sending **data tokens** that t
 
 The **data token** in the `kos` interactive prompt is expressed using **KSON** (Kinetic Stream Object Notation).  It is basically JSON but *prefixed* with a single *token string* which is used as a **label** to describe the data.
 
-Here are some examples of KSON expressions (where `foo` is the keyword):
+Here are some examples of KSON expressions (where `foo` is the token keyword):
 ```
 foo "bar" // valid
 foo { } // valid
@@ -74,7 +76,7 @@ foo 'bar' // invalid (JSON does not recognize single quote strings)
 foo // invalid
 ```
 
-When you send a **data token** with a specific label, every [Kinetic Reactor](./intro.md#kinetic-reactor) that includes a *trigger* for that particular *token* will process that *token* and attempt to perform a *reaction*.
+When you send a **data token** with a specific label, every [Kinetic Reactor](./intro.md#kinetic-reactor) that includes a *trigger* for that particular *token* will process that *token* and attempt to fire a *reaction trigger function*.
 
 ### Triggering a Reaction
 
@@ -89,24 +91,27 @@ the `kos` command. These initial data tokens triggered several chain
 reactions producing several additional data tokens that fired
 [Kinetic Trigger](./intro.md#kinetic-trigger) operations such as:
 
-- process -> f(initialize) -> reactor
-- program, process -> f(start) -> load, read, show, prompt
-- load -> f(loadReactor) -> reactor
-- reactor -> f(requireReactor) -> require
-- require -> f(tryRequire) -> module/*
-- prompt, process -> f(promptUser) -> render
+```
+process -> ƒ(initialize) -> reactor
+program, process -> ƒ(start) -> load, read, show, prompt
+load -> ƒ(loadReactor) -> reactor
+reactor -> ƒ(requireReactor) -> require
+require -> ƒ(tryRequire) -> module/*
+prompt, process -> ƒ(promptUser) -> render
+```
 
-So the `kos>` prompt that you start your interactions with was simply
+So the `kos>` prompt that you see after starting `kos` was simply
 produced as a *reaction* by the [run](../reactors/run.md) reactor
 which recognized that the current `process` data token contained
 `stdin.isTTY === true`. In addition, it was successfully generated
 because the current running system also was able to successfully
 `require "readline"` and produce `module/readline` data token (which
 is a condition for executing the `f(promptUser)` trigger with the
-`prompt` data token).
+`prompt` data token).  You can learn more about how the [run](../reactors/run.md) operates by reading the reactor documentation.
 
+In essence, the `kos>` prompt itself is simply another *dataflow interface* for which you can supply additional **data tokens** into the currently running [KOS runtime].
 
-### Operating System 
+### KOS Runtime 
 
 The **KOS** runtime is an operating environment where one or more [Kinetic Reactor](./intro.md#kinetic-reactor) modules are *loaded and reacting* to the running environment.
 

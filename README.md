@@ -54,12 +54,12 @@ itself by giving up your *programmatic* execution flow control
 logic. Instead of honing your *incantation* skills and declaring the
 chain of commands for fulfilling your desires, you've now become an
 **alchemist**, continually experimenting with
-[chain reactions](./docs/chaining.md) and tinkering with *tokens*
+[chain reactions](./docs/intro.md#chain-reactions) and tinkering with *tokens*
 you inject into the system until you get your desired result.
 
-Once you learn how to express/leverage the power of
-[chain reactions](./docs/chaining.md), you can create
-[neural networks](./docs/cluster.md) that **evolves** based on its
+Once you learn how to express and leverage the power of
+[chain reactions](./docs/intro.md#chain-reactions), you can create
+[neural networks](./docs/cluster.md) that **evolve** based on its
 operating environment.
 
 ## Reference Guides

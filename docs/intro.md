@@ -44,7 +44,7 @@ running**.
 Furthermore, **KOS** is a
 [closed-loop feedback](https://en.wikipedia.org/wiki/Feedback) control
 system. This means that *outputs* of the system are routed back as
-*inputs* as part of a [chain of cause-and-effect](./chaining.md) that
+*inputs* as part of a [chain of cause-and-effect](#chain-reactions) that
 forms a circular loop. The framework *thrives* on the
 [butterfly effect](https://en.wikipedia.org/wiki/Butterfly_effect), a
 concept that small causes can have large effects.
@@ -55,8 +55,27 @@ concept that small causes can have large effects.
 > later state.
 
 When you work with **KOS**, you're experimenting with *chaotic*
-[chain reactions](./chaining.md). You must think like an **alchemist**
+[chain reactions](#chain-reactions). You must think like an **alchemist**
 and learn to harness the power of elemental compositions.
+
+### Chain Reactions
+
+When a given [Kinetic Token](#kinetic-token) triggers a reaction which
+produces additional [Kinetic Token(s)](#kinetic-token) that then
+triggers a subsequent reaction, we refer to such event as a **chain
+reaction**. There is no limit as to the sequence of reactions that may
+occur as a result of a given data token. It's also possible for a
+given reaction to produce more than one data token type which can
+initiate multiple flows of **chain reactions** to take place in
+parallel. Furthermore, a given data token reaction may continuously
+generate a stream of data tokens, which can then trigger additional
+reactions forever.
+
+Especially when **KOS** is running as a *distributed*
+[neural network](./cluster.md) of reactive agents, it is possible for
+a very small number of *initial* data token inputs to produce
+extremely large reactive outputs flowing throughout the entire
+distributed computing cluster.
 
 ## Core Entities
 

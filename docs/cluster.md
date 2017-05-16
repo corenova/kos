@@ -33,10 +33,10 @@ reactor.
 
 Since the **KOS** framework is written in JavaScript, enabling
 seamless **dataflow integration** between the web browser client and
-the backend Node.js server is a rather *trivial* exercise.
+the backend Node.js server is fairly straight-forward.
 
-When establishing [sync](../reactors/sync.md) reactor dataflow between
-a web browser client and the backend, we can utilize the
+When using [sync](../reactors/sync.md) reactor to establish a dataflow
+stream between a web browser client and the backend, we utilize the
 [ws](../reactors/ws.md) reactor for `WebSocket` based communications.
 
 For a quick example on a **full stack** setup, you can also check out
@@ -76,8 +76,8 @@ loading the desired reactor and feeding it with desired data tokens.
 
 ### KOS on the client
 
-On the client side, you don't have the benefit of the `kos` utility,
-so you need to directly `import/require` the
+On the client side, since you don't have the benefit of the `kos`
+utility, you will need to directly `import/require` the
 [Kinetic Runtime](./intro.md#kinetic-runtime) inside the web
 application (e.g. [kos.min.js](../dist/kos.min.js)) and *load* the
 [sync](../reactors/sync.md) reactor module into the runtime instance.
@@ -108,12 +108,11 @@ kos
   .feed('module/simple-websocket', require('simple-websocket'))
 ```
 
-Unlike when you use the [sync](../reactors/sync.md) reactor via the
-`kos` command-line utility where the [run](../reactors/run.md) reactor
-dynamically resolved dependent library modules from the local
-filesystem, you must provide the `module/*` data tokens explicitly
-inside a web client application so that application builders such as
-[browserify](http://browserify.org) or
+Since the web browser does not have `require/import` capabilities for
+dynamically resolving dependency library modules from the local
+filesystem, you must supply the `module/*` data tokens explicitly
+inside a web client application so that the application builders such
+as [browserify](http://browserify.org) and
 [webpack](http://webpack.js.org) can bundle the necessary dependencies
 when generating the client-side web application.
 
@@ -124,7 +123,7 @@ establishing `WebSocket` connections.
 In the future, we can introduce a new reactor using a web service
 (such as [unpkg](https://unpkg.com)) to enable dynamic module
 dependency resolution within the web client browser. Volunteers are
-welcome for contributing this reactor. :-)
+welcome for contributing such reactor. :-)
 
 #### Feeding sync/connect token
 
@@ -132,8 +131,9 @@ welcome for contributing this reactor. :-)
 kos.feed('sync/connect', "ws://localhost:3000")
 ```
 
-The above example will trigger the following **chain reaction** using
-the [link](../reactors/link.md) and [ws](../reactors/ws.md) reactors:
+The above `sync/connect` data token triggers the following
+[chain reaction](./intro.md#chain-reactions) using the
+[link](../reactors/link.md) and [ws](../reactors/ws.md) reactors:
 
 ```
 sync/connect -> f(sync:syncConnect) -> link/connect/url
@@ -157,9 +157,9 @@ scenario?
 
 Synchronization in **KOS** enables the participating instances to
 exchange their *local* reactors with each other. By making their
-locally loaded reactors made known to other party, it allows the other
-party to trigger reactions as if those reactors were also locally
-available to itself.
+*locally* loaded reactors made known to other party, it allows the
+other party to trigger reactions as if those reactors were also
+locally available to itself.
 
 For example, if the server instance had the
 [http](../reactors/http.md) reactor loaded, then from the web client
@@ -189,8 +189,8 @@ modules with `require` dependencies to other modules. Once again,
 volunteers are welcome for exploring this reaction. :-)
 
 The key takeaway in understanding [sync](../reactors/sync.md) behavior
-is this: **we are synchronizing the *state machine* of each instance
-and NOT the actual state of each instance.**
+is this: **KOS synchronizes the *state machine* of each instance and NOT
+the actual state of each instance.**
 
 ### Limitations of the web client
 
@@ -201,28 +201,29 @@ connections. It is also unable to make direct TCP/UDP based
 connections using the [net](../reactors/net.md) reactor.
 
 However, it is fully capable of joining as many server endpoints as it
-desires and in turn able to act as a synchronization link across
-multiple disparate [hive clusters](#hive-mind) accessible via the
-server endpoints.
+wants and in turn act as a synchronization link across multiple
+disparate [hive clusters](#hive-mind) that are accessible via the
+connected server endpoints.
 
 ## Hive Mind
 
 The **KOS** framework was designed from the ground up to streamline
-creation of a *distributed* **neural network**.
+the creation of a *distributed* **neural network**.
 
 One of the closest definition for a **Hive Mind** from wikipedia is
 that of
 [Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence):
 
-> The collective behavior of decentralized, self-organized systems,
-> natural or artifical. SI systems consist typically of a population
-> of simple agents or boids interacting locally with one another and
-> with their environment. The inspiration often comes from nature,
-> especially biological systems. The agents follow very simple rules,
-> and although there is no centralized control structure dictating how
-> individual agents should behave, local, and to a certain degree
-> random, interactions between such agents lead to the emergence of
-> "intelligent" global behavior, unknown to the individual agents.
+> Swarm Intelligence is the collective behavior of decentralized,
+> self-organized systems, natural or artifical. SI systems consist
+> typically of a population of simple agents or boids interacting
+> locally with one another and with their environment. The inspiration
+> often comes from nature, especially biological systems. The agents
+> follow very simple rules, and although there is no centralized
+> control structure dictating how individual agents should behave,
+> local, and to a certain degree random, interactions between such
+> agents lead to the emergence of "intelligent" global behavior,
+> unknown to the individual agents.
 
 When you build a network of **KOS** instances using the
 [sync](../reactors/sync.md) reactor, you are effectively creating a
@@ -231,8 +232,8 @@ system, where each individual instance contributes its own local
 limited reactive facilities which when combined together as a whole
 leads to the emergence of "intelligent" global behavior.
 
-However, a key difference from the classic SI definition is that
-**KOS** also embraces the
+However, a key difference of **KOS** from the classic SI definition is
+that **KOS** also embraces the
 [Autonomic Computing](https://en.wikipedia.org/wiki/Autonomic_Computing)
 paradigm, which effectively makes each of the participating agents
 also become aware of the emerging "intelligent" global behavior.
@@ -243,14 +244,12 @@ becomes capable of individually behaving and acting like the
 **collective intelligence** even after it gets *pruned* from the
 network it once belonged to.
 
-Using the [sync](../reactors/sync.md) reactor, each *agent* learns ALL
-of the reactive facilities of the cluster it joins and can then
-perform ALL of the reactions provided by the cluster even after being
-disonncected from the cluster.
+Basically, using the [sync](../reactors/sync.md) reactor, each *agent*
+learns ALL of the reactive facilities of the cluster it joins and can
+then perform ALL of the reactions provided by the cluster even after
+being disonncected from the cluster.  Also, once the disconnected
+*agent* rejoins the cluster, it automatically resumes *delegating* the
+reactions accordingly back to the cluster and continues to serve only
+those reactions that were *previously local* to itself.
 
-When the disconnected *agent* then rejoins the cluster, it will resume
-*delegating* the reactions accordingly back to the cluster and
-continue serving only those reactions that were previously local to
-itself.
-
-Please do try this at home. It's facinating.
+Please do try this at home. It's awesome.

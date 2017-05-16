@@ -1321,8 +1321,11 @@ var KineticTrigger = function (_KineticStream) {
   }, {
     key: 'toJSON',
     value: function toJSON() {
+      var name = this.name,
+          source = this.source;
+
       return Object.assign(_get(KineticTrigger.prototype.__proto__ || Object.getPrototypeOf(KineticTrigger.prototype), 'toJSON', this).call(this), {
-        handler: { name: this.name, source: this.handler.toString() }
+        handler: { name: name, source: source }
       });
     }
   }, {
@@ -1371,6 +1374,11 @@ var KineticTrigger = function (_KineticStream) {
     key: 'name',
     get: function get() {
       return this.handler.name;
+    }
+  }, {
+    key: 'source',
+    get: function get() {
+      return this.handler instanceof Function ? this.handler.toString() : this.handler.source;
     }
   }, {
     key: 'identity',
@@ -7566,6 +7574,8 @@ function outputMessage(data) {
 (function (global){
 'use strict';
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 // HTTP transaction flow
 //
 // NOTE: this flow REQUIREs the 'superagent' or 'http' module and will
@@ -7578,7 +7588,7 @@ var _global = global,
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
 
-module.exports = kos.create('http').desc('reactions to HTTP client/server requests').in('http/request').and.has('module/superagent').out('http/response').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').and.has('module/http').out('http/server', 'http/socket', 'link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
+module.exports = kos.create('http').desc('reactions to HTTP client/server requests').in('http/request').and.has('module/superagent').out('http/response').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').and.has('module/http', 'module/url').out('http/server', 'http/socket', 'link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
 
 // TODO: future
 //.in('http/server/request','http/proxy').out('http/request').bind(proxy)
@@ -7616,12 +7626,19 @@ function clientRequest(req) {
 function createServer(opts) {
   var _this2 = this;
 
-  var http = this.get('module/http');
+  var _get = this.get('module/http', 'module/url'),
+      _get2 = _slicedToArray(_get, 2),
+      http = _get2[0],
+      url = _get2[1];
 
-  var _normalizeOptions$cal = normalizeOptions.call(this, opts),
-      protocol = _normalizeOptions$cal.protocol,
-      hostname = _normalizeOptions$cal.hostname,
-      port = _normalizeOptions$cal.port;
+  if (typeof opts === 'string') {
+    var dest = opts;
+    opts = url.parse(dest, true);
+    if (!opts.slashes) opts = url.parse('http://' + dest, true);
+  }
+  var protocol = opts.protocol || 'http:';
+  var hostname = opts.hostname || '0.0.0.0';
+  var port = parseInt(opts.port, 10) || 80;
 
   var server = http.createServer(function (request, response) {
     _this2.send('http/server/request', { req: request, res: response });
@@ -7650,24 +7667,12 @@ function classifyServerTransaction(session) {
   this.send('http/server/request/' + method, session);
 }
 
-function normalizeOptions(opts) {
-  if (typeof opts === 'string') {
-    var url = this.get('module/url');
-    if (!opts.includes('://')) opts = 'http://' + opts;
-    opts = url.parse(opts, true);
-  }
-  return {
-    protocol: opts.protocol || 'http:',
-    hostname: opts.hostname || '0.0.0.0',
-    port: parseInt(opts.port, 10) || 80
-  };
-}
-
 function handleRoute(server, route) {}
 
 function proxy(req, proxy) {
-  req.host = proxy.host;
-  this.send('http/request', req);
+  this.send('http/request', Object.assign({}, req, {
+    host: proxy.host
+  }));
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -8046,9 +8051,9 @@ function syncStream(stream) {
     function restore(target) {
       target.triggers.forEach(function (x) {
         if (x.handler instanceof Function) return;
-        reactor.info("restoring", x.name);
+        reactor.info('restoring ' + target.identity + ':' + x.name);
         try {
-          x._handler = eval('(' + x.handler.source + ')');
+          x._handler = new Function('return (' + x.handler.source + ')')();
         } catch (e) {
           reactor.error("unable to restore handler from source", x.handler.source, e);
         }

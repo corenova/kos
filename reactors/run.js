@@ -170,10 +170,7 @@ function promptUser(prompt) {
   function clearPrompt() {
     readline.clearLine(stderr, -1)
     readline.cursorTo(stderr, 0)
-    process.nextTick(() => {
-      cmd.prompt()
-      // TODO: figure out how to move cursor to the end
-    })
+    process.nextTick(() => cmd.prompt(true))
   }
 }
 

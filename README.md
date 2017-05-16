@@ -12,7 +12,7 @@ paradigm that dynamically responds to *objects* in motion through a
 pipeline of computational actors that can execute concurrently.
 
 Conduct [data science](https://en.wikipedia.org/wiki/Data_science)
-experiments, [share your reactors](./docs/sharing.md), and
+experiments, [create neural networks](./docs/cluster.md), and
 [embrace KOS](./docs/intro.md).
 
 <!---
@@ -39,23 +39,28 @@ of [Kinetic Stream](./docs/intro.md#kinetic-stream) and natively
 support data streaming API (i.e. read/write).
 
 One of the most important concept in **KOS** is that these *reactive*
-trigger functions are **never explicitly called** by other
-functions. Instead, the *reactive* trigger functions are invoked
-*automatically* by the **KOS** framework when its input states are
-*eventually* satisfied by one or more observed flow of data
-tokens. Its operating behavior is very similar to how a
+trigger functions are **never explicitly called** by other functions
+as part of a control flow logic. Instead, the *reactive* trigger
+functions are invoked *automatically* by the **KOS** framework when
+its input states are *eventually* satisfied by one or more observed
+flow of data tokens. Its operating behavior is very similar to how a
 [runtime garbage collector](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science))
 works tirelessly behind the scenes in a given software instance. You
 don't need to explicitly tell the *garbage collector* to clean-up, it
 simply *reacts autonomously* based on its environmental observations.
 
 When you [embrace KOS](./docs/intro.md) you are embracing **chaos**
-itself by giving up your programmatic execution flow control
+itself by giving up your *programmatic* execution flow control
 logic. Instead of honing your *incantation* skills and declaring the
 chain of commands for fulfilling your desires, you've now become an
 **alchemist**, continually experimenting with
 [chain reactions](./docs/chaining.md) and tinkering with *tokens*
 you inject into the system until you get your desired result.
+
+Once you learn how to express/leverage the power of
+[chain reactions](./docs/chaining.md), you can create
+[neural networks](./docs/cluster.md) that **evolves** based on its
+operating environment.
 
 ## Reference Guides
 
@@ -75,9 +80,13 @@ documentation below:
   - [Triggering Reactions](./docs/usage.md#triggering-reactions)
   - [CLI Reference](./docs/usage.md#cli-reference)
 - [Clustering KOS](./docs/cluster.md)
-- [Developing KOS](./docs/developer.md)
-  - [Creating Reactors](./docs/developer.md#creating-reactors)
-  - [Managing State](./docs/developer.md#managing-state)
+  - [Full Stack](./docs/cluster.md#full-stack)
+  - [Hive Mind](./docs/cluster.md#hive-mind)
+
+The **developer's guide** to creating new reactors and understanding
+the **KOS** library APIs will be coming soon! In the meantime, taking
+a look at the [available reactors](#available-reactors) bundled with
+the **KOS** framework should provide some indirect guidance.
 
 ## Installation
 

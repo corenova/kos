@@ -34,7 +34,7 @@ function connect(opts) {
   const [ net, protocols, links ] = this.get('module/net', 'protocols', 'links')
 
   // TODO: should be handled via data model schema
-  let { protocol, hostname, port, retry, max } = opts = normalizeOptions.call(this, opts)
+  let { protocol, hostname, port, retry, max } = opts = normalizeOptions(opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
@@ -75,7 +75,7 @@ function listen(opts) {
   const net = this.get('module/net')
 
   // TODO: should be handled via data model schema
-  let { protocol, hostname, port, retry, max } = opts = normalizeOptions.call(this, opts)
+  let { protocol, hostname, port, retry, max } = opts = normalizeOptions(opts)
 
   let server = net.createServer(socket => {
     let addr = `${protocol}//${socket.remoteAddress}:${socket.remotePort}`
@@ -113,7 +113,8 @@ function normalizeOptions(opts) {
     hostname: opts.hostname || '0.0.0.0',
     port:     parseInt(opts.port, 10) || 12345,
     retry:    parseInt(opts.retry, 10) || 100,
-    max:      parseInt(opts.max, 10) || 5000
+    max:      parseInt(opts.max, 10) || 5000,
+    persist:  ("persist" in opts)
   }
 }
 

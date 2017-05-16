@@ -34,26 +34,26 @@ function connect(opts) {
   const protocols = this.get('protocols')
   const links = this.get('links')
 
-  let { protocol, hostname, port, path, retry, max } = normalizeOptions(opts)
+  let { protocol, hostname, port, path, retry, max } = opts = normalizeOptions(opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
   const addr = `${protocol}//${hostname}:${port}/${path}`
   if (links.has(addr)) return this.send('link', links.get(addr))
 
-  const wsock = new WebSocket(addr)
-  const link = { addr: addr, socket: wsock }
+  const socket = new WebSocket(addr)
+  const link = { addr, socket, opts }
 
   links.set(addr, link)
   this.send('link', link)
 
-  wsock.on('connect', () => {
+  socket.on('connect', () => {
     this.info("connected to", addr)
-    this.send('ws/socket', wsock)
-    wsock.emit('active')
+    this.send('ws/socket', socket)
+    socket.emit('active')
     if (retry) retry = 100
   })
-  wsock.on('close', () => {
+  socket.on('close', () => {
     // find out if explicitly being closed?
     retry && setTimeout(() => {
       opts = Object.assign({}, opts, {
@@ -64,14 +64,14 @@ function connect(opts) {
       this.feed('ws/connect', opts)
     }, retry)
   })
-  wsock.on('error', this.error.bind(this))
+  socket.on('error', this.error.bind(this))
 }
 
 function listen(opts) {
   const Server = this.get('module/simple-websocket/server')
   const protocols = this.get('protocols')
 
-  let { protocol, hostname, port, path, server } = normalizeOptions(opts)
+  let { protocol, hostname, port, path, server } = opts = normalizeOptions(opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
@@ -85,13 +85,13 @@ function listen(opts) {
     this.info('listening', hostname, port, path)
     this.send('ws/server', server)
   }
-  server.on('connection', wsock => {
-    let sock = wsock._ws._socket
+  server.on('connection', socket => {
+    let sock = socket._ws._socket
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
     this.info('accept', addr)
-    this.send('ws/socket', wsock)
-    this.send('link', { addr: addr, socket: wsock, server: server })
-    wsock.emit('active')
+    this.send('ws/socket', socket)
+    this.send('link', { addr, socket, server, opts })
+    socket.emit('active')
   })
   server.on('error', this.error.bind(this))
 }
@@ -118,7 +118,8 @@ function normalizeOptions(opts) {
     path:     opts.path || '',
     server:   opts.server,
     retry:    parseInt(opts.retry, 10) || 100,
-    max:      parseInt(opts.max, 10) || 5000
+    max:      parseInt(opts.max, 10) || 5000,
+    persist:  ("persist" in opts)
   }
 }
 

@@ -16,7 +16,7 @@ function syncConnect(url)     { this.send('link/connect/url', url) }
 function syncListen(url)      { this.send('link/listen/url', url) }
 function syncReactor(reactor) { this.send('sync', reactor) }
 function syncStream(stream) {
-  const { addr } = stream.state.get('link')
+  const { addr, opts } = stream.state.get('link')
   const reactor = kos.create({
     name: `sync(${addr})`,
     purpose: `reactions to sync with remote peer`,
@@ -24,7 +24,7 @@ function syncStream(stream) {
     enabled: false
   })
   reactor.on('data', token => {
-    if (token.origin === reactor.id) return
+    if (token.origin === reactor.id || reactor.active) return
     // prevent propagation of locally supported token keys to the remote stream
     // TODO: optimize this via attribute of token itself
     const internal = kos.reactors
@@ -70,12 +70,28 @@ function syncStream(stream) {
   })
   stream.pause()
   stream.on('active', () => {
+    if (reactor.active) reactor.disable()
     stream.feed('sync', reactor.name).feed('sync', kos)
     stream.resume()
     this.debug('synchronizing with:', addr)
   })
   stream.on('inactive', () => {
-    //this.send('reactor', reactor)
+    if (!opts.persist) return
+    this.info('maintaining capabilities from', reactor.name)
+    restore(reactor)
+    reactor.enable()
+    reactor.send('reactor', reactor)
+    function restore(target) {
+      target.triggers.forEach(x => {
+        if (x.handler instanceof Function) return
+        reactor.info("restoring", x.name)
+        try { x._handler = eval('(' + x.handler.source + ')') }
+        catch (e) { 
+          reactor.error("unable to restore handler from source", x.handler.source, e) 
+        }
+      })
+      target.reactors.forEach(restore)
+    }
   })
   stream.on('destroy', () => {
     this.debug('destroying sync stream, unload:', reactor.name)

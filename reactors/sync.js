@@ -9,96 +9,85 @@ module.exports = kos.create('sync')
 
   .in('sync/connect').out('link/connect/url').bind(syncConnect)
   .in('sync/listen').out('link/listen/url').bind(syncListen)
-  .in('link/stream').out('sync').bind(syncStream)
+  .in('link/stream').out('sync', 'unsync').bind(syncStream)
   .in('reactor').out('sync').bind(syncReactor)
 
 function syncConnect(url)     { this.send('link/connect/url', url) }
 function syncListen(url)      { this.send('link/listen/url', url) }
 function syncReactor(reactor) { this.send('sync', reactor) }
-function syncStream(stream) {
-  const { addr, opts } = stream.state.get('link')
-  const reactor = kos.create({
-    name: `sync(${addr})`,
-    purpose: `reactions to sync with remote peer`,
-    passive: true,
-    enabled: false
-  })
-  reactor.on('data', token => {
-    if (token.origin === reactor.id || reactor.active) return
-    // prevent propagation of locally supported token keys to the remote stream
-    // TODO: optimize this via attribute of token itself
-    const internal = kos.reactors
-      .filter(x => !x.passive)
-      .reduce((a, b) => a.concat(b.inputs), [])
-    if (token.match(internal.concat(['module/*']))) return
-    stream.write(token)
-  })
-  stream.on('data', token => {
-    const { key, value } = token
-    if (key !== 'sync') return reactor.write(token)
-    if (value instanceof kos.Reactor) return
 
-    if (typeof value === 'string') {
-      if (value !== reactor.name) {
-        this.info('discovered own reactor name from peer', value)
-        reactor.state.set('remote', value)
-      }
-      return
+function sync(reactor) {
+  if (reactor instanceof kos.Reactor) {
+    if (this.parent._reactors.has(reactor.name)) 
+      this.parent.unload(this.parent._reactors.get(reactor.name))
+  } else {
+    reactor.enabled = false
+    if (kos._reactors.has(reactor.name))
+      this.info('ignore locally available reactor:', reactor.name)
+    else {
+      this.info('import remote reactor:', reactor.name)
+      this.parent.load(reactor)
     }
-    if (value.id === kos.id) {
-      kos.warn('detected circular sync loop from', addr)
-      kos.unload(reactor)
-      return
-    }
-    this.info(`importing '${value.name}' reactor (${value.id}) from ${addr}`)
-    if (value.name === 'kos') {
-      // exclude locally available reactors
-      const reactors = value.reactors.filter(x => {
-        return (x.name !== reactor.state.get('remote')) && !kos.reactors.some(y => x.name === y.name)
-      })
-      // reset currently loaded reactors
-      this.debug('unload existing reactors...', reactor.reactors.map(x => x.name))
-      reactor.reactors.forEach(x => reactor.unload(x))
-      reactor.load(...reactors)
-      this.debug(`imported ${reactors.length} new reactor(s):`, reactors.map(x => x.name))
-    } else {
-      if (kos.reactors.some(x => x.name === value.name)) return
-      reactor.load(value)
-    }
-    // Notify other remote peers about this reactor's new state
-    reactor.send('sync', reactor)
-  })
-  stream.pause()
-  stream.on('active', () => {
-    if (reactor.active) reactor.disable()
-    stream.feed('sync', reactor.name).feed('sync', kos)
-    stream.resume()
-    this.debug('synchronizing with:', addr)
-  })
-  stream.on('inactive', () => {
-    if (!opts.persist) return
-    this.info('maintaining capabilities from', reactor.name)
-    restore(reactor)
-    reactor.enable()
-    reactor.send('reactor', reactor)
-    function restore(target) {
-      target.triggers.forEach(x => {
-        if (x.handler instanceof Function) return
-        reactor.info(`restoring ${target.identity}:${x.name}`)
-        try { x._handler = new Function(`return (${x.handler.source})`)() }
-        catch (e) { 
-          reactor.error("unable to restore handler from source", x.handler.source, e) 
-        }
-      })
-      target.reactors.forEach(restore)
-    }
-  })
-  stream.on('destroy', () => {
-    this.debug('destroying sync stream, unload:', reactor.name)
-    kos.unload(reactor)
-    stream.end()
-    this.send('sync', kos)
-  })
-  kos._load(reactor)
+  }
+}
+function unsync(id) {
+  const exists = this.parent.find(id)
+  exists && exists.parent.unload(exists)
 }
 
+function syncStream(peer) {
+  const addr = peer.state.get('addr')
+  const { repair } = peer.state.get('opts')
+
+  // perform sync HANDSHAKE once peer is active
+  this.debug('synchronizing with:', addr)
+  peer.send('sync', kos) // advertise KOS to remote peer
+  peer.once('data', token => {
+    const { key, value } = token
+    if (key !== 'sync')
+      return this.error("unexpected initial token from peer", key, value)
+    if (value.id === kos.id)
+      return this.warn('detected circular sync loop from peer', addr)
+
+    this.info(`importing '${value.name}' reactor (${value.id}) from:`, addr)
+    value.name = `sync(${addr})`
+    // remove any reactors from peer that are also locally
+    // available in order to prevent further propagation of locally
+    // handled tokens into the distributed KOS cluster
+    //
+    // disable the rest so they don't participate in dataflow
+    // processing
+    value.reactors = value.reactors.filter(r => {
+      r.enabled = false
+      return !kos._reactors.has(r.name)
+    })
+    this.debug(`importing ${value.reactors.length} new reactors:`, value.reactors.map(r => r.name))
+    const reactor = kos.create(value).link(peer)
+      .in('sync').bind(sync)
+      .in('unsync').bind(unsync)
+    if (repair) {
+      peer.once('inactive', () => { 
+        reactor.info('repairing dataflow from peer')
+        reactor.unlink(peer)
+        reactor.reactors.forEach(r => r.enable())
+        reactor.send('reactor', reactor) 
+      })
+      peer.once('active', () => {
+        reactor.info('resuming dataflow to peer')
+        kos.unload(reactor)
+        this.feed('link/stream', peer) // re-initiate sync
+      })
+    }
+    peer.on('destroy', () => {
+      this.debug('destroying sync stream, unload:', reactor.name)
+      reactor.unlink(peer)
+      kos.unload(reactor)
+      // inform others peer is gone
+      this.send('unsync', reactor.id)
+    })
+    // inform others about new peer reactor
+    this.debug("informing others about new peer reactor from", addr)
+    this.send('sync', reactor)
+    kos._load(reactor)
+  })
+}

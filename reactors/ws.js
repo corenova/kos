@@ -119,7 +119,7 @@ function normalizeOptions(opts) {
     server:   opts.server,
     retry:    parseInt(opts.retry, 10) || 100,
     max:      parseInt(opts.max, 10) || 5000,
-    persist:  ("persist" in opts)
+    repair:  ("repair" in opts)
   }
 }
 

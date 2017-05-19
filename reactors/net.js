@@ -114,7 +114,7 @@ function normalizeOptions(opts) {
     port:     parseInt(opts.port, 10) || 12345,
     retry:    parseInt(opts.retry, 10) || 100,
     max:      parseInt(opts.max, 10) || 5000,
-    persist:  ("persist" in opts)
+    repair:  ("repair" in opts)
   }
 }
 

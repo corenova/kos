@@ -74,31 +74,31 @@ function listenByUrl(dest) {
 }
 
 function createLinkStream(link) {
-  const { addr, socket, server, opts } = link
+  const { addr, socket, server } = link
   const streams = this.get('streams')
   const stream = 
     streams.has(addr) ? 
     streams.get(addr) : 
-    (new kos.Stream).init('link', link)
+    (new kos.Stream).init(link)
 
   socket.on('active', () => {
     let io = stream.io()
-    socket.pipe(io, { end: false }).pipe(socket)
+    socket.pipe(io).pipe(socket)
     socket.on('close', () => {
-      stream.pause()
-      io.unpipe(socket)
       socket.destroy()
       if (server) {
         stream.emit('destroy')
+        stream.end()
         streams.delete(addr)
       } else {
         stream.emit('inactive')
       }
     })
+    stream.resume()
     stream.emit('active', socket)
   })
   if (!streams.has(addr)) {
     streams.set(addr, stream)
-    this.send('link/stream', stream)
+    stream.once('active', () => this.send('link/stream', stream))
   }
 }

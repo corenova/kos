@@ -56,8 +56,10 @@ function start(program, process) {
   silent || kos.pipe(debug).feed('debug/level', verbose)
 
   args.forEach(x => this.send('load', x))
-  expr.forEach(x => kos.write(x + "\n"))
-  data.forEach(x => this.send('read', x))
+  process.nextTick(() => {
+    expr.forEach(x => kos.write(x + "\n"))
+    data.forEach(x => this.send('read', x))
+  })
 
   if (show) {
     this.send('show', true)

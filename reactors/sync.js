@@ -65,19 +65,19 @@ function syncStream(peer) {
     const reactor = kos.create(value).link(peer)
       .in('sync').bind(sync)
       .in('unsync').bind(unsync)
-    if (repair) {
-      peer.once('inactive', () => { 
+    peer.once('inactive', () => { 
+      reactor.unlink(peer)
+      if (repair) {
         reactor.info('repairing dataflow from peer')
-        reactor.unlink(peer)
         reactor.reactors.forEach(r => r.enable())
         reactor.send('reactor', reactor) 
-      })
-      peer.once('active', () => {
-        reactor.info('resuming dataflow to peer')
-        kos.unload(reactor)
-        this.feed('link/stream', peer) // re-initiate sync
-      })
-    }
+      }
+    })
+    peer.once('active', () => {
+      reactor.info('resuming dataflow to peer')
+      kos.unload(reactor)
+      this.feed('link/stream', peer) // re-initiate sync
+    })
     peer.on('destroy', () => {
       this.debug('destroying sync stream, unload:', reactor.name)
       reactor.unlink(peer)

@@ -1,6 +1,6 @@
-# kos-flow-http
+# kos-reactors-http
 
-THis flow module provides message based transaction using HTTP as a
+This reactor module provides message based transaction using HTTP as a
 client and/or server.
 
 Source code is available [here](./http.js).
@@ -8,55 +8,41 @@ Source code is available [here](./http.js).
 ## Usage
 
 ```js
-const HttpFlow = require('kos/flows/http')
+//file name: httpTest.js
+
+//This example is to use the http reactor and to handle the
+//responses using the kos
+
+//To execute this sample, you can run kos command prompt.
+//"kos httpTest"
+
+//Once the app is started you can call the command 
+//"http/request/get "google.com""
+//in the kos prompt to initiate the reaction event.
+
+const { kos = require('..') } = global
+const http = require('../reactors/http');
+
+module.exports = kos.create('mytest')
+	.load(http)
+	.in('http/response').out('processImgs').bind(processResponse)
+	.in('processImgs').bind(processImages);
+
+function processImages(response) {	
+	//your code goes here to process the images
+}
+
+function processResponse(response) {
+	console.log('Response received');
+	this.send("processImgs", response);
+}
+
 ```
 
 ## kos show
 
 ```
-├─ name: http
-├─ purpose: Provides HTTP client and/or server flows
-├─ subflows
-│  ├─ kos-flow-http-client
-│  └─ kos-flow-http-server
-├─ actions
-│  ├─ ƒ(simpleGet)
-│  ├─ ƒ(extractBody)
-│  └─ ƒ(proxy)
-└──┐
-   ├─ kos-flow-http-client
-   │  ├─ summary: Provides HTTP client flows utilizing 'superagent' module
-   │  ├─ requires
-   │  │  └─ module/superagent
-   │  ├─ actions
-   │  │  ├─ ƒ(classify)
-   │  │  └─ ƒ(handleRequest)
-   │  └──┐
-   │     │                                             ┌╼ http/request/get
-   │     │                                             ├╼ http/request/post
-   │     ├─╼ http/request        ╾─╼ ƒ(classify)      ╾┼╼ http/request/put
-   │     │                                             ├╼ http/request/patch
-   │     │                                             └╼ http/request/delete
-   │     │┌╼ http/request/get    ╾┐
-   │     │├╼ http/request/post   ╾┤
-   │     └┼╼ http/request/put    ╾┼╼ ƒ(handleRequest) ╾─╼ http/response
-   │      ├╼ http/request/patch  ╾┤
-   │      └╼ http/request/delete ╾┘
-   │
-   ├─ kos-flow-http-server
-   │  ├─ summary: Provides HTTP server flows utilizing 'express' module
-   │  ├─ requires
-   │  │  └─ module/express
-   │  ├─ actions
-   │  │  ├─ ƒ(runServer)
-   │  │  └─ ƒ(handleRoute)
-   │  └──┐
-   │     ├─╼ http/listen    ╾─╼ ƒ(runServer)   ╾─╼ http/server
-   │     └┬╼ http/server    ╾┬╼ ƒ(handleRoute) ╾─╼ http/server/request
-   │      └╼ http/route     ╾┘
-   │
-   ├─╼ http/request/get/url ╾─╼ ƒ(simpleGet)   ╾─╼ http/request/get
-   ├─╼ http/response        ╾─╼ ƒ(extractBody) ╾─╼ http/response/body
-   └┬╼ http/server/request  ╾┬╼ ƒ(proxy)       ╾─╼ http/request
-    └╼ http/proxy           ╾┘
+
+The command "kos show http" should be able to give the event hierarchy in the command line for your reference.
+
 ```

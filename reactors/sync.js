@@ -68,7 +68,7 @@ function syncStream(peer) {
     peer.once('inactive', () => { 
       reactor.unlink(peer)
       if (repair) {
-        reactor.info('repairing dataflow from peer')
+        reactor.info('repairing dataflow with peer')
         reactor.reactors.forEach(r => r.enable())
         reactor.send('reactor', reactor) 
       }

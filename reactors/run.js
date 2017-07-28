@@ -78,15 +78,19 @@ function loadReactor(name) {
     path.resolve(__dirname, name),
     name
   ]
-  let reactor = {}
-  for (let name of search) {
-    try { reactor = require(name); break }
+  let reactor
+  let location
+  for (location of search) {
+    try { reactor = require(location); break }
     catch (e) { 
       if (e.code !== 'MODULE_NOT_FOUND') throw e
     }
   }
+  if (!reactor) 
+    throw new Error(`unable to locate reactor "${name}" from ${search}`)
+    
   if (reactor.type !== Symbol.for('kinetic.reactor'))
-    throw new Error("unable to load KOS for " + name + " from " + search)
+    throw new Error(`unable to load incompatible reactor "${name}" from ${location}`)
 
   this.send('reactor', kos._load(reactor))
 }

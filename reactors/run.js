@@ -13,23 +13,44 @@ module.exports = kos.create('run')
   .init('modules', new Map)
   .init('loadpath', new Set)
 
-  .in('process').out('reactor').bind(initialize)
+  .in('process')
+  .out('reactor')
+  .bind(initialize)
 
   .in('program','process')
   .out('load', 'read', 'show', 'prompt')
   .bind(start)
 
   // TODO: consider making this a separate reactor
-  .in('prompt').and.has('process','module/readline').out('render')
+  .pre('process','module/readline')
+  .in('prompt')
+  .out('render')
   .bind(promptUser)
 
-  .in('load').and.has('module/path').out('reactor').bind(loadReactor)
-  .in('load/path').bind(updateLoadPath)
-  .in('require').out('module/*').bind(tryRequire)
-  .in('read').and.has('module/fs').bind(readKSONFile)
+  .pre('module/path')
+  .in('load')
+  .out('reactor')
+  .bind(loadReactor)
 
-  .in('reactor').out('require').bind(requireReactor)
-  .in('reactor').and.has('process','show').out('render').bind(renderReactor)
+  .in('load/path')
+  .bind(updateLoadPath)
+
+  .in('require')
+  .out('module/*')
+  .bind(tryRequire)
+
+  .pre('module/fs')
+  .in('read')
+  .bind(readKSONFile)
+
+  .in('reactor')
+  .out('require')
+  .bind(requireReactor)
+
+  .pre('process','show')
+  .in('reactor')
+  .out('render')
+  .bind(renderReactor)
 
 // self-initialize
 function initialize(process) { 
@@ -66,7 +87,7 @@ function start(program, process) {
     return
   }
 
-  if (stdin.isTTY) this.send('prompt', 'kos> ')
+  if (stdin.isTTY && stdout.isTTY) this.send('prompt', 'kos> ')
   else stdin.pipe(kos, { end: false })
 }
 

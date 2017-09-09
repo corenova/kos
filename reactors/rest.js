@@ -10,13 +10,29 @@ module.exports = kos.create('rest')
   .load(http, ws)
   .init('basePath', '/')
 
-  .in('rest/listen').out('http/listen','http/route').bind(runInstance)
-  .in('http/server').out('ws/listen').bind(runWebSocketServer)
+  .in('rest/listen')
+  .out('http/listen','http/route')
+  .bind(runInstance)
 
-  .in('http/server/request/get').out('http/server/response').bind(getReactorState)
-  .in('http/server/request/put').out('http/server/response').bind(putReactortate)
-  .in('http/server/request/delete').out('http/server/response').bind(deleteReactortate)
-  .in('http/server/request/post').out('http/server/response').bind(postReactorState)
+  .in('http/server')
+  .out('ws/listen')
+  .bind(runWebSocketServer)
+
+  .in('http/server/request/get')
+  .out('http/server/response')
+  .bind(getReactorState)
+
+  .in('http/server/request/put')
+  .out('http/server/response')
+  .bind(putReactortate)
+
+  .in('http/server/request/delete')
+  .out('http/server/response')
+  .bind(deleteReactortate)
+
+  .in('http/server/request/post')
+  .out('http/server/response')
+  .bind(postReactorState)
 
 function runInstance(opts) {
   this.send('http/listen', opts)

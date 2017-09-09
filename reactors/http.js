@@ -10,12 +10,17 @@ const { kos = require('..') } = global
 module.exports = kos.create('http')
   .desc('reactions to HTTP client/server requests')
 
-  .in('http/request').and.has('module/superagent')
-  .out('http/response').bind(clientRequest)
+  .pre('module/superagent')
+  .in('http/request')
+  .out('http/response')
+  .bind(clientRequest)
 
-  .in('http/request/get').out('http/request').bind(simpleGet)
+  .in('http/request/get')
+  .out('http/request')
+  .bind(simpleGet)
 
-  .in('http/listen').and.has('module/http','module/url')
+  .pre('module/http','module/url')
+  .in('http/listen')
   .out('http/server','http/socket','link','http/server/request')
   .bind(createServer)
 
@@ -23,7 +28,9 @@ module.exports = kos.create('http')
   .out('http/server/request/*')
   .bind(classifyServerTransaction)
 
-  .in('http/server','http/route').out('http/server/request').bind(handleRoute)
+  .in('http/server','http/route')
+  .out('http/server/request')
+  .bind(handleRoute)
 
   // TODO: future
   //.in('http/server/request','http/proxy').out('http/request').bind(proxy)
@@ -34,7 +41,7 @@ function simpleGet(url) {
 
 function clientRequest(req) {
   const agent = this.get('module/superagent')
-  let { url, method, data } = req
+  let { url, type='json', method, data } = req
   method = method.toLowerCase()
   switch (method) {
   case 'get':
@@ -47,8 +54,8 @@ function clientRequest(req) {
   case 'post':
   case 'put':
   case 'patch':
-    agent[method](url).send(data).end((err, res) => { 
-      if (err) this.throw(err)
+    agent[method](url).type(type).send(data).end((err, res) => { 
+      if (err) this.throw(err.response.error)
       else this.send('http/response', res) 
     })
     break;

@@ -5,9 +5,12 @@ const { kos = require('..') } = global
 module.exports = kos.create('render')
   .desc('reactions to visually render KOS reactors')
 
-  .in('render').out('render/reactor','render/output').bind(render)
+  .in('render')
+  .out('render/reactor','render/output')
+  .bind(render)
 
-  .in('render/reactor').and.has('module/treeify')
+  .pre('module/treeify')
+  .in('render/reactor')
   .out('reactor/tree')
   .bind(renderReactorAsTree)
 

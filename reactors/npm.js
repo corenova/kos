@@ -11,11 +11,23 @@ module.exports = kos.create('npm')
   .init('ready', false)
   .init('pending', new Set)
 
-  .in('module/npm').out('npm/load').bind(triggerLoad)
-  .in('npm/load').and.has('module/npm').out('npm/loaded').bind(initialize)
+  .in('module/npm')
+  .out('npm/load')
+  .bind(triggerLoad)
 
-  .in('npm/install').and.has('module/npm').bind(queueInstall)
-  .in('npm/install','npm/loaded').and.has('module/npm').out('npm/installed').bind(install)
+  .pre('module/npm')
+  .in('npm/load')
+  .out('npm/loaded')
+  .bind(initialize)
+
+  .pre('module/npm')
+  .in('npm/install')
+  .bind(queueInstall)
+
+  .pre('module/npm')
+  .in('npm/install','npm/loaded')
+  .out('npm/installed')
+  .bind(install)
 
   // reactions to "run" reactor
   .in('error').out('npm/install').bind(autoFetchMissing)

@@ -7,10 +7,21 @@ module.exports = kos.create('sync')
   .desc('reactions to synchronize dataflow objects with remote stream(s)')
   .load(link)
 
-  .in('sync/connect').out('link/connect/url').bind(syncConnect)
-  .in('sync/listen').out('link/listen/url').bind(syncListen)
-  .in('link/stream').out('sync', 'unsync').bind(syncStream)
-  .in('reactor').out('sync').bind(syncReactor)
+  .in('sync/connect')
+  .out('link/connect/url')
+  .bind(syncConnect)
+
+  .in('sync/listen')
+  .out('link/listen/url')
+  .bind(syncListen)
+
+  .in('link/stream')
+  .out('sync', 'unsync')
+  .bind(syncStream)
+
+  .in('reactor')
+  .out('sync')
+  .bind(syncReactor)
 
 function syncConnect(url)     { this.send('link/connect/url', url) }
 function syncListen(url)      { this.send('link/listen/url', url) }

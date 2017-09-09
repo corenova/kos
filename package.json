@@ -1,6 +1,6 @@
 {
   "name": "kos",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A dataflow streaming framework for creating autonomic data pipelines and distributed neural networks",
   "bin": {
     "kos": "./bin/kos.js"

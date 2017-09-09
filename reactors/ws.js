@@ -13,19 +13,23 @@ module.exports = kos.create('ws')
   .init('protocols', ['ws:', 'wss:'])
   .init('links', new Map)
 
-  .in('ws/connect').and.has('module/simple-websocket')
+  .pre('module/simple-websocket')
+  .in('ws/connect')
   .out('ws/socket','link','ws/connect')
   .bind(connect)
 
-  .in('ws/listen').and.has('module/simple-websocket/server')
+  .pre('module/simple-websocket/server')
+  .in('ws/listen')
   .out('ws/server','ws/socket','link')
   .bind(listen)
 
-  .in('ws/connect/url').and.has('module/url')
+  .pre('module/url')
+  .in('ws/connect/url')
   .out('ws/connect')
   .bind(connectByUrl)
 
-  .in('ws/listen/url').and.has('module/url')
+  .pre('module/url')
+  .in('ws/listen/url')
   .out('ws/listen')
   .bind(listenByUrl)
 

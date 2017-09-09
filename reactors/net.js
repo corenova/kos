@@ -13,19 +13,23 @@ module.exports = kos.create('net')
   .init('protocols', ['tcp:', 'udp:'])
   .init('links', new Map)
 
-  .in('net/connect').and.has('module/net')
+  .pre('module/net')
+  .in('net/connect')
   .out('net/socket','link','net/connect')
   .bind(connect)
 
-  .in('net/listen').and.has('module/net')
+  .pre('module/net')
+  .in('net/listen')
   .out('net/server','net/socket','link')
   .bind(listen)
 
-  .in('net/connect/url').and.has('module/url')
+  .pre('module/url')
+  .in('net/connect/url')
   .out('net/connect')
   .bind(connectByUrl)
 
-  .in('net/listen/url').and.has('module/url')
+  .pre('module/url')
+  .in('net/listen/url')
   .out('net/listen')
   .bind(listenByUrl)
 

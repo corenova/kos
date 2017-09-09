@@ -15,16 +15,27 @@ module.exports = kos.create('link')
   .load(net, ws)
   .init('streams', new Map)
 
-  .in('link/connect').out('net/connect','ws/connect').bind(connect)
-  .in('link/listen').out('net/listen','ws/listen').bind(listen)
+  .in('link/connect')
+  .out('net/connect','ws/connect')
+  .bind(connect)
 
-  .in('link/connect/url').and.has('module/url')
-  .out('link/connect').bind(connectByUrl)
+  .in('link/listen')
+  .out('net/listen','ws/listen')
+  .bind(listen)
 
-  .in('link/listen/url').and.has('module/url')
-  .out('link/listen').bind(listenByUrl)
+  .pre('module/url')
+  .in('link/connect/url')
+  .out('link/connect')
+  .bind(connectByUrl)
 
-  .in('link').out('link/stream').bind(createLinkStream)
+  .pre('module/url')
+  .in('link/listen/url')
+  .out('link/listen')
+  .bind(listenByUrl)
+
+  .in('link')
+  .out('link/stream')
+  .bind(createLinkStream)
 
 
 function connect(opts) {

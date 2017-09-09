@@ -55,6 +55,7 @@ function outputError(err) {
   const error = this.get('loggers').get('error')
   const level = this.get('level')
   if (typeof error !== 'function') return
+  if (level > 2) console.error(err)
   if (level > 1) error(err)
   else error(err.message)
 }

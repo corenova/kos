@@ -17,10 +17,13 @@ module.exports = kos.create('mqtt')
   .desc("reactions to establish MQTT client/server communication links")
   .init('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
 
-  .in('mqtt/connect').and.has('module/mqtt')
-  .out('mqtt/client').bind(connect)
+  .pre('module/mqtt')
+  .in('mqtt/connect')
+  .out('mqtt/client')
+  .bind(connect)
 
-  .in('mqtt/connect/url').out('mqtt/connect')
+  .in('mqtt/connect/url')
+  .out('mqtt/connect')
   .bind(function simpleConnect(url) {
     this.send('mqtt/connect', { url: url })
   })
@@ -30,8 +33,12 @@ module.exports = kos.create('mqtt')
   .init('topics', new Set)
   .bind(subscribe)
 
-  .in('mqtt/client','mqtt/message').bind(publish)
-  .in('mqtt/message/*').out('mqtt/message').bind(convert)
+  .in('mqtt/client','mqtt/message')
+  .bind(publish)
+
+  .in('mqtt/message/*')
+  .out('mqtt/message')
+  .bind(convert)
 
 function connect(opts) {
   const [ mqtt, {parse}, protocols ] = this.get('module/mqtt', 'module/url', 'protocols')

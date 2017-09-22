@@ -33,16 +33,12 @@
     "clean": "rimraf dist/*",
     "prebuild": "npm run clean -s && mkdirp dist",
     "build:min": "browserify -t babelify -p [ minifyify --no-map ] . -o dist/kos.min.js",
-    "build:full": "browserify -t babelify . -o dist/kos.js",
-    "build": "npm run build:full && npm run build:min",
+    "build:dev": "browserify -t babelify . -o dist/kos.dev.js",
+    "build": "npm run build:min",
     "test": "mocha"
   },
-  "babel": {
-    "presets": [
-      "es2015"
-    ]
-  },
   "dependencies": {
+    "babel-plugin-transform-builtin-extend": "^1.1.2",
     "circular-json": "^0.3.1",
     "colors": "^1.1.2",
     "commander": "^2.9.0",
@@ -57,7 +53,6 @@
   },
   "devDependencies": {
     "babel-preset-es2015": "^6.24.0",
-    "babel-preset-react": "^6.23.0",
     "babelify": "^7.3.0",
     "browserify": "^14.1.0",
     "minifyify": "^7.3.5",
@@ -65,5 +60,16 @@
     "mocha": "^3.2.0",
     "rimraf": "^2.6.1",
     "should": "^11.2.0"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ],
+    "plugins": [
+      [ "transform-builtin-extend", {
+        "globals": ["Array"],
+        "approximate": true
+      }]
+    ]
   }
 }

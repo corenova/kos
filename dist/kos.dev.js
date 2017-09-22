@@ -1,33 +1,85 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var debug = require('debug')('kos:context');
 var delegate = require('delegates');
+var KineticToken = require('./token');
 
 var proto = module.exports = {
   get: function get() {
     var _this = this;
+
+    var state = this.state;
 
     for (var _len = arguments.length, keys = Array(_len), _key = 0; _key < _len; _key++) {
       keys[_key] = arguments[_key];
     }
 
     var res = keys.map(function (key) {
-      if (_this.state.has(key)) return _this.state.get(key);
-      if (_this.parent) return _this.parent.state.get(key);
-      return null;
+      return _this.trigger.get(key);
     });
     return res.length > 1 ? res : res[0];
+  },
+  send: function send(key) {
+    var _trigger, _queue$get;
+
+    for (var _len2 = arguments.length, values = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      values[_key2 - 1] = arguments[_key2];
+    }
+
+    // if already flushed, then send it as we observe them
+    if (this.queue.flushed === true) return (_trigger = this.trigger).send.apply(_trigger, arguments);
+    // preserve the send queue inside this context
+    debug(this.id, 'queue', key);
+    // preserve an instance of the token inside state machine
+    this.queue.has(key) || this.queue.set(key, new KineticToken(key, this.id));
+    (_queue$get = this.queue.get(key)).add.apply(_queue$get, values);
+  },
+  flush: function flush() {
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+      for (var _iterator = this.queue[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        var _step$value = _slicedToArray(_step.value, 2),
+            key = _step$value[0],
+            token = _step$value[1];
+
+        debug(this.id, 'flushing ' + key + ' (' + token.length + ')');
+        this.trigger.push(token.compress());
+        this.queue.delete(key);
+      }
+    } catch (err) {
+      _didIteratorError = true;
+      _iteratorError = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion && _iterator.return) {
+          _iterator.return();
+        }
+      } finally {
+        if (_didIteratorError) {
+          throw _iteratorError;
+        }
+      }
+    }
+
+    this.queue.flushed = true;
   }
 };
 
-delegate(proto, 'trigger').getter('state').getter('inputs').getter('outputs').getter('reactor').getter('parent').method('post').method('send').method('feed') // for self-driven trigger
+delegate(proto, 'trigger').getter('id').getter('state').getter('inputs').getter('outputs').getter('reactor').getter('parent').method('post') // XXX - should get rid of this
+.method('feed') // for self-driven trigger
 .method('seen')
+// state facilities
+.method('has').method('set').method('delete').method('reset')
 // various logging facilities
 .method('debug').method('info').method('warn').method('error').method('throw');
 
-delegate(proto, 'state').method('clear').method('delete').method('entries').method('forEach').method('has').method('set').method('keys').method('set').method('values');
-
-},{"delegates":15}],2:[function(require,module,exports){
+},{"./token":4,"debug":13,"delegates":15}],2:[function(require,module,exports){
 'use strict';
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -100,44 +152,48 @@ var KineticReactor = function (_KineticStream) {
         var flow = [];
         if (_this.seen(token)) {
           // from external flow
-          flow.push('accept');
-          if (token.match(_this.inputs) || token.match(_this.requires)) {
+          _this.notify && flow.push('accept');
+          if (token.match(_this.inputs.concat(_this.requires))) {
             debug(_this.identity, '<==', token.key);
             // update the token that it's been accepted into this flow
             _this.mark(token, true);
-            if (token.match(_this.consumes)) flow.push('consume');
-            if (token.match(_this.absorbs)) flow.push('absorb');
+            if (_this.notify) {
+              if (token.match(_this.consumes)) flow.push('consume');
+              if (token.match(_this.absorbs)) flow.push('absorb');
+            }
           } else {
-            if (token.match(['error', 'warn', 'info', 'debug'])) return false;
-            flow.push('reject');
-            _this.emit('flow', token, flow);
+            if (_this.notify && !token.match(['error', 'warn', 'info', 'debug'])) {
+              flow.push('reject');
+              _this.emit('flow', token, flow);
+            }
             return false;
           }
         } else {
           // from internal flow
           if (token.match(['error', 'warn', 'info', 'debug'])) return true;
-
-          flow.push('feedback');
-          token.match(_this.consumes) ? flow.push('consume') : flow.push('reject');
+          if (_this.notify) {
+            flow.push('feedback');
+            token.match(_this.consumes) ? flow.push('consume') : flow.push('reject');
+          }
           if (token.match(_this.absorbs)) {
             debug(_this.identity, '<->', token.key);
             _this.mark(token, true); // prevent external propagation
-            flow.push('absorb');
+            _this.notify && flow.push('absorb');
           } else if (token.match(_this.outputs)) {
             debug(_this.identity, '==>', token.key);
-            flow.push('produce');
+            _this.notify && flow.push('produce');
           } else {
             // unhandled side-effect byproduct
             debug(_this.identity, '<--', token.key);
-            flow.push('byproduct');
+            _this.notify && flow.push('byproduct');
             _this.passive || _this.mark(token); // prevent external propagation
           }
-          if (token.key !== 'error') _this.emit(token.key, token.value);
+          _this.notify && _this.emit(token.key, token.value);
         }
-        _this.emit('flow', token, flow);
+        _this.notify && _this.emit('flow', token, flow);
         return true;
       }
-    });
+    }).join(_this);
     _this.load.apply(_this, _toConsumableArray(reactors));
     _this.add.apply(_this, _toConsumableArray(triggers));
     enabled && _this.enable();
@@ -220,16 +276,26 @@ var KineticReactor = function (_KineticStream) {
       }
       return this;
     }
+
+    // LINK/UNLINK additional streams into the reactor
+
   }, {
     key: 'link',
     value: function link(stream) {
-      this.core.pipe(stream);stream.pipe(this.core);return this;
+      this.core.pipe(stream);stream.pipe(this.core);
+      this.emit('dirty', stream);
+      return this;
     }
   }, {
     key: 'unlink',
     value: function unlink(stream) {
-      this.core.unpipe(stream);stream.unpipe(this.core);return this;
+      this.core.unpipe(stream);stream.unpipe(this.core);
+      this.emit('dirty', stream);
+      return this;
     }
+
+    // ENABLE/DISABLE this reactor
+
   }, {
     key: 'enable',
     value: function enable() {
@@ -295,7 +361,7 @@ var KineticReactor = function (_KineticStream) {
 
           trigger = new KineticTrigger(trigger).join(this);
           this._triggers.add(trigger);
-          this.core.pipe(trigger).pipe(this.core);
+          this.link(trigger);
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -320,32 +386,39 @@ var KineticReactor = function (_KineticStream) {
     // returns: new KineticReactor
 
   }, {
-    key: 'in',
-    value: function _in() {
+    key: 'pre',
+    value: function pre() {
       for (var _len4 = arguments.length, keys = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
         keys[_key4] = arguments[_key4];
       }
 
-      return this.trigger(keys);
+      return this.trigger({ requires: keys });
+    }
+  }, {
+    key: 'in',
+    value: function _in() {
+      for (var _len5 = arguments.length, keys = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+        keys[_key5] = arguments[_key5];
+      }
+
+      return this.trigger({ inputs: keys });
     }
 
     // Primary method for expressing I/O bound KineticTrigger for KineticReactor
     // 
-    // trigger('my/input','my/output').bind(fn)
-    // trigger(['a','b','c'],'d').bind(fn) 
-    // trigger('hello','world',fn) -- returns KineticReactor
-    //
-    // returns: a new KineticTrigger or current KineticReactor (if func supplied)
+    // opts expects an object: {
+    //   requires: [ ],
+    //   inputs: [ ],
+    //   outputs: [ ],
+    //   handler: function
+    // }
+    // returns: this KineticReactor
 
   }, {
     key: 'trigger',
-    value: function trigger(inputs, outputs, func) {
-      var trigger = new KineticTrigger({
-        inputs: inputs,
-        outputs: outputs,
-        handler: func
-      });
-      return func ? this.include(trigger) : trigger.join(this);
+    value: function trigger() {
+      var opts = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      return new KineticTrigger(opts).join(this);
     }
   }, {
     key: 'contains',
@@ -434,12 +507,6 @@ var KineticReactor = function (_KineticStream) {
       });
     }
   }, {
-    key: 'identity',
-    get: function get() {
-      var parent = this.parent;
-      return parent ? parent.identity + '/' + this.name : this.name;
-    }
-  }, {
     key: 'type',
     get: function get() {
       return Symbol.for('kinetic.reactor');
@@ -470,6 +537,11 @@ var KineticReactor = function (_KineticStream) {
       return this._enabled && (this.parent ? this.parent.active : true);
     }
   }, {
+    key: 'notify',
+    get: function get() {
+      return this.listenerCount('flow');
+    }
+  }, {
     key: 'triggers',
     get: function get() {
       return Array.from(this._triggers);
@@ -480,32 +552,56 @@ var KineticReactor = function (_KineticStream) {
       return Array.from(this._reactors.values());
     }
   }, {
+    key: 'cache',
+    get: function get() {
+      var _this2 = this;
+
+      if (!this.state.has('cache')) {
+        this.state.set('cache', {
+          requires: function () {
+            var streams = _this2.triggers.concat(_this2.reactors);
+            return extractUniqueKeys(streams, 'requires');
+          }.call(this),
+
+          inputs: function () {
+            var streams = _this2.passive ? _this2.triggers.concat(_this2.reactors) : _this2.triggers;
+            return extractUniqueKeys(streams, 'inputs', 'requires');
+          }.call(this),
+
+          outputs: extractUniqueKeys(this.triggers, 'outputs'),
+          consumes: extractUniqueKeys(this.triggers, 'inputs', 'requires'),
+          absorbs: extractUniqueKeys(this.reactors, 'inputs')
+        });
+        this.once('dirty', function (stream) {
+          return _this2.state.delete('cache');
+        });
+      }
+      return this.state.get('cache');
+    }
+  }, {
     key: 'requires',
     get: function get() {
-      //if (!this.enabled) return []
-      return extractUniqueKeys(this.triggers.concat(this.reactors), 'requires');
+      return this.cache.requires;
     }
   }, {
     key: 'inputs',
     get: function get() {
-      //if (!this.enabled) return []
-      var streams = this.passive ? this.triggers.concat(this.reactors) : this.triggers;
-      return extractUniqueKeys(streams, 'inputs', 'requires');
+      return this.cache.inputs;
     }
   }, {
     key: 'outputs',
     get: function get() {
-      return extractUniqueKeys(this.triggers, 'outputs');
+      return this.cache.outputs;
     }
   }, {
     key: 'consumes',
     get: function get() {
-      return extractUniqueKeys(this.triggers, 'inputs', 'requires');
+      return this.cache.consumes;
     }
   }, {
     key: 'absorbs',
     get: function get() {
-      return extractUniqueKeys(this.reactors, 'inputs');
+      return this.cache.absorbs;
     }
   }]);
 
@@ -515,8 +611,8 @@ var KineticReactor = function (_KineticStream) {
 module.exports = KineticReactor;
 
 function extractUniqueKeys() {
-  for (var _len5 = arguments.length, names = Array(_len5 > 1 ? _len5 - 1 : 0), _key5 = 1; _key5 < _len5; _key5++) {
-    names[_key5 - 1] = arguments[_key5];
+  for (var _len6 = arguments.length, names = Array(_len6 > 1 ? _len6 - 1 : 0), _key6 = 1; _key6 < _len6; _key6++) {
+    names[_key6 - 1] = arguments[_key6];
   }
 
   var streams = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
@@ -532,6 +628,8 @@ function extractUniqueKeys() {
 },{"./stream":3,"./trigger":5,"debug":13}],3:[function(require,module,exports){
 'use strict';
 
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -542,11 +640,13 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var debug = require('debug')('kos:stream');
 var uuid = require('uuid');
+var delegate = require('delegates');
 
 var _require = require('stream'),
     Transform = _require.Transform;
 
 var KineticToken = require('./token');
+var DEFAULT_HIGH_WATERMARK = 100;
 
 var KineticStream = function (_Transform) {
   _inherits(KineticStream, _Transform);
@@ -608,8 +708,21 @@ var KineticStream = function (_Transform) {
     key: '_transform',
     value: function _transform(chunk, enc, callback) {
       if (chunk instanceof KineticToken) {
-        // accept if it hasn't been seen before and allowed by the filter
-        if (!this.seen(chunk) && this.filter(this.mark(chunk))) this.push(chunk);
+        // send along if it hasn't been seen before and allowed by the filter
+        if (this.seen(chunk)) return callback();
+
+        try {
+          this.filter(this.mark(chunk)) && this.push(chunk);
+          callback();
+        } catch (e) {
+          if (e.method === 'push') {
+            this.read(0); // re-initiate reading from this stream
+            this.once('data', function () {
+              console.error("readable data has been read, resume next transform");
+              callback(null, e.chunk);
+            });
+          }
+        }
       } else {
         // transform KSON to KineticToken
         this._buffer += chunk;
@@ -626,7 +739,7 @@ var KineticStream = function (_Transform) {
             try {
               chunk = KineticToken.fromKSON(line.trim());
             } catch (e) {
-              chunk = new KineticToken('error', e);
+              chunk = new KineticToken('error').add(e);
             }
             this.filter(this.mark(chunk)) && this.push(chunk);
             //this.filter(chunk) && this.push(this.mark(chunk))
@@ -645,8 +758,9 @@ var KineticStream = function (_Transform) {
             }
           }
         }
+
+        callback();
       }
-      callback();
     }
   }, {
     key: 'filter',
@@ -663,8 +777,8 @@ var KineticStream = function (_Transform) {
       var value = arguments[1];
 
       if (key.constructor === Object) for (var k in key) {
-        this.state.set(k, key[k]);
-      } else this.state.set(key, value);
+        this.set(k, key[k]);
+      } else this.set(key, value);
       return this;
     }
   }, {
@@ -681,47 +795,24 @@ var KineticStream = function (_Transform) {
     key: 'join',
     value: function join(stream) {
       if (!(stream instanceof KineticStream)) throw new Error("[join] can only join to other KineticStreams, sorry", stream);
+      // XXX - handle when it was already joined to another parent before
       this.parent = stream;
+      this.on('dirty', this.emit.bind(stream)); // propagation to parent
       return this;
     }
-
-    // get parent()  { return this.state.get('parent') }
-    // set parent(x) { return this.state.set('parent', x) }
 
     // Convenience function for injecting KineticToken into Writable stream
 
   }, {
     key: 'feed',
     value: function feed(key) {
+      var _ref;
+
       for (var _len = arguments.length, values = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
         values[_key - 1] = arguments[_key];
       }
 
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
-
-      try {
-        for (var _iterator2 = values[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-          var value = _step2.value;
-
-          this.write(new KineticToken(key, value));
-        }
-      } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2.return) {
-            _iterator2.return();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
-      }
-
+      this.write((_ref = new KineticToken(key)).add.apply(_ref, values));
       return this;
     }
     // Convenience function for injecting KineticToken into Readable stream
@@ -729,36 +820,24 @@ var KineticStream = function (_Transform) {
   }, {
     key: 'send',
     value: function send(key) {
+      var _ref2;
+
       for (var _len2 = arguments.length, values = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
         values[_key2 - 1] = arguments[_key2];
       }
 
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
-
-      try {
-        for (var _iterator3 = values[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-          var value = _step3.value;
-
-          this.push(new KineticToken(key, value, this.id));
-        }
-      } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3.return) {
-            _iterator3.return();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
+      return this.push((_ref2 = new KineticToken(key, this.id)).add.apply(_ref2, values));
+    }
+  }, {
+    key: 'push',
+    value: function push(chunk) {
+      if (!_get(KineticStream.prototype.__proto__ || Object.getPrototypeOf(KineticStream.prototype), 'push', this).apply(this, arguments)) {
+        var err = new Error("unable to push chunk");
+        err.flow = this;
+        err.method = 'push';
+        throw err;
       }
-
-      return this;
+      return true;
     }
 
     // A special "wrapper" method that creates a new KineticStream
@@ -800,6 +879,7 @@ var KineticStream = function (_Transform) {
   }, {
     key: 'post',
     value: function post(key, value) {
+      this.warn("post() method has been deprecated and will be removed soon. simply use this.parent.has/set/get");
       if (this.parent) {
         var state = this.parent.state;
 
@@ -809,6 +889,21 @@ var KineticStream = function (_Transform) {
         }
         state.set(key, value);
       }
+    }
+
+    // STATE interaction overloads
+
+  }, {
+    key: 'has',
+    value: function has(key) {
+      // TODO: consider supporting key as wildcard match?
+      return this.state.has(key) || (this.parent ? this.parent.has(key) : false);
+    }
+  }, {
+    key: 'get',
+    value: function get(key) {
+      if (this.state.has(key)) return this.state.get(key);
+      if (this.parent) return this.parent.get(key);
     }
 
     // TODO: should we allow undefined/null value?
@@ -824,7 +919,7 @@ var KineticStream = function (_Transform) {
         args[_key3 - 1] = arguments[_key3];
       }
 
-      this.push(new KineticToken(type, [this.identity].concat(args), this.id));
+      this.push(new KineticToken(type, this.id).add([this.identity].concat(args)));
     }
   }, {
     key: 'debug',
@@ -853,13 +948,17 @@ var KineticStream = function (_Transform) {
 
       if (!(err instanceof Error)) err = new Error([err].concat(rest).join(' '));
       err.flow = this;
-      this.push(new KineticToken('error', err, this.id));
+      this.push(new KineticToken('error', this.id).add(err));
       return err;
     }
 
     // throw error
-    //throw() { throw this.error(...arguments) }
 
+  }, {
+    key: 'throw',
+    value: function _throw() {
+      throw this.error.apply(this, arguments);
+    }
   }, {
     key: 'inspect',
     value: function inspect() {
@@ -882,34 +981,68 @@ var KineticStream = function (_Transform) {
       return Symbol.for('kinetic.stream');
     }
   }, {
-    key: 'identity',
+    key: 'name',
     get: function get() {
       return this.id;
     }
   }, {
-    key: 'throw',
+    key: 'identity',
     get: function get() {
-      return this.error;
+      return this.parent ? this.parent.identity + '/' + this.name : this.name;
     }
   }]);
 
   return KineticStream;
 }(Transform);
 
+delegate(KineticStream.prototype, 'state').method('set') // only local
+.method('delete'); // only local
+
 module.exports = KineticStream;
 
-},{"./token":4,"debug":13,"stream":35,"uuid":38}],4:[function(require,module,exports){
+},{"./token":4,"debug":13,"delegates":15,"stream":35,"uuid":38}],4:[function(require,module,exports){
 'use strict';
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _extendableBuiltin(cls) {
+  function ExtendableBuiltin() {
+    cls.apply(this, arguments);
+  }
+
+  ExtendableBuiltin.prototype = Object.create(cls.prototype, {
+    constructor: {
+      value: cls,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+
+  if (Object.setPrototypeOf) {
+    Object.setPrototypeOf(ExtendableBuiltin, cls);
+  } else {
+    ExtendableBuiltin.__proto__ = cls;
+  }
+
+  return ExtendableBuiltin;
+}
 
 var CircularJSON = require('circular-json');
 
-var KineticToken = function () {
+var KineticToken = function (_extendableBuiltin2) {
+  _inherits(KineticToken, _extendableBuiltin2);
+
   _createClass(KineticToken, null, [{
     key: 'fromKSON',
     value: function fromKSON(kson) {
@@ -926,23 +1059,42 @@ var KineticToken = function () {
           origin = _label$split2[1];
 
       obj = CircularJSON.parse(obj);
-      return new KineticToken(key, obj, origin);
+      return new KineticToken(key, origin).add(obj);
     }
   }]);
 
-  function KineticToken(key, value) {
-    var origin = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'unknown';
+  function KineticToken(key) {
+    var origin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'unknown';
 
     _classCallCheck(this, KineticToken);
 
-    this.key = key;
-    this.value = value;
-    this.origin = origin;
-    this.tags = new Map();
-    this.tag(origin); // ensure origin does not accept this token again
+    var _this = _possibleConstructorReturn(this, (KineticToken.__proto__ || Object.getPrototypeOf(KineticToken)).call(this));
+
+    _this.key = key;
+    _this.origin = origin;
+    _this.tags = new Map();
+    _this.tags.set(origin);
+    return _this;
   }
 
   _createClass(KineticToken, [{
+    key: 'add',
+    value: function add() {
+      this.push.apply(this, arguments);
+      return this;
+    }
+  }, {
+    key: 'compress',
+    value: function compress() {
+      if (this.length > 1) {
+        var uniques = [].concat(_toConsumableArray(new Set(this)));
+        if (this.length !== uniques.length) {
+          this.splice.apply(this, [0, this.length].concat(_toConsumableArray(uniques)));
+        }
+      }
+      return this;
+    }
+  }, {
     key: 'tag',
     value: function tag(key, val) {
       key && this.tags.set(key, val);
@@ -951,9 +1103,11 @@ var KineticToken = function () {
   }, {
     key: 'match',
     value: function match(keys) {
-      if (Array.isArray(keys)) keys = new Set(keys);
-      if (!(keys instanceof Set)) return false;
-      if (keys.has(this.key)) return true;
+      if (!arguments.length) return null;
+      if (arguments.length > 1) keys = arguments;
+      if (typeof keys === 'string') keys = [keys];
+      //if (keys instanceof Set && keys.has(this.key)) return true
+      var idx = -1;
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
@@ -962,9 +1116,11 @@ var KineticToken = function () {
         for (var _iterator = keys[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var key = _step.value;
 
+          idx++;
+          if (this.key === key) return [idx, key];
           if (key.indexOf('*') === -1) continue;
           var regex = '^' + key.replace('*', '.*') + '$';
-          if (this.key.match(regex) != null) return true;
+          if (this.key.match(regex) != null) return [idx, key];
         }
       } catch (err) {
         _didIteratorError = true;
@@ -981,7 +1137,7 @@ var KineticToken = function () {
         }
       }
 
-      return false;
+      return null;
     }
   }, {
     key: 'toKSON',
@@ -1000,6 +1156,11 @@ var KineticToken = function () {
 
       if (typeof value === 'function') value = null;
       return '{"' + key + '":' + CircularJSON.stringify(value) + '}';
+    }
+  }, {
+    key: 'value',
+    get: function get() {
+      return this[this.length - 1];
     }
   }, {
     key: 'accepted',
@@ -1034,12 +1195,14 @@ var KineticToken = function () {
   }]);
 
   return KineticToken;
-}();
+}(_extendableBuiltin(Array));
 
 module.exports = KineticToken;
 
 },{"circular-json":11}],5:[function(require,module,exports){
 'use strict';
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
@@ -1089,6 +1252,7 @@ var KineticTrigger = function (_KineticStream) {
 
     if (inputs && !Array.isArray(inputs)) inputs = [inputs];
     if (outputs && !Array.isArray(outputs)) outputs = [outputs];
+    if (requires && !Array.isArray(requires)) requires = [requires];
 
     _this._inputs = new Set(inputs);
     _this._outputs = new Set(outputs);
@@ -1114,21 +1278,58 @@ var KineticTrigger = function (_KineticStream) {
       if (typeof this.handler !== 'function') return false;
       if (this.ready(token)) {
         var ctx = this.context;
-        ctx.event = token.key;
-        ctx.arguments = this.inputs.map(function (x) {
-          return _this2.state.get(x);
+
+        var _token$match = token.match(this.inputs),
+            _token$match2 = _slicedToArray(_token$match, 1),
+            idx = _token$match2[0];
+
+        var args = this.inputs.map(function (x) {
+          return _this2.get(x);
         });
-        // TODO: clear the local state for input triggers
-        debug(this.identity, 'ƒ(' + this.inputs + ')');
+        ctx.queue = new Map();
+        ctx.event = token.key;
+        // TODO: clear the local state for input triggers?
+        debug(this.identity, 'ƒ(' + this.inputs + ')', 'call', token.length, 'time(s)');
         this.parent && this.parent.emit('fire', this);
+
+        //debug(this.identity, 'args:', args)
+        //debug(this.identity, 'token:', token)
+
+        // Since token may have multiple outputs generated, we collect
+        // all "send" operations and "compress" them into bulk token(s).
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
         try {
-          this.handler.apply(ctx, ctx.arguments);
-        } catch (e) {
-          debug(e);
-          this.error(e);
+          for (var _iterator = token[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var data = _step.value;
+
+            args[idx] = data;
+            try {
+              this.handler.apply(ctx, args);
+            } catch (e) {
+              debug(e);this.error(e);
+            }
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+              _iterator.return();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
         }
+
+        ctx.flush();
       }
-      return false;
+      return false; // always prevent propagation of the incoming token
     }
 
     // accept token if ALL conditions are met:
@@ -1140,68 +1341,44 @@ var KineticTrigger = function (_KineticStream) {
     value: function ready(token) {
       var _this3 = this;
 
+      var key = token.key,
+          value = token.value;
+
       if (token.match(this._requires)) {
         this.mark(token, true);
-        this.state.set(token.key, token.value);
+        this.set(key, value);
+        return false;
       }
-
       // TODO: should warn about dropped input triggers...
       if (this.requires.every(function (x) {
-        return _this3.state.has(x);
+        return _this3.has(x);
       }) && token.match(this._inputs)) {
         this.mark(token, true);
-        this.state.set(token.key, token.value);
+        this.set(key, value);
         // TODO: should also check parent
         return this.inputs.every(function (x) {
-          return _this3.state.has(x);
+          return _this3.has(x);
         });
       }
       return false;
     }
 
-    // data objects consumed as input(s) by the KineticTrigger
+    // RULE DEFINITION INTERFACE
+
+
+    // data objects that are required pre-conditions for invoking the
+    // KineticTrigger
+    //
+    // NOTE: the difference between `has()` and `in()` is that the
+    // pre-condition data tokens stay sticky to the State Machine and
+    // must be present before the declared input data tokens can invoke
+    // the trigger.
 
   }, {
-    key: 'in',
-    value: function _in() {
+    key: 'pre',
+    value: function pre() {
       for (var _len = arguments.length, keys = Array(_len), _key = 0; _key < _len; _key++) {
         keys[_key] = arguments[_key];
-      }
-
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
-
-      try {
-        for (var _iterator = keys.filter(String)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var key = _step.value;
-          this._inputs.add(key);
-        }
-      } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator.return) {
-            _iterator.return();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
-      }
-
-      return this;
-    }
-
-    // data objects produced as output(s) by the KineticTrigger
-
-  }, {
-    key: 'out',
-    value: function out() {
-      for (var _len2 = arguments.length, keys = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        keys[_key2] = arguments[_key2];
       }
 
       var _iteratorNormalCompletion2 = true;
@@ -1211,7 +1388,7 @@ var KineticTrigger = function (_KineticStream) {
       try {
         for (var _iterator2 = keys.filter(String)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
           var key = _step2.value;
-          this._outputs.add(key);
+          this._requires.add(key);
         }
       } catch (err) {
         _didIteratorError2 = true;
@@ -1231,19 +1408,13 @@ var KineticTrigger = function (_KineticStream) {
       return this;
     }
 
-    // data objects that are required pre-conditions for invoking the
-    // KineticTrigger
-    //
-    // NOTE: the difference between `has()` and `in()` is that the
-    // pre-condition data tokens stay sticky to the State Machine and
-    // must be present before the declared input data tokens can invoke
-    // the trigger.
+    // data objects consumed as input(s) by the KineticTrigger
 
   }, {
-    key: 'has',
-    value: function has() {
-      for (var _len3 = arguments.length, keys = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-        keys[_key3] = arguments[_key3];
+    key: 'in',
+    value: function _in() {
+      for (var _len2 = arguments.length, keys = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        keys[_key2] = arguments[_key2];
       }
 
       var _iteratorNormalCompletion3 = true;
@@ -1253,7 +1424,7 @@ var KineticTrigger = function (_KineticStream) {
       try {
         for (var _iterator3 = keys.filter(String)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
           var key = _step3.value;
-          this._requires.add(key);
+          this._inputs.add(key);
         }
       } catch (err) {
         _didIteratorError3 = true;
@@ -1266,6 +1437,42 @@ var KineticTrigger = function (_KineticStream) {
         } finally {
           if (_didIteratorError3) {
             throw _iteratorError3;
+          }
+        }
+      }
+
+      return this;
+    }
+
+    // data objects produced as output(s) by the KineticTrigger
+
+  }, {
+    key: 'out',
+    value: function out() {
+      for (var _len3 = arguments.length, keys = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        keys[_key3] = arguments[_key3];
+      }
+
+      var _iteratorNormalCompletion4 = true;
+      var _didIteratorError4 = false;
+      var _iteratorError4 = undefined;
+
+      try {
+        for (var _iterator4 = keys.filter(String)[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+          var key = _step4.value;
+          this._outputs.add(key);
+        }
+      } catch (err) {
+        _didIteratorError4 = true;
+        _iteratorError4 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion4 && _iterator4.return) {
+            _iterator4.return();
+          }
+        } finally {
+          if (_didIteratorError4) {
+            throw _iteratorError4;
           }
         }
       }
@@ -1289,6 +1496,9 @@ var KineticTrigger = function (_KineticStream) {
       return this.parent ? this.parent.add(this) : this;
     }
 
+    // END Of RULE DEFINITION INTERFACE
+
+
     // enforce check for output tokens
 
   }, {
@@ -1296,6 +1506,15 @@ var KineticTrigger = function (_KineticStream) {
     value: function send(key) {
       if (!KineticToken.prototype.match.call({ key: key }, this._outputs)) throw new Error("[KineticTrigger:send] " + key + " not in [" + this.outputs + "]");
       return _get(KineticTrigger.prototype.__proto__ || Object.getPrototypeOf(KineticTrigger.prototype), 'send', this).apply(this, arguments);
+    }
+  }, {
+    key: 'reset',
+    value: function reset() {
+      var _this4 = this;
+
+      this.inputs.forEach(function (x) {
+        return _this4.delete(x);
+      });
     }
 
     // TODO: consider when we support Trigger -> Trigger -> Trigger type pipelines
@@ -1345,6 +1564,16 @@ var KineticTrigger = function (_KineticStream) {
       return Symbol.for('kinetic.trigger');
     }
   }, {
+    key: 'name',
+    get: function get() {
+      return this.handler.name;
+    }
+  }, {
+    key: 'source',
+    get: function get() {
+      return this.handler instanceof Function ? this.handler.toString() : this.handler.source;
+    }
+  }, {
     key: 'inputs',
     get: function get() {
       return Array.from(this._inputs);
@@ -1375,21 +1604,6 @@ var KineticTrigger = function (_KineticStream) {
       var ctx = Object.create(KineticContext);
       ctx.trigger = this;
       return ctx;
-    }
-  }, {
-    key: 'name',
-    get: function get() {
-      return this.handler.name;
-    }
-  }, {
-    key: 'source',
-    get: function get() {
-      return this.handler instanceof Function ? this.handler.toString() : this.handler.source;
-    }
-  }, {
-    key: 'identity',
-    get: function get() {
-      return this.parent ? this.parent.identity + ':' + this.handler.name : this.handler.name;
     }
   }]);
 
@@ -7566,6 +7780,7 @@ function outputError(err) {
   var error = this.get('loggers').get('error');
   var level = this.get('level');
   if (typeof error !== 'function') return;
+  if (level > 2) console.error(err);
   if (level > 1) error(err);else error(err.message);
 }
 
@@ -7594,7 +7809,7 @@ var _global = global,
 
 // Composite Flow (uses HttpClient and/or HttpServer) flows dynamically
 
-module.exports = kos.create('http').desc('reactions to HTTP client/server requests').in('http/request').and.has('module/superagent').out('http/response').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).in('http/listen').and.has('module/http', 'module/url').out('http/server', 'http/socket', 'link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
+module.exports = kos.create('http').desc('reactions to HTTP client/server requests').pre('module/superagent').in('http/request').out('http/response').bind(clientRequest).in('http/request/get').out('http/request').bind(simpleGet).pre('module/http', 'module/url').in('http/listen').out('http/server', 'http/socket', 'link', 'http/server/request').bind(createServer).in('http/server/request').out('http/server/request/*').bind(classifyServerTransaction).in('http/server', 'http/route').out('http/server/request').bind(handleRoute);
 
 // TODO: future
 //.in('http/server/request','http/proxy').out('http/request').bind(proxy)
@@ -7608,6 +7823,8 @@ function clientRequest(req) {
 
   var agent = this.get('module/superagent');
   var url = req.url,
+      _req$type = req.type,
+      type = _req$type === undefined ? 'json' : _req$type,
       method = req.method,
       data = req.data;
 
@@ -7622,8 +7839,8 @@ function clientRequest(req) {
     case 'post':
     case 'put':
     case 'patch':
-      agent[method](url).send(data).end(function (err, res) {
-        if (err) _this.throw(err);else _this.send('http/response', res);
+      agent[method](url).type(type).send(data).end(function (err, res) {
+        if (err) _this.throw(err.response.error);else _this.send('http/response', res);
       });
       break;
   }
@@ -7699,7 +7916,7 @@ var _global = global,
 var net = require('./net');
 var ws = require('./ws');
 
-module.exports = kos.create('link').desc('reactions to stream dynamic client/server links').load(net, ws).init('streams', new Map()).in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).in('link/connect/url').and.has('module/url').out('link/connect').bind(connectByUrl).in('link/listen/url').and.has('module/url').out('link/listen').bind(listenByUrl).in('link').out('link/stream').bind(createLinkStream);
+module.exports = kos.create('link').desc('reactions to stream dynamic client/server links').load(net, ws).init('streams', new Map()).in('link/connect').out('net/connect', 'ws/connect').bind(connect).in('link/listen').out('net/listen', 'ws/listen').bind(listen).pre('module/url').in('link/connect/url').out('link/connect').bind(connectByUrl).pre('module/url').in('link/listen/url').out('link/listen').bind(listenByUrl).in('link').out('link/stream').bind(createLinkStream);
 
 function connect(opts) {
   switch (opts.protocol) {
@@ -7799,7 +8016,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.create('net').desc("reactions to establish TCP/UDP client/server communication links").init('protocols', ['tcp:', 'udp:']).init('links', new Map()).in('net/connect').and.has('module/net').out('net/socket', 'link', 'net/connect').bind(connect).in('net/listen').and.has('module/net').out('net/server', 'net/socket', 'link').bind(listen).in('net/connect/url').and.has('module/url').out('net/connect').bind(connectByUrl).in('net/listen/url').and.has('module/url').out('net/listen').bind(listenByUrl);
+module.exports = kos.create('net').desc("reactions to establish TCP/UDP client/server communication links").init('protocols', ['tcp:', 'udp:']).init('links', new Map()).pre('module/net').in('net/connect').out('net/socket', 'link', 'net/connect').bind(connect).pre('module/net').in('net/listen').out('net/server', 'net/socket', 'link').bind(listen).pre('module/url').in('net/connect/url').out('net/connect').bind(connectByUrl).pre('module/url').in('net/listen/url').out('net/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;
@@ -8023,21 +8240,21 @@ function syncStream(peer) {
       return r.name;
     }));
     var reactor = kos.create(value).link(peer).in('sync').bind(sync).in('unsync').bind(unsync);
-    if (repair) {
-      peer.once('inactive', function () {
-        reactor.info('repairing dataflow from peer');
-        reactor.unlink(peer);
+    peer.once('inactive', function () {
+      reactor.unlink(peer);
+      if (repair) {
+        reactor.info('repairing dataflow with peer');
         reactor.reactors.forEach(function (r) {
           return r.enable();
         });
         reactor.send('reactor', reactor);
-      });
-      peer.once('active', function () {
-        reactor.info('resuming dataflow to peer');
-        kos.unload(reactor);
-        _this.feed('link/stream', peer); // re-initiate sync
-      });
-    }
+      }
+    });
+    peer.once('active', function () {
+      reactor.info('resuming dataflow to peer');
+      kos.unload(reactor);
+      _this.feed('link/stream', peer); // re-initiate sync
+    });
     peer.on('destroy', function () {
       _this.debug('destroying sync stream, unload:', reactor.name);
       reactor.unlink(peer);
@@ -8068,7 +8285,7 @@ var _global = global,
     kos = _global$kos === undefined ? require('..') : _global$kos;
 
 
-module.exports = kos.create('ws').desc("reactions to establish WebSocket client/server communication links").init('protocols', ['ws:', 'wss:']).init('links', new Map()).in('ws/connect').and.has('module/simple-websocket').out('ws/socket', 'link', 'ws/connect').bind(connect).in('ws/listen').and.has('module/simple-websocket/server').out('ws/server', 'ws/socket', 'link').bind(listen).in('ws/connect/url').and.has('module/url').out('ws/connect').bind(connectByUrl).in('ws/listen/url').and.has('module/url').out('ws/listen').bind(listenByUrl);
+module.exports = kos.create('ws').desc("reactions to establish WebSocket client/server communication links").init('protocols', ['ws:', 'wss:']).init('links', new Map()).pre('module/simple-websocket').in('ws/connect').out('ws/socket', 'link', 'ws/connect').bind(connect).pre('module/simple-websocket/server').in('ws/listen').out('ws/server', 'ws/socket', 'link').bind(listen).pre('module/url').in('ws/connect/url').out('ws/connect').bind(connectByUrl).pre('module/url').in('ws/listen/url').out('ws/listen').bind(listenByUrl);
 
 function connect(opts) {
   var _this = this;

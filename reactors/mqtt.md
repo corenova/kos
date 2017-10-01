@@ -1,6 +1,6 @@
-# kos-flow-mqtt
+# kos-reactors-mqtt
 
-This flow module provides message based transactions using MQTT as a
+This reactor module provides message based transactions using MQTT as a
 client. Server-side flow will be added soon.
 
 For additional usage example, you can refer to
@@ -12,7 +12,7 @@ Source code is available [here](./mqtt.js).
 ## Usage
 
 ```js
-const MqttFlow = require('kos/flows/mqtt')
+const MqttFlow = require('kos/reactors/mqtt')
 ```
 
 Enabling the flow:
@@ -49,23 +49,7 @@ MqttFlow
 ## kos show
 
 ```
-├─ name: mqtt
-├─ purpose: Provides MQTT transaction flow utilizing 'mqtt' module
-├─ requires
-│  ├─ module/mqtt
-│  └─ module/url
-├─ actions
-│  ├─ ƒ(connect)
-│  ├─ ƒ(simpleConnect)
-│  ├─ ƒ(subscribe)
-│  ├─ ƒ(publish)
-│  └─ ƒ(convert)
-└──┐
-   ├─╼ mqtt/connect     ╾─╼ ƒ(connect)       ╾─╼ mqtt/client
-   ├─╼ mqtt/connect/url ╾─╼ ƒ(simpleConnect) ╾─╼ mqtt/connect
-   ├┬╼ mqtt/client      ╾┬╼ ƒ(subscribe)     ╾┬╼ mqtt/subscription
-   │└╼ mqtt/subscribe   ╾┘                    └╼ mqtt/message
-   ├┬╼ mqtt/client      ╾┬╼ ƒ(publish)
-   │└╼ mqtt/message     ╾┘
-   └─╼ mqtt/message/*   ╾─╼ ƒ(convert)       ╾─╼ mqtt/message
+
+The command "kos show mqtt" gives the reactos and event hierarchy in the kos environment.
+
 ```

@@ -226,5 +226,5 @@ function renderReactorAsTree(reactor) {
 
 function outputTreeReactor(tree, output) { 
   output.write(tree + "\n")
-  this.clear()
+  this.reset()
 }

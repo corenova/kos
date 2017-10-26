@@ -27,25 +27,6 @@ function syncConnect(url)     { this.send('link/connect/url', url) }
 function syncListen(url)      { this.send('link/listen/url', url) }
 function syncReactor(reactor) { this.send('sync', reactor) }
 
-function sync(reactor) {
-  if (reactor instanceof kos.Reactor) {
-    if (this.parent._reactors.has(reactor.name)) 
-      this.parent.unload(this.parent._reactors.get(reactor.name))
-  } else {
-    reactor.enabled = false
-    if (kos._reactors.has(reactor.name))
-      this.info('ignore locally available reactor:', reactor.name)
-    else {
-      this.info('import remote reactor:', reactor.name)
-      this.parent.load(reactor)
-    }
-  }
-}
-function unsync(id) {
-  const exists = this.parent.find(id)
-  exists && exists.parent.unload(exists)
-}
-
 function syncStream(peer) {
   const addr = peer.state.get('addr')
   const { repair } = peer.state.get('opts')
@@ -70,7 +51,7 @@ function syncStream(peer) {
     // processing
     value.reactors = value.reactors.filter(r => {
       r.enabled = false
-      return !kos._reactors.has(r.name)
+      return !kos.reactors.some(x => x.name === r.name)
     })
     this.debug(`importing ${value.reactors.length} new reactors:`, value.reactors.map(r => r.name))
     const reactor = kos.create(value).link(peer)
@@ -99,6 +80,30 @@ function syncStream(peer) {
     // inform others about new peer reactor
     this.debug("informing others about new peer reactor from", addr)
     this.send('sync', reactor)
-    kos._load(reactor)
+    reactor.join(kos)
   })
+
+  // internal helper functions
+  function sync(reactor) {
+    if (reactor instanceof kos.Reactor) {
+      const exists = this.parent.find(reactor.id)
+      if (exists && exists.parent === this.parent) 
+        exists.leave(this.parent)
+      // XXX - cannot recall reason for this logic...
+      // if (this.parent._reactors.has(reactor.name)) 
+      //   this.parent.unload(this.parent._reactors.get(reactor.name))
+    } else {
+      reactor.enabled = false
+      if (kos.reactors.some(x => x.name === reactor.name))
+        this.info('ignore locally available reactor:', reactor.name)
+      else {
+        this.info('import remote reactor:', reactor.name)
+        this.parent.load(reactor)
+      }
+    }
+  }
+  function unsync(id) {
+    const exists = this.parent.find(id)
+    exists && exists.leave(exists.parent)
+  }
 }

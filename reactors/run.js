@@ -113,7 +113,7 @@ function loadReactor(name) {
   if (reactor.type !== Symbol.for('kinetic.reactor'))
     throw new Error(`unable to load incompatible reactor "${name}" from ${location}`)
 
-  this.send('reactor', kos._load(reactor))
+  this.send('reactor', reactor.join(kos))
 }
 
 function updateLoadPath(loadpath) {

@@ -1,13 +1,22 @@
 'use strict'
 
-const kos   = require('./node')
-const debug = require('./reactors/debug')
-const link  = require('./reactors/link')
-const http  = require('./reactors/http')
-const ws    = require('./reactors/ws')
-const sync  = require('./reactors/sync')
-const pull  = require('./reactors/pull')
-const push  = require('./reactors/push')
+const kos = require('./node')
+const KineticDebug = require('./reactors/debug')
+const KineticLink  = require('./reactors/link')
+const KineticHttp  = require('./reactors/http')
+const KineticSync  = require('./reactors/sync')
+const KineticPull  = require('./reactors/pull')
+const KineticPush  = require('./reactors/push')
+const KineticReact = require('./reactors/react')
+const KineticWebSocket = require('./reactors/ws')
 
 export default kos
-export { debug, link, http, ws, sync, pull, push }
+export { 
+  KineticDebug, 
+  KineticLink, 
+  KineticHttp, 
+  KineticWebSocket, 
+  KineticSync, 
+  KineticPull, 
+  KineticPush, 
+  KineticReact }

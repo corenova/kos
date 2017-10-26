@@ -25,6 +25,7 @@ function setupLogger(level) {
   if (level)     namespaces.push('kos:info')
   if (level > 1) namespaces.push('kos:debug')
   if (level > 2) namespaces.push('kos:trace')
+  if (level > 3) namespaces = [ 'kos:*' ]
   debug.enable(namespaces.join(','))
 
   loggers.set('error', debug('kos:error'))

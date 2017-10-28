@@ -94,7 +94,7 @@ function renderListItem(item, i, options={}) {
 
 function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
   const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
-  const { inputs, requires, outputs, handler={} } = trigger
+  const { inputs, requires, outputs, label } = trigger
   let accepts = requires.concat(inputs)
   // BOX for consumed inputs
   let inbox = {
@@ -102,7 +102,7 @@ function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
 	width: inputWidth || findLongest(accepts).length,
 	start: 0
   }
-  let funcName = handler.name || ''
+  let funcName = label || ''
   if (!funcWidth) funcWidth = funcName.length
   // BOX for provided outputs
   let outbox = {
@@ -127,7 +127,7 @@ function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
   for (let idx=0, i=0, o=0; idx < block.height; idx++) {
 	let line = ''
 	if (idx >= inbox.start && i < inbox.height) {
-	  line += renderListItem(accepts[i], i++, {
+	  line += renderListItem.call(this, accepts[i], i++, {
 		height: inbox.height,
 		width:  inbox.width,
 		isMiddle: (idx === block.middle)
@@ -145,7 +145,7 @@ function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
 	  line += SEP.repeat(funcWidth + 7)
 	}
 	if (idx >= outbox.start && o < outbox.height) {
-	  line += renderListItem(outputs[o], o++, {
+	  line += renderListItem.call(this, outputs[o], o++, {
 		height: outbox.height,
 		width:  outbox.width,
 		right: {},
@@ -162,11 +162,11 @@ function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
 function renderTriggers(reactor) {
   const [ BOX, SEP ] = this.get('BOX','SEP')
   const { triggers, inputs, outputs } = reactor
-  let inputWidth  = findLongest(Array.from(inputs)).length
-  let outputWidth = findLongest(Array.from(outputs)).length
-  let funcWidth   = findLongest(triggers.map((x => x.name))).length
+  let inputWidth  = findLongest(inputs).length
+  let outputWidth = findLongest(outputs).length
+  let funcWidth   = findLongest(triggers.map((x => x.label))).length
   let lines = triggers.reduce(((acc, trigger, idx) => {
-	let item = renderTrigger(trigger, funcWidth, inputWidth, outputWidth)
+	let item = renderTrigger.call(this, trigger, funcWidth, inputWidth, outputWidth)
 	let last = idx == (triggers.length - 1)
 	for (let i=0; i < item.lines.length; i++) {
 	  let line = item.lines[i]
@@ -192,15 +192,15 @@ function renderTriggers(reactor) {
 function renderReactor(reactor) {
   const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
   const treeify = this.get('module/treeify')
-  const { id, name, purpose, passive, requires, reactors, triggers } = reactor
-  let funcWidth = findLongest(triggers.map((x => x.name))).length
+  const { id, label, purpose, passive, requires, reactors, triggers } = reactor
+  let funcWidth = findLongest(triggers.map((x => x.label))).length
   let str = ''
   let info = {
     id:       id,
 	requires: requires.sort(),
-    reactors: reactors.map(x => x.name),
-    triggers: triggers.map(x => FUNC + `(${x.name})`),
-    // + SEP.repeat(funcWidth - x.name.length) + ` @ ${x.id}`),
+    reactors: reactors.map(x => x.label),
+    triggers: triggers.map(x => FUNC + `(${x.label})`),
+    // + SEP.repeat(funcWidth - x.label.length) + ` @ ${x.id}`),
     '': null
   }
   for (let key in info) {
@@ -214,17 +214,17 @@ function renderReactor(reactor) {
   }
   str += treeify.asTree(info, true)
   for (let sub of reactors) {
-    str += '   ├─ ' + `${sub.name}: ${sub.purpose}` + "\n"
+    str += '   ├─ ' + `${sub.label}: ${sub.purpose}` + "\n"
     str += indent(renderReactor.call(this, sub), 1, '   │  ') + "\n"
     str += "   │\n"
   }
-  str += indent(renderTriggers(reactor), 3)
+  str += indent(renderTriggers.call(this, reactor), 3)
   return str
 }
 
 function renderReactorAsTree(reactor) {
-  const { name, purpose } = reactor
-  let str = `${name}: ${purpose}\n` + renderReactor.call(this, reactor)
+  const { label, purpose } = reactor
+  let str = `${label}: ${purpose}\n` + renderReactor.call(this, reactor)
   this.send('reactor/tree', str)
 }
 

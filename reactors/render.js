@@ -4,6 +4,35 @@ const { kos = require('..') } = global
 
 module.exports = kos.create('render')
   .desc('reactions to visually render KOS reactors')
+  .init({
+    BOX: {
+      L: {
+	    top:  '┌╼ ',
+	    item: '├╼ ',
+	    last: '└╼ ',
+	    mid1: '┬╼ ',
+	    mid2: '┼╼ ',
+	    mid3: '┴╼ ',
+	    one:  '─╼ ',
+	    dash: '╼ '
+      },
+      R: {
+	    top:  ' ╾┐',
+	    item: ' ╾┤',
+	    last: ' ╾┘',
+	    mid1: ' ╾┬',
+	    mid2: ' ╾┼',
+	    mid3: ' ╾┴',
+	    one:  ' ╾─',
+	    dash: ' ╾'
+      },
+      nest: '│',
+      item: '├',
+      last: '└'
+    },
+    FUNC: 'ƒ',
+    SEP: ' '
+  })
 
   .in('render')
   .out('render/reactor','render/output')
@@ -23,35 +52,6 @@ function render(opts) {
   this.send('render/reactor', source)
 }
 
-const BOX = {
-  L: {
-	top:  '┌╼ ',
-	item: '├╼ ',
-	last: '└╼ ',
-	mid1: '┬╼ ',
-	mid2: '┼╼ ',
-	mid3: '┴╼ ',
-	one:  '─╼ ',
-	dash: '╼ '
-  },
-  R: {
-	top:  ' ╾┐',
-	item: ' ╾┤',
-	last: ' ╾┘',
-	mid1: ' ╾┬',
-	mid2: ' ╾┼',
-	mid3: ' ╾┴',
-	one:  ' ╾─',
-	dash: ' ╾'
-  },
-  nest: '│',
-  item: '├',
-  last: '└'
-}
-
-const FUNC = 'ƒ'
-const SEP = ' '
-
 function indent(str, count=1, sep=' ') {
   return str.replace(/^(?!\s*$)/mg, sep.repeat(count))
 }
@@ -68,6 +68,7 @@ function findLongest(a) {
 }
 
 function renderListItem(item, i, options={}) {
+  const [ BOX, SEP ] = this.get('BOX','SEP')
   let { width, height, isMiddle=false, left=BOX.L, right=BOX.R } = options
   let str = ''
   let label = item + SEP.repeat(width - item.length)
@@ -92,6 +93,7 @@ function renderListItem(item, i, options={}) {
 }
 
 function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
+  const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
   const { inputs, requires, outputs, handler={} } = trigger
   let accepts = requires.concat(inputs)
   // BOX for consumed inputs
@@ -158,6 +160,7 @@ function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
 }
 
 function renderTriggers(reactor) {
+  const [ BOX, SEP ] = this.get('BOX','SEP')
   const { triggers, inputs, outputs } = reactor
   let inputWidth  = findLongest(Array.from(inputs)).length
   let outputWidth = findLongest(Array.from(outputs)).length
@@ -187,6 +190,7 @@ function renderTriggers(reactor) {
 }
 
 function renderReactor(reactor) {
+  const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
   const treeify = this.get('module/treeify')
   const { id, name, purpose, passive, requires, reactors, triggers } = reactor
   let funcWidth = findLongest(triggers.map((x => x.name))).length

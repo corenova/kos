@@ -10,8 +10,10 @@ const { kos = require('..') } = global
 
 module.exports = kos.create('net')
   .desc("reactions to establish TCP/UDP client/server communication links")
-  .init('protocols', ['tcp:', 'udp:'])
-  .init('links', new Map)
+  .init({
+    protocols: ['tcp:', 'udp:'],
+    links: new Map
+  })
 
   .pre('module/net')
   .in('net/connect')

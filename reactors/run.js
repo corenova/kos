@@ -10,8 +10,10 @@ const colors = require('colors')
 module.exports = kos.create('run')
   .desc('reactions to runtime context')
   .load(render)
-  .init('modules', new Map)
-  .init('loadpath', new Set)
+  .init({
+    modules: new Map,
+    loadpath: new Set
+  })
 
   .in('process')
   .out('reactor')

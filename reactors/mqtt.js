@@ -15,7 +15,7 @@ const { kos = require('..') } = global
 
 module.exports = kos.create('mqtt')
   .desc("reactions to establish MQTT client/server communication links")
-  .init('protocols', ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'])
+  .init({ protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'] })
 
   .pre('module/mqtt')
   .in('mqtt/connect')
@@ -30,7 +30,7 @@ module.exports = kos.create('mqtt')
 
   .in('mqtt/client','mqtt/subscribe')
   .out('mqtt/subscription','mqtt/message')
-  .init('topics', new Set)
+  .set('topics', new Set)
   .bind(subscribe)
 
   .in('mqtt/client','mqtt/message')

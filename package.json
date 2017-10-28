@@ -48,6 +48,7 @@
     "uuid": "^3.0.1"
   },
   "optionalDependencies": {
+    "net-snmp": "^1.2.0",
     "simple-websocket": "^5.0.0",
     "superagent": "^3.4.1"
   },
@@ -66,10 +67,15 @@
       "es2015"
     ],
     "plugins": [
-      [ "transform-builtin-extend", {
-        "globals": ["Array"],
-        "approximate": true
-      }]
+      [
+        "transform-builtin-extend",
+        {
+          "globals": [
+            "Array"
+          ],
+          "approximate": true
+        }
+      ]
     ]
   }
 }

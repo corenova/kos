@@ -6,7 +6,7 @@ const KineticTrigger = require('./lib/trigger')
 const KineticToken   = require('./lib/token')
 
 const kos = new KineticReactor({
-  name: 'kos',
+  label: 'kos',
   purpose: 'reactions to kinetic object streams',
   passive: true
 })

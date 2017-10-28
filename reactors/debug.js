@@ -5,8 +5,10 @@ const debug = require('debug')
 
 module.exports = kos.create('debug')
   .desc('reactions to send debugging messages to an output stream')
-  .init('loggers', new Map)
-  .init('level', 0)
+  .init({
+    loggers: new Map,
+    level: 0
+  })
 
   .in('debug/level').bind(setupLogger)
 
@@ -19,7 +21,7 @@ function setupLogger(level) {
   const loggers = this.get('loggers')
   if (level < 0) return
 
-  this.parent.init('level', level)
+  this.parent.set('level', level)
 
   let namespaces = [ 'kos:error', 'kos:warn' ]
   if (level)     namespaces.push('kos:info')

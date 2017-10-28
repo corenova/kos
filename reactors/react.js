@@ -2,12 +2,14 @@ const { kos = require('kos') } = global
 
 module.exports = kos.create('react-state-machine')
   .desc('reactions to React lifecycle events')
-  .init('lifecycle', {
-    componentWillMount:   "react:mounting",
-    componentDidMount:    "react:mounted",
-    componentWillUnmount: "react:unmounting",
-    componentWillUpdate:  "react:updating",
-    componentDidUpdate:   "react:updated"
+  .init({
+    lifecycle: {
+      componentWillMount:   "react:mounting",
+      componentDidMount:    "react:mounted",
+      componentWillUnmount: "react:unmounting",
+      componentWillUpdate:  "react:updating",
+      componentDidUpdate:   "react:updated"
+    }
   })
   .in('react:mounting').bind(function() { 
     this.reactor.parent.join(kos) 
@@ -16,13 +18,13 @@ module.exports = kos.create('react-state-machine')
     this.reactor.parent.leave(kos)
   })
 
-  .in('react:component')
+  .in('component')
   .out('react:*')
   .bind(wrapComponent)
 
 function wrapComponent(component) {
   const lifecycle = this.get('lifecycle')
-  const { state={}, setState } = component
+  const { state, setState } = component
   const source = this.reactor.parent
 
   // allow all lifecycle events to emit an actual event
@@ -34,9 +36,9 @@ function wrapComponent(component) {
     }
   }
   // treat 'state' and 'setState' specially
-  source.init(state)
+  source.save(state, { emit: false })
   component.setState = function (obj, ...rest) {
-    source.init(obj)
+    source.save(obj, { emit: false })
     return setState.call(component, obj, ...rest)
   }
   Object.defineProperty(component, 'state', {
@@ -46,7 +48,6 @@ function wrapComponent(component) {
       return obj
     },
     set(obj) {
-      source.state.clear()
       source.init(obj)
     }
   })

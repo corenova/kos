@@ -8,7 +8,7 @@ const ws   = require('./ws')
 module.exports = kos.create('rest')
   .desc('reactions to RElational State Transfer interactions with KOS reactors')
   .load(http, ws)
-  .init('basePath', '/')
+  .init({ basePath: '/' })
 
   .in('rest/listen')
   .out('http/listen','http/route')
@@ -38,7 +38,7 @@ function runInstance(opts) {
   this.send('http/listen', opts)
   // Note: for now tap into the stream and "publish" every kinetic
   // object into runtime state. Should make this hierarchical...
-  this.parent.on('data', token => this.post(token.key, token.value))
+  this.parent.on('data', token => this.save({ token.key: token.value }))
 }
 
 function runWebSocketServer(server) {

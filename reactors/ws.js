@@ -10,8 +10,10 @@ const { kos = require('..') } = global
 
 module.exports = kos.create('ws')
   .desc("reactions to establish WebSocket client/server communication links")
-  .init('protocols', ['ws:', 'wss:'])
-  .init('links', new Map)
+  .init({
+    protocols: ['ws:', 'wss:'],
+    links: new Map
+  })
 
   .pre('module/simple-websocket')
   .in('ws/connect')

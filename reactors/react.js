@@ -8,7 +8,8 @@ module.exports = kos.create('react-state-machine')
       componentDidMount:    "react:mounted",
       componentWillUnmount: "react:unmounting",
       componentWillUpdate:  "react:updating",
-      componentDidUpdate:   "react:updated"
+      componentDidUpdate:   "react:updated",
+      componentWillReceiveProps: "react:receive"
     }
   })
   .in('react:mounting').bind(function() { 
@@ -31,7 +32,7 @@ function wrapComponent(component) {
   for (let event in lifecycle) {
     let f = component[event], label = lifecycle[event]
     component[event] = (...args) => {
-      this.send(label, true)
+      this.send(label, args)
       if (f) return f.apply(component, args)
     }
   }

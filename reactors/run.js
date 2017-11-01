@@ -66,7 +66,7 @@ function start(program, process) {
   const ignores = engine.inputs.concat([ 'module/*', 'sync', 'error', 'warn', 'info', 'debug' ])
 
   // write tokens seen by this reactor into stdout
-  kos.on('trace', (token, flow) => {
+  kos.on('flow', (token, flow) => {
     if (token.origin !== 'unknown' && !token.match(ignores)) {
       kos.emit('clear')
       stdout.write(token.toKSON() + "\n")

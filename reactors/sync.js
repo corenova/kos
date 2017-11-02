@@ -41,8 +41,8 @@ function syncStream(peer) {
     if (value.id === kos.id)
       return this.warn('detected circular sync loop from peer', addr)
 
-    this.info(`importing '${value.name}' reactor (${value.id}) from:`, addr)
-    value.name = `sync(${addr})`
+    this.info(`importing '${value.label}' reactor (${value.id}) from:`, addr)
+    value.label = `sync(${addr})`
     // remove any reactors from peer that are also locally
     // available in order to prevent further propagation of locally
     // handled tokens into the distributed KOS cluster
@@ -51,9 +51,9 @@ function syncStream(peer) {
     // processing
     value.reactors = value.reactors.filter(r => {
       r.enabled = false
-      return !kos.reactors.some(x => x.name === r.name)
+      return !kos.reactors.some(x => x.label === r.label)
     })
-    this.debug(`importing ${value.reactors.length} new reactors:`, value.reactors.map(r => r.name))
+    this.debug(`importing ${value.reactors.length} new reactors:`, value.reactors.map(r => r.label))
     const reactor = kos.create(value).link(peer)
       .in('sync').bind(sync)
       .in('unsync').bind(unsync)
@@ -71,7 +71,7 @@ function syncStream(peer) {
       this.feed('link/stream', peer) // re-initiate sync
     })
     peer.on('destroy', () => {
-      this.debug('destroying sync stream, unload:', reactor.name)
+      this.debug('destroying sync stream, unload:', reactor.label)
       reactor.unlink(peer)
       kos.unload(reactor)
       // inform others peer is gone
@@ -94,10 +94,10 @@ function syncStream(peer) {
       //   this.parent.unload(this.parent._reactors.get(reactor.name))
     } else {
       reactor.enabled = false
-      if (kos.reactors.some(x => x.name === reactor.name))
-        this.info('ignore locally available reactor:', reactor.name)
+      if (kos.reactors.some(x => x.label === reactor.label))
+        this.info('ignore locally available reactor:', reactor.label)
       else {
-        this.info('import remote reactor:', reactor.name)
+        this.info('import remote reactor:', reactor.label)
         this.parent.load(reactor)
       }
     }

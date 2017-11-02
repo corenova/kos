@@ -7,7 +7,8 @@ const ws   = require('./ws')
 
 module.exports = kos.create('rest')
   .desc('reactions to RElational State Transfer interactions with KOS reactors')
-  .load(http, ws)
+  .load(http)
+  .load(ws)
   .init({ basePath: '/' })
 
   .in('rest/listen')

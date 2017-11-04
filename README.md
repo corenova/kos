@@ -12,8 +12,8 @@ paradigm that dynamically responds to *objects* in motion through a
 pipeline of computational actors that can execute concurrently.
 
 Conduct [data science](https://en.wikipedia.org/wiki/Data_science)
-experiments, [create neural networks](./docs/cluster.md), and
-[embrace KOS](./docs/intro.md).
+experiments, [create neural networks](./doc/cluster.md), and
+[embrace KOS](./doc/intro.md).
 
 <!---
   [![NPM Version][npm-image]][npm-url]
@@ -29,13 +29,13 @@ expressed as a set of discrete atomic *trigger(s)* that
 observes from its incoming flow of data objects.
 
 Using **KOS**, you can create a new
-[Kinetic Reactor](./docs/intro.md#kinetic-reactor) instance with one
-or more [Kinetic Trigger](./docs/intro.md#kinetic-trigger) reactive
+[Kinetic Reactor](./doc/intro.md#kinetic-reactor) instance with one
+or more [Kinetic Trigger](./doc/intro.md#kinetic-trigger) reactive
 functions and **feed/pipe** a stream of
-[Kinetic Token(s)](./docs/intro.md#kinetic-token) into the
-reactor. The [Kinetic Reactor](./docs/intro.md#kinetic-reactor) and
-[Kinetic Trigger](./docs/intro.md#kinetic-trigger) are both instances
-of [Kinetic Stream](./docs/intro.md#kinetic-stream) and natively
+[Kinetic Token(s)](./doc/intro.md#kinetic-token) into the
+reactor. The [Kinetic Reactor](./doc/intro.md#kinetic-reactor) and
+[Kinetic Trigger](./doc/intro.md#kinetic-trigger) are both instances
+of [Kinetic Stream](./doc/intro.md#kinetic-stream) and natively
 support data streaming API (i.e. read/write).
 
 One of the most important concept in **KOS** is that these *reactive*
@@ -49,17 +49,17 @@ works tirelessly behind the scenes in a given software instance. You
 don't need to explicitly tell the *garbage collector* to clean-up, it
 simply *reacts autonomously* based on its environmental observations.
 
-When you [embrace KOS](./docs/intro.md) you are embracing **chaos**
+When you [embrace KOS](./doc/intro.md) you are embracing **chaos**
 itself by giving up your *programmatic* execution flow control
 logic. Instead of honing your *incantation* skills and declaring the
 chain of commands for fulfilling your desires, you've now become an
 **alchemist**, continually experimenting with
-[chain reactions](./docs/intro.md#chain-reactions) and tinkering with *tokens*
+[chain reactions](./doc/intro.md#chain-reactions) and tinkering with *tokens*
 you inject into the system until you get your desired result.
 
 Once you learn how to express and leverage the power of
-[chain reactions](./docs/intro.md#chain-reactions), you can create
-[neural networks](./docs/cluster.md) that **evolve** based on its
+[chain reactions](./doc/intro.md#chain-reactions), you can create
+[neural networks](./doc/cluster.md) that **evolve** based on its
 operating environment.
 
 ## Reference Guides
@@ -69,19 +69,19 @@ paradigms for expressing software itself, it is **highly** advised
 that first-time users carefully read **all** of the included
 documentation below:
 
-- [Introduction to KOS](./docs/intro.md)
-  - [Core Concepts](./docs/intro.md#core-concepts)
-  - [Core Entities](./docs/intro.md#core-entities)
-  - [Programming Paradigms](./docs/intro.md#programming-paradigms)
-- [Using KOS](./docs/usage.md)
-  - [Getting Started](./docs/usage.md#getting-started)
-  - [Loading Reactors](./docs/usage.md#loading-reactors)
-  - [Sending Tokens](./docs/usage.md#sending-tokens)
-  - [Triggering Reactions](./docs/usage.md#triggering-reactions)
-  - [CLI Reference](./docs/usage.md#cli-reference)
-- [Clustering KOS](./docs/cluster.md)
-  - [Full Stack](./docs/cluster.md#full-stack)
-  - [Hive Mind](./docs/cluster.md#hive-mind)
+- [Introduction to KOS](./doc/intro.md)
+  - [Core Concepts](./doc/intro.md#core-concepts)
+  - [Core Entities](./doc/intro.md#core-entities)
+  - [Programming Paradigms](./doc/intro.md#programming-paradigms)
+- [Using KOS](./doc/usage.md)
+  - [Getting Started](./doc/usage.md#getting-started)
+  - [Loading Reactors](./doc/usage.md#loading-reactors)
+  - [Sending Tokens](./doc/usage.md#sending-tokens)
+  - [Triggering Reactions](./doc/usage.md#triggering-reactions)
+  - [CLI Reference](./doc/usage.md#cli-reference)
+- [Clustering KOS](./doc/cluster.md)
+  - [Full Stack](./doc/cluster.md#full-stack)
+  - [Hive Mind](./doc/cluster.md#hive-mind)
 
 The **developer's guide** to creating new reactors and understanding
 the **KOS** library APIs will be coming soon! In the meantime, taking
@@ -108,22 +108,23 @@ $ git clone https://github.com/corenova/kos
 ## Available Reactors
 
 The following reactor modules are included inside the **KOS**
-repository (see [reactors](./reactors)):
+repository (see [reactors](./reactor)):
 
 name | description
 ---  | ---
-[debug](./reactors/debug.md) | reactions to send debugging messages to an output stream
-[http](./reactors/http.md) | reactions to http client/server transactions
-[link](./reactors/link.md) | reactions to dynamic client/server flows
-[mqtt](./reactors/mqtt.md) | reactions to mqtt client/server transactions
-[net](./reactors/net.md) | reactions to tcp/udp client/server transactions
-[npm](./reactors/npm.md) | reactions to drive NPM operations
-[pull](./reactors/pull.md) | reactions to pull dataflow from peers
-[push](./reactors/push.md) | reactions to push dataflow to peers
-[rest](./reactors/rest.md) | reactions to RESTful transactions
-[run](./reactors/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
-[sync](./reactors/sync.md) | reactions to sync dataflow with peers
-[ws](./reactors/ws.md) | reactions to websockets client/server flows
+[debug](./reactor/debug.md) | reactions to send debugging messages to an output stream
+[http](./reactor/http.md) | reactions to http client/server transactions
+[link](./reactor/link.md) | reactions to dynamic client/server flows
+[mqtt](./reactor/mqtt.md) | reactions to mqtt client/server transactions
+[net](./reactor/net.md) | reactions to tcp/udp client/server transactions
+[npm](./reactor/npm.md) | reactions to drive NPM operations
+[pull](./reactor/pull.md) | reactions to pull dataflow from peers
+[push](./reactor/push.md) | reactions to push dataflow to peers
+[rest](./reactor/rest.md) | reactions to RESTful transactions
+[run](./reactor/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
+[snmp](./reactor/snmp.md) | reactions to snmp client/server transactions
+[sync](./reactor/sync.md) | reactions to sync dataflow with peers
+[ws](./reactor/ws.md) | reactions to websockets client/server flows
 
 ## License
   [Apache 2.0](LICENSE)

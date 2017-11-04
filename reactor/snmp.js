@@ -40,7 +40,7 @@ function connect(opts) {
   const snmp = this.get('module/net-snmp')
   const [ protocols, sessions ] = this.get('protocols', 'sessions')
 
-  const { protocol, hostname, port, community, retries, timeout, transport, version } = opts = normalizeOptions(opts)
+  const { protocol, hostname, port, community, retries, timeout, version } = opts = normalizeOptions(opts)
   if (!protocols.includes(protocol)) this.throw("unsupported protocol", protocol)
 
   const addr = `${protocol}//${hostname}:${port}`

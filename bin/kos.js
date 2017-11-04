@@ -4,7 +4,7 @@
 const program = require('commander')
 const pkginfo = require('../package.json')
 const kos = require('..')
-const run = require('../reactors/run')
+const run = require('../reactor/run')
 
 function collect(val, keys) { keys.push(val); return keys }
 

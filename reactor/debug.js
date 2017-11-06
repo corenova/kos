@@ -66,5 +66,5 @@ function outputError(err) {
 function outputMessage(data) {
   const logger = this.get('loggers').get(this.event)
   if (typeof logger !== 'function') return
-  logger(data.join(' '))
+  logger(...data)
 }

@@ -65,6 +65,8 @@ function start(program, process) {
   const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
   const ignores = engine.inputs.concat([ 'module/*', 'sync', 'error', 'warn', 'info', 'debug' ])
 
+  this.save({ verbose })
+
   // write tokens seen by this reactor into stdout
   kos.on('flow', (token, flow) => {
     if (token.origin !== 'unknown' && !token.match(ignores)) {
@@ -75,7 +77,12 @@ function start(program, process) {
       this.warn(`unrecognized token "${token.key}"`)
     }
   })
-  kos.on('data', () => kos.emit('clear'))
+  kos.on('data', token => {
+    const { key } = token
+    const logs = [ 'error', 'warn', 'info', 'debug' ]
+    const level = logs.indexOf(key)
+    if ((level === -1) || (verbose >= (level-1))) kos.emit('clear')
+  })
   silent || kos.pipe(debug).feed('debug/level', verbose)
 
   args.forEach(x => this.send('load', x))
@@ -154,6 +161,7 @@ function tryRequire(opts) {
 
 function promptUser(prompt) {
   const regex = /^module\//
+  const verbose = this.get('verbose')
   const readline = this.get('module/readline')
   const { stdin, stdout, stderr } = this.get('process')
 
@@ -191,7 +199,12 @@ function promptUser(prompt) {
     }
     cmd.prompt()
   })
-  kos.on('data', clearPrompt)
+  kos.on('data', token => {
+    const { key } = token
+    const logs = [ 'error', 'warn', 'info', 'debug' ]
+    const level = logs.indexOf(key)
+    if ((level === -1) || (verbose >= (level-1))) clearPrompt()
+  })
   kos.on('clear', clearPrompt)
   this.set('active', true)
   cmd.prompt()

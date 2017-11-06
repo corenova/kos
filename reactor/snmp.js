@@ -13,7 +13,7 @@ module.exports = kos.create('snmp')
 
   .pre('module/net-snmp')
   .in('snmp/connect')
-  .out('snmp/session')
+  .out('snmp/session','snmp/connect/url')
   .bind(connect)
 
   .pre('module/net-snmp')
@@ -40,12 +40,12 @@ function connect(opts) {
   const snmp = this.get('module/net-snmp')
   const [ protocols, sessions ] = this.get('protocols', 'sessions')
 
-  const { protocol, hostname, port, community, retries, timeout, version } = opts = normalizeOptions(opts)
+  const { protocol, hostname, port, community, retries, timeout, transport, version } = opts = normalizeOptions(opts)
   if (!protocols.includes(protocol)) this.throw("unsupported protocol", protocol)
 
   const addr = `${protocol}//${hostname}:${port}`
   if (!sessions.has(addr)) {
-    let session = snmp.createSession(hostname, community, {version})
+    let session = snmp.createSession(hostname, community, { port, retries, timeout, transport, version })
     session.on('error', this.error.bind(this))
     sessions.set(addr, session)
   }

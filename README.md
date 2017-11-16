@@ -120,6 +120,7 @@ name | description
 [npm](./reactor/npm.md) | reactions to drive NPM operations
 [pull](./reactor/pull.md) | reactions to pull dataflow from peers
 [push](./reactor/push.md) | reactions to push dataflow to peers
+[react](./reactor/react.md) | reactions to React.js component lifecycle
 [rest](./reactor/rest.md) | reactions to RESTful transactions
 [run](./reactor/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
 [snmp](./reactor/snmp.md) | reactions to snmp client/server transactions

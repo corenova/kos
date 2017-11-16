@@ -15,18 +15,18 @@ The **KOS** framework comes with a number of
 [available reactors](../README.md#available-reactors) designed
 specifically for providing distributed networking facilities.
 
-The [pull](../reactors/pull.md) and [push](../reactors/push.md)
+The [pull](../reactor/pull.md) and [push](../reactor/push.md)
 reactors provide reactions to enable uni-directional
 [Kinetic Token](./intro.md#kinetic-token) flows across instances.
 
-The [sync](../reactors/sync.md) reactor provides the essential
+The [sync](../reactor/sync.md) reactor provides the essential
 reactions to create a topology of
 [Kinetic Runtime](./intro.md#kinetic-runtime) instances that
 synchronizes [Kinetic Token](./intro.md#kinetic-token) flows across
 instances.
 
 For the purpose of discussing various distributed computing cluster
-models, we'll focus mainly on using the [sync](../reactors/sync.md)
+models, we'll focus mainly on using the [sync](../reactor/sync.md)
 reactor.
 
 ## Full Stack
@@ -35,12 +35,12 @@ Since the **KOS** framework is written in JavaScript, enabling
 seamless **dataflow integration** between the web browser client and
 the backend Node.js server is fairly straight-forward.
 
-When using [sync](../reactors/sync.md) reactor to establish a dataflow
+When using [sync](../reactor/sync.md) reactor to establish a dataflow
 stream between a web browser client and the backend, we utilize the
-[ws](../reactors/ws.md) reactor for `WebSocket` based communications.
+[ws](../reactor/ws.md) reactor for `WebSocket` based communications.
 
 For a quick example on a **full stack** setup, you can also check out
-the [todo app](../examples/todo) inside the [examples](../examples)
+the [todo app](../example/todo) inside the [example](../example)
 folder.
 
 ### KOS on the server
@@ -60,12 +60,12 @@ kos> load "sync"
 kos> sync/listen "ws://localhost:3000"
 ```
 
-You can also programatically use the [sync](../reactors/sync.md)
+You can also programatically use the [sync](../reactor/sync.md)
 reactor:
 
 ```js
 const kos = require("kos")
-const sync = require("kos/reactors/sync")
+const sync = require("kos/reactor/sync")
 kos
   .load(sync)
   .feed('sync/listen', 'ws://localhost:3000')
@@ -80,7 +80,7 @@ On the client side, since you don't have the benefit of the `kos`
 utility, you will need to directly `import/require` the
 [Kinetic Runtime](./intro.md#kinetic-runtime) inside the web
 application (e.g. [kos.min.js](../dist/kos.min.js)) and *load* the
-[sync](../reactors/sync.md) reactor module into the runtime instance.
+[sync](../reactor/sync.md) reactor module into the runtime instance.
 
 Here's the complete client-side workflow:
 
@@ -117,7 +117,7 @@ as [browserify](http://browserify.org) and
 when generating the client-side web application.
 
 The `url` and the `simple-websocket` modules are needed by the
-[sync](../reactors/sync.md) reactor in order to perform reactions for
+[sync](../reactor/sync.md) reactor in order to perform reactions for
 establishing `WebSocket` connections.
 
 In the future, we can introduce a new reactor using a web service
@@ -133,7 +133,7 @@ kos.feed('sync/connect', "ws://localhost:3000")
 
 The above `sync/connect` data token triggers the following
 [chain reaction](./intro.md#chain-reactions) using the
-[link](../reactors/link.md) and [ws](../reactors/ws.md) reactors:
+[link](../reactor/link.md) and [ws](../reactor/ws.md) reactors:
 
 ```
 sync/connect -> f(sync:syncConnect) -> link/connect/url
@@ -151,7 +151,7 @@ token (i.e. it's ok to start the client before the server).
 
 ### Synchronization between server/client
 
-So, what does it mean once you have a [sync](../reactors/sync.md)
+So, what does it mean once you have a [sync](../reactor/sync.md)
 reactor active between the server and the client in a full stack
 scenario?
 
@@ -162,7 +162,7 @@ other party to trigger reactions as if those reactors were also
 locally available to itself.
 
 For example, if the server instance had the
-[http](../reactors/http.md) reactor loaded, then from the web client
+[http](../reactor/http.md) reactor loaded, then from the web client
 instance, it can [send](./usage.md#sending-tokens) the
 `http/request/get` token and have the `http/response` data token
 produced by the server instance flow back to itself as if the actual
@@ -170,7 +170,7 @@ reaction took place inside the client instance.
 
 From the web client, it can even trigger a *reaction* to the server
 instance to have it **dynamically load** the
-[http](../reactors/http.md) reactor:
+[http](../reactor/http.md) reactor:
 
 ```js
 kos.feed('load', 'http')
@@ -178,7 +178,7 @@ kos.feed('load', 'http')
 
 Such ability is made possible for the web client instance because when
 it *synchronized* with the server instance, it discovered the
-[run](../reactors/run.md) reactor from the server instance which
+[run](../reactor/run.md) reactor from the server instance which
 contains a reactive trigger for the `load` data token.
 
 In theory, we should also be able to trigger `require` data token and
@@ -188,7 +188,7 @@ between instances due to JSON serialization challenges for Node.js
 modules with `require` dependencies to other modules. Once again,
 volunteers are welcome for exploring this reaction. :-)
 
-The key takeaway in understanding [sync](../reactors/sync.md) behavior
+The key takeaway in understanding [sync](../reactor/sync.md) behavior
 is this: **KOS synchronizes the *state machine* of each instance and NOT
 the actual state of each instance.**
 
@@ -198,7 +198,7 @@ The **KOS** instance running on the web client has limited options
 when establishing network relationships with other **KOS**
 instances. For one, it is not possible to have it *listen* for new
 connections. It is also unable to make direct TCP/UDP based
-connections using the [net](../reactors/net.md) reactor.
+connections using the [net](../reactor/net.md) reactor.
 
 However, it is fully capable of joining as many server endpoints as it
 wants and in turn act as a synchronization link across multiple
@@ -226,7 +226,7 @@ that of
 > unknown to the individual agents.
 
 When you build a network of **KOS** instances using the
-[sync](../reactors/sync.md) reactor, you are effectively creating a
+[sync](../reactor/sync.md) reactor, you are effectively creating a
 [Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence)
 system, where each individual instance contributes its own local
 limited reactive facilities which when combined together as a whole
@@ -244,7 +244,7 @@ becomes capable of individually behaving and acting like the
 **collective intelligence** even after it gets *pruned* from the
 network it once belonged to.
 
-Basically, using the [sync](../reactors/sync.md) reactor, each *agent*
+Basically, using the [sync](../reactor/sync.md) reactor, each *agent*
 learns ALL of the reactive facilities of the cluster it joins and can
 then perform ALL of the reactions provided by the cluster even after
 being disonncected from the cluster.  Also, once the disconnected

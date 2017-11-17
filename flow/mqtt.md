@@ -1,6 +1,6 @@
-# kos-flow-mqtt
+# mqtt flow observer
 
-This flow module provides message based transactions using MQTT as a
+This flow observer provides message based transactions using MQTT as a
 client. Server-side flow will be added soon.
 
 For additional usage example, you can refer to
@@ -12,13 +12,12 @@ Source code is available [here](./mqtt.js).
 ## Usage
 
 ```js
-const MqttFlow = require('kos/flows/mqtt')
+const MqttFlow = require('kos/flow/mqtt')
 ```
 
 Enabling the flow:
 ```js
 MqttFlow
-  .on('mqtt/message', ({topic, payload}) => console.log(payload))
   .feed('module/mqtt', require('mqtt'))
   .feed('module/url', require('url'))
 ```

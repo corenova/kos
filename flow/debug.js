@@ -21,7 +21,7 @@ function setupLogger(level) {
   const loggers = this.get('loggers')
   if (level < 0) return
 
-  this.parent.set('level', level)
+  this.save({ level })
 
   let namespaces = [ 'kos:error', 'kos:warn' ]
   if (level)     namespaces.push('kos:info')

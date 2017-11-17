@@ -1,6 +1,6 @@
-# kos-flow-http
+# http flow observer
 
-THis flow module provides message based transaction using HTTP as a
+This flow observer provides message based transaction using HTTP as a
 client and/or server.
 
 Source code is available [here](./http.js).
@@ -8,7 +8,7 @@ Source code is available [here](./http.js).
 ## Usage
 
 ```js
-const HttpFlow = require('kos/flows/http')
+const HttpFlow = require('kos/flow/http')
 ```
 
 ## kos show

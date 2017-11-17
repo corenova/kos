@@ -1,20 +1,18 @@
 'use strict'
 
-const KineticStream  = require('./lib/stream')
-const KineticReactor = require('./lib/reactor')
-const KineticTrigger = require('./lib/trigger')
-const KineticToken   = require('./lib/token')
+const Dataflow = require('./lib/dataflow')
+const Reaction = require('./lib/reaction')
+const Stream   = require('./lib/stream')
 
-const kos = new KineticReactor({
+const kos = new Dataflow({
   label: 'kos',
-  purpose: 'reactions to kinetic object streams',
+  purpose: 'reactions to flow of stimuli',
   passive: true
 })
 
-// expose Kinetic class definitions
-kos.Stream  = KineticStream
-kos.Reactor = KineticReactor
-kos.Trigger = KineticTrigger
-kos.Token   = KineticToken
+// expose core class definitions
+kos.Dataflow = Dataflow
+kos.Reaction = Reaction
+kos.Stream   = Stream
 
 global.kos = module.exports = kos['default'] = kos.kos = kos

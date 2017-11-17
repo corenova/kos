@@ -1,4 +1,4 @@
-// MQTT transaction flow
+// MQTT transaction flow observer
 //
 // NOTE: this flow REQUIREs the 'mqtt' module and will become active
 // if already present locally, receives it from the upstream, or fed
@@ -14,7 +14,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.create('mqtt')
-  .desc("reactions to establish MQTT client/server communication links")
+  .desc("reactions to MQTT client/server communications")
   .init({ protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'] })
 
   .pre('module/mqtt')

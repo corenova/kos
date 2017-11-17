@@ -1,17 +1,17 @@
-# npm reactor
+# npm flow observer
 
-This reactor module provides basic NPM client transactions with the
-NPM registry. It enables you to install/uninstall external modules to
-any given endpoint running KOS. For example, it can be used in
-conjunction with [engine](./engine.md) to auto-resolve dependencies
-via a simple `require "some-module"` message.
+This flow observer provides basic NPM client transactions with the NPM
+registry. It enables you to install/uninstall external modules to any
+given endpoint running KOS. For example, it can be used in conjunction
+with [engine](./engine.md) to auto-resolve dependencies via a simple
+`require "some-module"` message.
 
 Source code is [here](./npm.js).
 
 ## Usage
 
 ```js
-const npm = require('kos/reactors/npm')
+const npm = require('kos/flow/npm')
 ```
 
 Simple example:

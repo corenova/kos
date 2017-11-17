@@ -16,14 +16,14 @@ module.exports = kos.create('run')
   })
 
   .in('process')
-  .out('reactor')
+  .out('observer')
   .bind(initialize)
 
   .in('program','process')
   .out('load', 'read', 'show', 'prompt')
   .bind(start)
 
-  // TODO: consider making this a separate reactor
+  // TODO: consider making this a separate observer
   .pre('process','module/readline')
   .in('prompt')
   .out('render')
@@ -31,8 +31,8 @@ module.exports = kos.create('run')
 
   .pre('module/path')
   .in('load')
-  .out('reactor')
-  .bind(loadReactor)
+  .out('observer')
+  .bind(loadObserver)
 
   .in('load/path')
   .bind(updateLoadPath)
@@ -45,29 +45,29 @@ module.exports = kos.create('run')
   .in('read')
   .bind(readKSONFile)
 
-  .in('reactor')
+  .in('observer')
   .out('require')
-  .bind(requireReactor)
+  .bind(requireObserver)
 
   .pre('process','show')
-  .in('reactor')
+  .in('observer')
   .out('render')
-  .bind(renderReactor)
+  .bind(renderObserver)
 
 // self-initialize
 function initialize(process) { 
-  this.send('reactor', this.parent)
+  this.send('observer', this.flow)
 }
 
 function start(program, process) {
-  const engine = this.parent
+  const engine = this.flow
   const { stdin, stdout, stderr } = process
   const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
   const ignores = engine.inputs.concat([ 'module/*', 'sync', 'error', 'warn', 'info', 'debug' ])
 
   this.save({ verbose })
 
-  // write tokens seen by this reactor into stdout
+  // write tokens seen by this observer into stdout
   kos.on('flow', (token, flow) => {
     if (token.origin !== 'unknown' && !token.match(ignores)) {
       kos.emit('clear')
@@ -100,38 +100,38 @@ function start(program, process) {
   else stdin.pipe(kos, { end: false })
 }
 
-function loadReactor(name) {
+function loadObserver(name) {
   const [ path, loadpath ] = this.get('module/path','loadpath')
   const search = [ 
     path.resolve(name),
-    path.resolve('reactors', name),
+    path.resolve('flow', name),
     path.resolve(__dirname, name),
     name
   ]
-  let reactor
+  let observer
   let location
   for (location of search) {
-    try { reactor = require(location); break }
+    try { observer = require(location); break }
     catch (e) { 
       if (e.code !== 'MODULE_NOT_FOUND') throw e
     }
   }
-  if (!reactor) 
-    throw new Error(`unable to locate reactor "${name}" from ${search}`)
+  if (!observer) 
+    throw new Error(`unable to locate observer "${name}" from ${search}`)
     
-  if (reactor.type !== Symbol.for('kinetic.reactor'))
-    throw new Error(`unable to load incompatible reactor "${name}" from ${location}`)
+  if (observer.type !== Symbol.for('kos:observer'))
+    throw new Error(`unable to load incompatible observer "${name}" from ${location}`)
 
-  this.send('reactor', reactor.join(kos))
+  this.send('observer', observer.join(kos))
 }
 
 function updateLoadPath(loadpath) {
   
 }
 
-function requireReactor(reactor) { 
+function requireObserver(observer) { 
   const regex = /^module\/(.+)$/
-  reactor.requires.forEach(key => {
+  observer.requires.forEach(key => {
     let match = key.match(regex, '$1')
     if (!match) return
     this.send('require', match[1])
@@ -216,11 +216,11 @@ function promptUser(prompt) {
   }
 }
 
-function renderReactor(reactor) {
+function renderObserver(observer) {
   if (!this.get('show')) return
   const { stderr } = this.get('process')
   this.send('render', {
-    source: reactor,
+    source: observer,
     target: stderr
   })
 }

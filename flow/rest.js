@@ -6,7 +6,7 @@ const http = require('./http')
 const ws   = require('./ws')
 
 module.exports = kos.create('rest')
-  .desc('reactions to RElational State Transfer interactions with KOS reactors')
+  .desc('reactions to RElational State Transfer interactions with KOS flow observers')
   .load(http)
   .load(ws)
   .init({ basePath: '/' })
@@ -21,19 +21,19 @@ module.exports = kos.create('rest')
 
   .in('http/server/request/get')
   .out('http/server/response')
-  .bind(getReactorState)
+  .bind(getFlowState)
 
   .in('http/server/request/put')
   .out('http/server/response')
-  .bind(putReactortate)
+  .bind(putFlowState)
 
   .in('http/server/request/delete')
   .out('http/server/response')
-  .bind(deleteReactortate)
+  .bind(deleteFlowState)
 
   .in('http/server/request/post')
   .out('http/server/response')
-  .bind(postReactorState)
+  .bind(postFlowState)
 
 function runInstance(opts) {
   this.send('http/listen', opts)
@@ -46,7 +46,7 @@ function runWebSocketServer(server) {
   this.send('ws/listen', { server })
 }
 
-function getReactorState({ req, res }) {
+function getFlowState({ req, res }) {
   let key = url2key(req.url, this.get('basePath'))
   let data = this.get(key)
   res.statusCode = data ? 200 : 404
@@ -63,17 +63,17 @@ function getReactorState({ req, res }) {
   res.end()
 }
 
-function putReactorState({ req, res }) {
+function putFlowState({ req, res }) {
   let key = url2key(req.url, this.get('basePath'))
   this.warn('not yet supported')
 }
 
-function deleteReactorState({ req, res }) {
+function deleteFlowState({ req, res }) {
   let key = url2key(req.url, this.get('basePath'))
   this.warn('not yet supported')
 }
 
-function postReactorState({ req, res }) {
+function postFlowState({ req, res }) {
   let key = url2key(req.url, this.get('basePath'))
   let io = this.parent.io()
   io.write(key + ' ')

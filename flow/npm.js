@@ -1,4 +1,4 @@
-// Node Package Manager transaction stream
+// Node Package Manager flow observer
 //
 // NOTE: this stream REQUIREs the 'npm' module which is usually
 // available in a Node.js environment. Optionally, it can be fulfilled

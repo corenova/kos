@@ -1,4 +1,4 @@
-// HTTP transaction flow
+// HTTP transaction flow observer
 //
 // NOTE: this flow REQUIREs the 'superagent' or 'http' module and will
 // become active if already present locally, receives it from the

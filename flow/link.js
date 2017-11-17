@@ -1,4 +1,4 @@
-// Link transaction flow
+// Link transaction flow observer
 //
 // NOTE: this flow REQUIREs the 'url' module and will become active
 // if already present locally, receives it from the upstream, or fed
@@ -12,8 +12,8 @@ const ws  = require('./ws')
 
 module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
-  .load(net)
-  .load(ws)
+  .use(net)
+  .use(ws)
   .init({ streams: new Map })
 
   .in('link/connect')
@@ -91,7 +91,7 @@ function createLinkStream(link) {
   const stream = 
     streams.has(addr) ? 
     streams.get(addr) : 
-    (new kos.Stream).init(link)
+    (new kos.Dataflow).init(link)
 
   socket.on('active', () => {
     let io = stream.io()

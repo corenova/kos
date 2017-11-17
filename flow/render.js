@@ -3,7 +3,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.create('render')
-  .desc('reactions to visually render KOS reactors')
+  .desc('reactions to visually render KOS flow observers')
   .init({
     BOX: {
       L: {
@@ -35,21 +35,21 @@ module.exports = kos.create('render')
   })
 
   .in('render')
-  .out('render/reactor','render/output')
+  .out('render/observer','render/output')
   .bind(render)
 
   .pre('module/treeify')
-  .in('render/reactor')
-  .out('reactor/tree')
-  .bind(renderReactorAsTree)
+  .in('render/observer')
+  .out('observer/tree')
+  .bind(renderObserverAsTree)
 
-  .in('reactor/tree','render/output')
-  .bind(outputTreeReactor)
+  .in('observer/tree','render/output')
+  .bind(outputObserverTree)
 
 function render(opts) {
   const { source, target } = opts
   this.send('render/output', target)
-  this.send('render/reactor', source)
+  this.send('render/observer', source)
 }
 
 function indent(str, count=1, sep=' ') {
@@ -92,9 +92,9 @@ function renderListItem(item, i, options={}) {
   return str
 }
 
-function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
+function renderReaction(reaction, funcWidth, inputWidth, outputWidth) {
   const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
-  const { inputs, requires, outputs, label } = trigger
+  const { inputs, requires, outputs, label } = reaction
   let accepts = requires.concat(inputs)
   // BOX for consumed inputs
   let inbox = {
@@ -159,15 +159,15 @@ function renderTrigger(trigger, funcWidth, inputWidth, outputWidth) {
   return block
 }
 
-function renderTriggers(reactor) {
+function renderReactions(observer) {
   const [ BOX, SEP ] = this.get('BOX','SEP')
-  const { triggers, inputs, outputs } = reactor
+  const { reactions, inputs, outputs } = observer
   let inputWidth  = findLongest(inputs).length
   let outputWidth = findLongest(outputs).length
-  let funcWidth   = findLongest(triggers.map((x => x.label))).length
-  let lines = triggers.reduce(((acc, trigger, idx) => {
-	let item = renderTrigger.call(this, trigger, funcWidth, inputWidth, outputWidth)
-	let last = idx == (triggers.length - 1)
+  let funcWidth   = findLongest(.map((x => x.label))).length
+  let lines = reactions.reduce(((acc, reaction, idx) => {
+	let item = renderReaction.call(this, reaction, funcWidth, inputWidth, outputWidth)
+	let last = idx == (reactions.length - 1)
 	for (let i=0; i < item.lines.length; i++) {
 	  let line = item.lines[i]
 	  if (i < item.middle)
@@ -185,21 +185,21 @@ function renderTriggers(reactor) {
 	}
 	return acc
   }), [])
-  if (!lines.length) lines.push(BOX.last + BOX.L.dash + 'no triggers')
+  if (!lines.length) lines.push(BOX.last + BOX.L.dash + 'no reactions')
   return lines.join("\n")
 }
 
-function renderReactor(reactor) {
+function renderObserver(observer) {
   const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
   const treeify = this.get('module/treeify')
-  const { id, label, purpose, passive, requires, reactors, triggers } = reactor
-  let funcWidth = findLongest(triggers.map((x => x.label))).length
+  const { id, label, purpose, passive, requires, observers, reactions } = observer
+  let funcWidth = findLongest(reactions.map((x => x.label))).length
   let str = ''
   let info = {
     id:       id,
 	requires: requires.sort(),
-    reactors: reactors.map(x => x.label),
-    triggers: triggers.map(x => FUNC + `(${x.label})`),
+    observers: observers.map(x => x.label),
+    reactions: reactions.map(x => FUNC + `(${x.label})`),
     // + SEP.repeat(funcWidth - x.label.length) + ` @ ${x.id}`),
     '': null
   }
@@ -213,22 +213,22 @@ function renderReactor(reactor) {
 	}
   }
   str += treeify.asTree(info, true)
-  for (let sub of reactors) {
+  for (let sub of observers) {
     str += '   ├─ ' + `${sub.label}: ${sub.purpose}` + "\n"
-    str += indent(renderReactor.call(this, sub), 1, '   │  ') + "\n"
+    str += indent(renderObserver.call(this, sub), 1, '   │  ') + "\n"
     str += "   │\n"
   }
-  str += indent(renderTriggers.call(this, reactor), 3)
+  str += indent(renderReactions.call(this, observer), 3)
   return str
 }
 
-function renderReactorAsTree(reactor) {
-  const { label, purpose } = reactor
-  let str = `${label}: ${purpose}\n` + renderReactor.call(this, reactor)
-  this.send('reactor/tree', str)
+function renderObserverAsTree(observer) {
+  const { label, purpose } = observer
+  let str = `${label}: ${purpose}\n` + renderObserver.call(this, observer)
+  this.send('observer/tree', str)
 }
 
-function outputTreeReactor(tree, output) { 
+function outputObserverTree(tree, output) { 
   output.write(tree + "\n")
-  this.reset()
+  this.clear()
 }

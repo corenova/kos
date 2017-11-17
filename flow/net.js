@@ -1,4 +1,4 @@
-// Network transaction flow
+// Network transaction flow observer
 //
 // NOTE: this flow REQUIREs the 'net' and 'url' modules and will
 // become active if already present locally, receives it from the

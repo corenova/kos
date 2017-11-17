@@ -4,16 +4,16 @@
 const program = require('commander')
 const pkginfo = require('../package.json')
 const kos = require('..')
-const run = require('../reactor/run')
+const run = require('../flow/run')
 
 function collect(val, keys) { keys.push(val); return keys }
 
 program
   .version(pkginfo.version)
-  .arguments('<reactors...>')
+  .arguments('<flows...>')
   .option('-e, --expr <kson>', 'eval KSON expression and feed into KOS', collect, [])
   .option('-d, --data <file>', 'feed KSON file contents into KOS', collect, [])
-  .option('-s, --show', 'print detailed info about reactor(s)')
+  .option('-s, --show', 'print detailed info about flow(s)')
   .option('-v, --verbose', 'enable more verbose output', ( (v, t) => t + 1), 0)
   .option('--silent', 'suppress all debug/info/warn/error log messages')
   .parse(process.argv)

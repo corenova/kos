@@ -1,3 +1,5 @@
+'use strict'
+
 const { kos = require('kos') } = global
 
 const lifecycle = {
@@ -9,15 +11,15 @@ const lifecycle = {
   componentWillReceiveProps: "react:receive"
 }
 
-module.exports = kos.create('react-state-machine')
+module.exports = kos.create('react')
   .desc('reactions to React lifecycle events')
   .init({ lifecycle })
 
   .in('react:mounting').bind(function() { 
-    this.reactor.parent.join(kos) 
+    this.flow.parent.join(kos) 
   })
   .in('react:unmounting').bind(function() { 
-    this.reactor.parent.leave(kos)
+    this.flow.parent.leave(kos)
   })
 
   .in('component')
@@ -27,7 +29,7 @@ module.exports = kos.create('react-state-machine')
 function wrapComponent(component) {
   const lifecycle = this.get('lifecycle')
   const { state, setState, trigger } = component // remember originals
-  const source = this.reactor.parent
+  const source = this.flow.parent
 
   // allow all lifecycle events to emit an internal event
   for (let event in lifecycle) {
@@ -48,7 +50,7 @@ function wrapComponent(component) {
     source.save(obj, { emit: false })
     return setState.call(component, obj, ...rest)
   }
-  // override to compute 'state' from source reactor
+  // override to compute 'state' from source flow
   Object.defineProperty(component, 'state', {
     get() { 
       let obj = Object.create(null)

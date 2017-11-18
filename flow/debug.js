@@ -37,7 +37,7 @@ function setupLogger(level) {
   loggers.set('trace', debug('kos:trace'))
 
   if (level > 2 && !this.get('tracing')) {
-    this.parent.on('data', token => {
+    this.flow.on('data', token => {
       if (token.match(['error','warn','info','debug'])) return
       const trace = loggers.get('trace')
       const { key, value } = token
@@ -58,13 +58,13 @@ function outputError(err) {
   const error = this.get('loggers').get('error')
   const level = this.get('level')
   if (typeof error !== 'function') return
-  if (level > 2) console.error(err)
-  if (level > 1) error(err)
+  if (level > 2) console.error(...err)
+  if (level > 1) error(...err)
   else error(err.message)
 }
 
 function outputMessage(data) {
-  const logger = this.get('loggers').get(this.event)
+  const logger = this.get('loggers').get(this.type)
   if (typeof logger !== 'function') return
   logger(...data)
 }

@@ -14,5 +14,5 @@ module.exports = kos.create('push')
     function pushListen(url) { this.send('link/listen/url', url) }
   )
   .in('link/stream').bind(
-    function pushKineticObjects(stream) { this.parent.pipe(stream) }
+    function pushKineticObjects(stream) { this.flow.pipe(stream) }
   )

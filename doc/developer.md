@@ -1,20 +1,20 @@
 # Developer's Guide
 
 This documentation provides information on creating new
-[Kinetic Reactor](./intro.md#kinetic-reactor) modules.
+[Persona](./intro.md#persona) flow modules.
 
 NOTE: This documenation is **incomplete** and requires further work.
 
-## Creating Reactors
+## Creating Personas
 
-An important convention when creating new KOS reactors is to **never**
+An important convention when creating new KOS personas is to **never**
 contain any *explicit* external module dependencies at the
 module-level of the reactor module's source code.
 
 An **important** concept here is that the
 [superagent](http://npmjs.com/package/superagent) library for
 transacting the HTTP Client requests is being *fed* into the flow by
-the consumer of the `Flow`. What this means is that the Flow
+the consumer of the `Persona`. What this means is that the Persona
 **dependency** is resolved dynamically and can be updated dynamically
 by the consumer on-demand. In fact, it doesn't even have to be the
 actual `superagent` module itself, only something that provides

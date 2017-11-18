@@ -1,18 +1,20 @@
 'use strict'
 
-const Dataflow = require('./lib/dataflow')
+const Persona  = require('./lib/persona')
 const Reaction = require('./lib/reaction')
-const Stream   = require('./lib/stream')
+const Dataflow = require('./lib/dataflow')
+const Stimulus = require('./lib/stimulus')
 
-const kos = new Dataflow({
+const kos = new Persona({
   label: 'kos',
   purpose: 'reactions to flow of stimuli',
   passive: true
 })
 
-// expose core class definitions
-kos.Dataflow = Dataflow
+// expose main class definitions
+kos.Persona  = Persona
 kos.Reaction = Reaction
-kos.Stream   = Stream
+kos.Dataflow = Dataflow
+kos.Stimulus = Stimulus
 
 global.kos = module.exports = kos['default'] = kos.kos = kos

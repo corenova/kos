@@ -60,16 +60,15 @@ and learn to harness the power of elemental compositions.
 
 ### Chain Reactions
 
-When a given [Kinetic Token](#kinetic-token) triggers a reaction which
-produces additional [Kinetic Token(s)](#kinetic-token) that then
-triggers a subsequent reaction, we refer to such event as a **chain
-reaction**. There is no limit as to the sequence of reactions that may
-occur as a result of a given data token. It's also possible for a
-given reaction to produce more than one data token type which can
-initiate multiple flows of **chain reactions** to take place in
-parallel. Furthermore, a given data token reaction may continuously
-generate a stream of data tokens, which can then trigger additional
-reactions forever.
+When a given [Stimulus](#stimulus) triggers a [Reaction](#reaction)
+which produces additional stimuli that then triggers a subsequent
+reaction, we refer to such event as a **chain reaction**. There is no
+limit as to the sequence of reactions that may occur as a result of a
+given data token. It's also possible for a given reaction to produce
+more than one type of stimulus data which can initiate multiple flows
+of **chain reactions** to take place in parallel. Furthermore, a given
+reaction may continuously generate a stream of stimuli, which can then
+trigger additional reactions forever.
 
 Especially when **KOS** is running as a *distributed*
 [neural network](./cluster.md) of reactive agents, it is possible for
@@ -83,124 +82,117 @@ Before you can embrace the **KOS** framework, it is important to
 understand the core entities within **KOS** and their respective
 roles.
 
-### Kinetic Token
+### Stimulus
 
-The **kinetic token** provides primary encapsulation of data
-objects. The actual *data object* is a property of the *token*. The
-*token* is the main entity that flows throughout the **KOS** data
-pipeline.
+The **Stimulus** entity represents the primary encapsulation of data
+objects. The *Stimulus* is the main entity that flows throughout the
+**KOS** data pipeline.
 
-Every *token* has a **key**, which serves as the data *type* label for
-the *actual* data object being transmitted. The token's key is the
+Every *stimulus* has a **key**, which serves as the data *type* label
+for the *actual* data object being transmitted. The token's key is the
 **sole identifier** used for fulfilling input state condition(s) for
 the *reactive* functions.
 
 It also serves the essential role of tracing the *path* of the data
 object throughout the **KOS** data pipeline. It tracks the `origin` of
-the data object and ensures that each of the
-[Kinetic Stream](#kinetic-stream) instances in a data pipeline *never*
-reacts to a given data object more than once.
+the data oject and ensures that each of the [Dataflow](#dataflow)
+instances in a given data pipeline *never* reacts to the same data
+object more than once.
 
-The *tokens* are internally created to encapsulate the data object by
-the underlying [Kinetic Stream](#kinetic-stream) instance.
+The *stimuli* are internally created to encapsulate the data object by
+the underlying [Dataflow](#dataflow) instance.
 
-You can reference the source code [here](../lib/token.js).
+You can reference the source code [here](../lib/stimulus.js).
 
-### Kinetic Stream
+### Dataflow
 
-The **kinetic stream** provides the underlying dataflow plumbing. It
-extends the [Node.js](http://nodejs.org)
+The **Dataflow** entity represents the underlying data pipeline
+plumbing. It extends the [Node.js](http://nodejs.org)
 [stream](http://nodejs.org/api/stream.html) interface to streamline
-the flow of [Kinetic Tokens](#kinetic-token).
+the flow of [Stimuli](#stimulus).
 
-It also provides **state management** facilities for preserving
+It also provides **state management** facilities for preserving any
 necessary operational context.
 
-You can use the **kinetic stream** interface to directly
-[feed](./usage.md#feeding-kinetic-tokens) additional labeled data
-objects into the stream.
+You can use the **Dataflow** interface to directly
+[feed](./usage.md#feeding-stimuli) additional labeled data objects
+into the stream.
 
-It serves as the base class for the
-[Kinetic Trigger](#kinetic-trigger) and
-[Kinetic Reactor](#kinetic-reactor) entities.
+It also serves as the base class for the
+[Persona](#persona) entity.
 
-You can reference the source code [here](../lib/stream.js).
+You can reference the source code [here](../lib/dataflow.js).
 
-### Kinetic Trigger
+### Reaction
 
-The **kinetic trigger** provides the essence of a *reactive*
-function. It extends the [Kinetic Stream](#kinetic-stream) interface
-and enables declarations of `inputs` that will fire the transition
-function, data objects that it `requires` as dependencies, as well as
-`outputs` that it can generate.
+The **Reaction** entity represents the essence of a *reactive*
+function. It extends the Javascript Function interface and enables
+declarations of `inputs` that will fire the *reactive* function, data
+objects that it `requires` as dependencies, as well as `outputs` that
+it can generate.
 
-It utilizes the **state management** facilities of the underlying
-[Kinetic Stream](#kinetic-stream) interface to track the incoming flow
-of data objects and handles the *automatic* execution of the *bound*
-function once its trigger state is satisfied.
+It utilizes its own indepedent **state management** interface to track
+the incoming flow of data objects and handles the *automatic*
+execution of the *bound* function once its trigger state is satisfied.
 
 When the *bound* function is *reactively* invoked, the function
 executes with the `this` context bound to an instance of
-[Kinetic Context](#kinetic-context).
+[Context](#context).
 
-The *triggers* are usually created as part of a
-[Kinetic Reactor](#kinetic-reactor) declaration but can be utilized
-independently if desired.
+The *reactions* are usually created as part of a [Persona](#persona)
+declaration but can be utilized independently if desired.
 
-You can reference the source code [here](../lib/trigger.js).
+You can reference the source code [here](../lib/reaction.js).
 
-### Kinetic Context
+### Context
 
-The **kinetic context** provides the execution context for performing
-the *reaction*. It exposes useful interfaces to the
-[Kinetic Stream](#kinetic-stream) that it is operating on.
+The **Context** entity provides the execution context for performing
+the [Reaction](#reaction). It exposes useful interfaces to the
+underlying [Dataflow](#dataflow) instance that it is operating on.
 
 You can reference the source code [here](../lib/context.js).
 
-### Kinetic Reactor
+### Persona
 
-The **kinetic reactor** provides the control logic for managing
-dataflow streams. It extends the [Kinetic Stream](#kinetic-stream)
-interface and enables loading of one or more
-[Kinetic Trigger(s)](#kinetic-trigger) as well as other
-[Kinetic Reactor(s)](#kinetic-reactor).
+The **Persona** entity represents the control interface for managing
+one-or-more dataflow streams. It extends the [Dataflow](#dataflow)
+interface and enables loading of one or more [Reaction(s)](#reaction)
+as well as other [Persona(s)](#persona).
 
-The *reactor* is a **continuously flowing** data stream. It contains
+The *persona* is a **continuously flowing** data stream. It contains
 an internal `core` stream that is used to form a
 [closed-loop feedback](https://en.wikipedia.org/wiki/Feedback) route
 back to itself.
 
 It's primary role is to be a *logical* container for declaring related
-*reactive* functions.
+*reactive* functions as a cohesive aspect.
 
-You can reference the source code [here](../lib/reactor.js).
+You can reference the source code [here](../lib/persona.js).
 
-### Kinetic Runtime
+### Runtime
 
-The **kinetic runtime** is a *singleton* instance of the
-[Kinetic Reactor](#kinetic-reactor) which serves as the primary
-operating environment where one or more
-[Kinetic Reactor](#kinetic-reactor) modules are *loaded and
-reacting* to the running environment.
+The **Runtime** is a *singleton* instance of the [Persona](#persona)
+which serves as the primary operating environment where one or more
+[Persona](#persona) flow modules are *loaded and reacting* to the
+running environment.
 
 It's the `kos` library module itself, so when you `require("kos")` or
-`import "kos"`, you are simply accessing the **kinetic runtime**
-instance itself. It operates as a `passive` reactor, which means that
-it allows *passthrough* of [Kinetic Token](#kinetic-token) it observes
-directly to one or more of *loaded*
-[Kinetic Reactor](#kinetic-reactor) modules.
+`import "kos"`, you are simply accessing the **Runtime** instance
+itself. It operates as a `passive` persona, which means that it allows
+*passthrough* of [Stimuli](#stimulus) it observes directly to one or
+more *loaded* [Persona](#persona) flow modules.
 
 It's primary role is to represent the *logical root* container for a
 given **KOS** instance as well as enabling *creation* of additional
-[Kinetic Reactor](#kinetic-reactor) modules for programmatic use.
+[Persona](#persona) flow modules for programmatic use.
 
-For most usage scenario, you should only have a single **kinetic
-runtime** operating inside a given application instance. Please note
-that *loading* [Kinetic Reactor](#kinetic-reactor) modules into the
-**kinetic runtime** is completely optional. You can *load/use* other
-[Kinetic Reactor](#kinetic-reactor) module instances directly without
-first loading them into the **kinetic runtime**. It's simply a matter
-of *convenience* to have them all *loaded* in one place.
+For most usage scenario, you should only have a single **Runtime**
+operating inside a given application instance. Please note that
+*loading* [Persona](#persona) modules into the **Runtime** is
+completely optional. You can *load/use* other [Persona](#persona) flow
+module instances directly without first loading them into the
+**Runtime**. It's simply a matter of *convenience* to have them all
+*loaded* in one place.
 
 You can reference the source code [here](../node.js).
 
@@ -241,7 +233,7 @@ program* using `kos`:
 ```js
 const kos = require('kos')
 const example = kos.create('example')
-  .desc('An example reactor that computes "b+c" to produce "a"')
+  .desc('An example persona that computes "b+c" to produce "a"')
   .in('b','c').out('a').bind(doAddition)
   .in('a').bind(printResult)
 // define the reactive functions
@@ -254,14 +246,14 @@ function printResult(a) {
 ```
 
 In the above example, we've created a new
-[Kinetic Reactor](./lib/reactor.js) that *will trigger* a simple
+[Persona](#persona) that *will trigger* a simple
 arithmetic addition when it observes *both* inputs labeled `b` and `c`
 to produce a new output labeled `a`.  In addition, we express a simple
 **chain reaction** that will trigger once `a` is observed within the
-reactor to print its value to the console.
+persona to print its value to the console.
 
 We can then explicitly trigger the reactions by
-[feeding](./usage.md#feeding-kinetic-tokens) the reactor instance with
+[feeding](./usage.md#feeding-stimuli) the persona instance with
 input objects:
 
 ```js
@@ -281,9 +273,9 @@ example.feed('b', 100) // resulting "a" is now 105
 example.feed('c', 50)  // resulting "a" is now 150
 ```
 
-With **KOS**, you can create and compose various reactors and triggers
-into the operating environment that can **pipe** the flow of data
-objects between each other in a closed loop.
+With **KOS**, you can create and compose various personas and
+reactions into the operating environment that can **pipe** the flow of
+data objects between each other in a closed loop.
 
 ### Imperative Programming
 

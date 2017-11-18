@@ -3,7 +3,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.create('render')
-  .desc('reactions to visually render KOS flow observers')
+  .desc('reactions to visually render KOS flow personas')
   .init({
     BOX: {
       L: {
@@ -35,21 +35,21 @@ module.exports = kos.create('render')
   })
 
   .in('render')
-  .out('render/observer','render/output')
+  .out('render/persona','render/output')
   .bind(render)
 
   .pre('module/treeify')
-  .in('render/observer')
-  .out('observer/tree')
-  .bind(renderObserverAsTree)
+  .in('render/persona')
+  .out('persona/tree')
+  .bind(renderPersonaAsTree)
 
-  .in('observer/tree','render/output')
-  .bind(outputObserverTree)
+  .in('persona/tree','render/output')
+  .bind(outputPersonaTree)
 
 function render(opts) {
   const { source, target } = opts
   this.send('render/output', target)
-  this.send('render/observer', source)
+  this.send('render/persona', source)
 }
 
 function indent(str, count=1, sep=' ') {
@@ -159,12 +159,12 @@ function renderReaction(reaction, funcWidth, inputWidth, outputWidth) {
   return block
 }
 
-function renderReactions(observer) {
+function renderReactions(persona) {
   const [ BOX, SEP ] = this.get('BOX','SEP')
-  const { reactions, inputs, outputs } = observer
+  const { reactions, inputs, outputs } = persona
   let inputWidth  = findLongest(inputs).length
   let outputWidth = findLongest(outputs).length
-  let funcWidth   = findLongest(.map((x => x.label))).length
+  let funcWidth   = findLongest(reactions.map((x => x.label))).length
   let lines = reactions.reduce(((acc, reaction, idx) => {
 	let item = renderReaction.call(this, reaction, funcWidth, inputWidth, outputWidth)
 	let last = idx == (reactions.length - 1)
@@ -189,16 +189,16 @@ function renderReactions(observer) {
   return lines.join("\n")
 }
 
-function renderObserver(observer) {
+function renderPersona(persona) {
   const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
   const treeify = this.get('module/treeify')
-  const { id, label, purpose, passive, requires, observers, reactions } = observer
+  const { id, label, purpose, passive, requires, personas, reactions } = persona
   let funcWidth = findLongest(reactions.map((x => x.label))).length
   let str = ''
   let info = {
     id:       id,
 	requires: requires.sort(),
-    observers: observers.map(x => x.label),
+    personas: personas.map(x => x.label),
     reactions: reactions.map(x => FUNC + `(${x.label})`),
     // + SEP.repeat(funcWidth - x.label.length) + ` @ ${x.id}`),
     '': null
@@ -213,22 +213,22 @@ function renderObserver(observer) {
 	}
   }
   str += treeify.asTree(info, true)
-  for (let sub of observers) {
+  for (let sub of personas) {
     str += '   ├─ ' + `${sub.label}: ${sub.purpose}` + "\n"
-    str += indent(renderObserver.call(this, sub), 1, '   │  ') + "\n"
+    str += indent(renderPersona.call(this, sub), 1, '   │  ') + "\n"
     str += "   │\n"
   }
-  str += indent(renderReactions.call(this, observer), 3)
+  str += indent(renderReactions.call(this, persona), 3)
   return str
 }
 
-function renderObserverAsTree(observer) {
-  const { label, purpose } = observer
-  let str = `${label}: ${purpose}\n` + renderObserver.call(this, observer)
-  this.send('observer/tree', str)
+function renderPersonaAsTree(persona) {
+  const { label, purpose } = persona
+  let str = `${label}: ${purpose}\n` + renderPersona.call(this, persona)
+  this.send('persona/tree', str)
 }
 
-function outputObserverTree(tree, output) { 
+function outputPersonaTree(tree, output) { 
   output.write(tree + "\n")
   this.clear()
 }

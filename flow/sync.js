@@ -16,16 +16,16 @@ module.exports = kos.create('sync')
   .bind(syncListen)
 
   .in('link/stream')
-  .out('sync', 'unsync')
+  .out('sync', 'unsync', 'persona')
   .bind(syncStream)
 
-  .in('reactor')
+  .in('persona')
   .out('sync')
-  .bind(syncReactor)
+  .bind(syncPersona)
 
 function syncConnect(url)     { this.send('link/connect/url', url) }
 function syncListen(url)      { this.send('link/listen/url', url) }
-function syncReactor(reactor) { this.send('sync', reactor) }
+function syncPersona(persona) { this.send('sync', persona) }
 
 function syncStream(peer) {
   const addr = peer.state.get('addr')
@@ -41,69 +41,74 @@ function syncStream(peer) {
     if (value.id === kos.id)
       return this.warn('detected circular sync loop from peer', addr)
 
-    this.info(`importing '${value.label}' reactor (${value.id}) from:`, addr)
+    this.info(`importing '${value.label}' persona (${value.id}) from:`, addr)
     value.label = `sync(${addr})`
-    // remove any reactors from peer that are also locally
+    // remove any personas from peer that are also locally
     // available in order to prevent further propagation of locally
     // handled tokens into the distributed KOS cluster
     //
     // disable the rest so they don't participate in dataflow
     // processing
-    value.reactors = value.reactors.filter(r => {
+    value.personas = value.personas.filter(r => {
       r.enabled = false
-      return !kos.reactors.some(x => x.label === r.label)
+      return !kos.personas.some(x => x.label === r.label)
     })
-    this.debug(`importing ${value.reactors.length} new reactors:`, value.reactors.map(r => r.label))
-    const reactor = kos.create(value).link(peer)
+    this.debug(`importing ${value.personas.length} new personas:`, value.personas.map(r => r.label))
+    if (value.personas[0])
+      console.log(value.personas[0].reactions)
+    const peerPersona = kos.create(value).link(peer)
       .in('sync').bind(sync)
       .in('unsync').bind(unsync)
+    if (peerPersona.personas[0])
+      console.log(peerPersona.personas[0].reactions)
     peer.once('inactive', () => { 
-      reactor.unlink(peer)
+      peerPersona.unlink(peer)
       if (repair) {
-        reactor.info('repairing dataflow with peer')
-        reactor.reactors.forEach(r => r.enable())
-        reactor.send('reactor', reactor) 
+        this.info('repairing dataflow with peer')
+        peerPersona.personas.forEach(r => r.enable())
+        // here we send it from the dynamic persona
+        peerPersona.send('persona', peerPersona) 
       }
     })
     peer.once('active', () => {
-      reactor.info('resuming dataflow to peer')
-      kos.unload(reactor)
+      this.info('resuming dataflow to peer')
+      kos.unload(peerPersona)
       this.feed('link/stream', peer) // re-initiate sync
     })
     peer.on('destroy', () => {
-      this.debug('destroying sync stream, unload:', reactor.label)
-      reactor.unlink(peer)
-      kos.unload(reactor)
+      this.debug('destroying sync stream, unload:', peerPersona.label)
+      peerPersona.unlink(peer)
+      kos.unload(peerPersona)
       // inform others peer is gone
-      this.send('unsync', reactor.id)
+      this.send('unsync', peerPersona.id)
     })
-    // inform others about new peer reactor
-    this.debug("informing others about new peer reactor from", addr)
-    this.send('sync', reactor)
-    reactor.join(kos)
+    // inform others about new peer persona
+    this.debug("informing others about new peer persona from", addr)
+    this.send('sync', peerPersona)
+    peerPersona.join(kos)
   })
 
   // internal helper functions
-  function sync(reactor) {
-    if (reactor instanceof kos.Reactor) {
-      const exists = this.parent.find(reactor.id)
-      if (exists && exists.parent === this.parent) 
-        exists.leave(this.parent)
+  function sync(persona) {
+    if (persona instanceof kos.Persona) {
+      const exists = this.flow.find(persona.id)
+      if (exists && exists.parent === this.flow) 
+        exists.leave()
       // XXX - cannot recall reason for this logic...
-      // if (this.parent._reactors.has(reactor.name)) 
-      //   this.parent.unload(this.parent._reactors.get(reactor.name))
+      // if (this.flow._personas.has(persona.name)) 
+      //   this.flow.unload(this.flow._personas.get(persona.name))
     } else {
-      reactor.enabled = false
-      if (kos.reactors.some(x => x.label === reactor.label))
-        this.info('ignore locally available reactor:', reactor.label)
+      persona.enabled = false
+      if (kos.personas.some(x => x.label === persona.label))
+        this.info('ignore locally available persona:', persona.label)
       else {
-        this.info('import remote reactor:', reactor.label)
-        this.parent.load(reactor)
+        this.info('import remote persona:', persona.label)
+        this.flow.load(persona)
       }
     }
   }
   function unsync(id) {
-    const exists = this.parent.find(id)
-    exists && exists.leave(exists.parent)
+    const exists = this.flow.find(id)
+    exists && exists.leave()
   }
 }

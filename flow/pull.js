@@ -14,6 +14,6 @@ module.exports = kos.create('pull')
     function pullListen(url)  { this.send('link/listen/url', url) }
   )
   .in('link/stream').bind(
-    function pullKineticObjects(stream) { stream.pipe(this.parent) }
+    function pullKineticObjects(stream) { stream.pipe(this.flow) }
   )
 

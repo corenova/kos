@@ -24,26 +24,22 @@ experiments, [create neural networks](./doc/cluster.md), and
 
 The **KOS** framework enables
 [dataflow](https://en.wikipedia.org/wiki/Dataflow) transactions to be
-expressed as a set of discrete atomic *trigger(s)* that
+expressed as a set of discrete atomic *reaction(s)* that
 *automatically* executes based on one or more *desired* input(s) it
-observes from its incoming flow of data objects.
+observes from its incoming flow of data stimuli.
 
 Using **KOS**, you can create a new
-[Kinetic Reactor](./doc/intro.md#kinetic-reactor) instance with one
-or more [Kinetic Trigger](./doc/intro.md#kinetic-trigger) reactive
-functions and **feed/pipe** a stream of
-[Kinetic Token(s)](./doc/intro.md#kinetic-token) into the
-reactor. The [Kinetic Reactor](./doc/intro.md#kinetic-reactor) and
-[Kinetic Trigger](./doc/intro.md#kinetic-trigger) are both instances
-of [Kinetic Stream](./doc/intro.md#kinetic-stream) and natively
-support data streaming API (i.e. read/write).
+[Persona](./doc/intro.md#persona) instance with one or more
+[Reaction](./doc/intro.md#reaction) functions and
+**feed/pipe** a stream of [Stimuli](./doc/intro.md#stimulus)
+into the Persona.
 
 One of the most important concept in **KOS** is that these *reactive*
-trigger functions are **never explicitly called** by other functions
-as part of a control flow logic. Instead, the *reactive* trigger
-functions are invoked *automatically* by the **KOS** framework when
-its input states are *eventually* satisfied by one or more observed
-flow of data tokens. Its operating behavior is very similar to how a
+functions are **never explicitly called** by other functions as part
+of a control flow logic. Instead, the *reactive* functions are invoked
+*automatically* by the **KOS** framework when its input states are
+*eventually* satisfied by one or more observed flow of data
+stimuli. Its operating behavior is very similar to how a
 [runtime garbage collector](https://en.wikipedia.org/wiki/Garbage_collection_(computer_science))
 works tirelessly behind the scenes in a given software instance. You
 don't need to explicitly tell the *garbage collector* to clean-up, it
@@ -54,8 +50,9 @@ itself by giving up your *programmatic* execution flow control
 logic. Instead of honing your *incantation* skills and declaring the
 chain of commands for fulfilling your desires, you've now become an
 **alchemist**, continually experimenting with
-[chain reactions](./doc/intro.md#chain-reactions) and tinkering with *tokens*
-you inject into the system until you get your desired result.
+[chain reactions](./doc/intro.md#chain-reactions) and tinkering with
+*stimuli* you inject into the system until you get your desired
+result.
 
 Once you learn how to express and leverage the power of
 [chain reactions](./doc/intro.md#chain-reactions), you can create
@@ -75,17 +72,17 @@ documentation below:
   - [Programming Paradigms](./doc/intro.md#programming-paradigms)
 - [Using KOS](./doc/usage.md)
   - [Getting Started](./doc/usage.md#getting-started)
-  - [Loading Reactors](./doc/usage.md#loading-reactors)
-  - [Sending Tokens](./doc/usage.md#sending-tokens)
+  - [Loading Personas](./doc/usage.md#loading-personas)
+  - [Sending Stimuli](./doc/usage.md#sending-stimuli)
   - [Triggering Reactions](./doc/usage.md#triggering-reactions)
   - [CLI Reference](./doc/usage.md#cli-reference)
 - [Clustering KOS](./doc/cluster.md)
   - [Full Stack](./doc/cluster.md#full-stack)
   - [Hive Mind](./doc/cluster.md#hive-mind)
 
-The **developer's guide** to creating new reactors and understanding
+The **developer's guide** to creating new personas and understanding
 the **KOS** library APIs will be coming soon! In the meantime, taking
-a look at the [available reactors](#available-reactors) bundled with
+a look at the [available personas](#available-personas) bundled with
 the **KOS** framework should provide some indirect guidance.
 
 ## Installation
@@ -105,27 +102,27 @@ repo from:
 $ git clone https://github.com/corenova/kos
 ```
 
-## Available Reactors
+## Available Personas
 
-The following reactor modules are included inside the **KOS**
-repository (see [reactors](./reactor)):
+The following persona flow modules are included inside the **KOS**
+repository (see [personas](./flow)):
 
 name | description
 ---  | ---
-[debug](./reactor/debug.md) | reactions to send debugging messages to an output stream
-[http](./reactor/http.md) | reactions to http client/server transactions
-[link](./reactor/link.md) | reactions to dynamic client/server flows
-[mqtt](./reactor/mqtt.md) | reactions to mqtt client/server transactions
-[net](./reactor/net.md) | reactions to tcp/udp client/server transactions
-[npm](./reactor/npm.md) | reactions to drive NPM operations
-[pull](./reactor/pull.md) | reactions to pull dataflow from peers
-[push](./reactor/push.md) | reactions to push dataflow to peers
-[react](./reactor/react.md) | reactions to React.js component lifecycle
-[rest](./reactor/rest.md) | reactions to RESTful transactions
-[run](./reactor/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
-[snmp](./reactor/snmp.md) | reactions to snmp client/server transactions
-[sync](./reactor/sync.md) | reactions to sync dataflow with peers
-[ws](./reactor/ws.md) | reactions to websockets client/server flows
+[debug](./flow/debug.md) | reactions to send debugging messages to an output stream
+[http](./flow/http.md) | reactions to http client/server transactions
+[link](./flow/link.md) | reactions to dynamic client/server flows
+[mqtt](./flow/mqtt.md) | reactions to mqtt client/server transactions
+[net](./flow/net.md) | reactions to tcp/udp client/server transactions
+[npm](./flow/npm.md) | reactions to drive NPM operations
+[pull](./flow/pull.md) | reactions to pull dataflow from peers
+[push](./flow/push.md) | reactions to push dataflow to peers
+[react](./flow/react.md) | reactions to React.js component lifecycle
+[rest](./flow/rest.md) | reactions to RESTful transactions
+[run](./flow/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
+[snmp](./flow/snmp.md) | reactions to snmp client/server transactions
+[sync](./flow/sync.md) | reactions to sync dataflow with peers
+[ws](./flow/ws.md) | reactions to websockets client/server flows
 
 ## License
   [Apache 2.0](LICENSE)

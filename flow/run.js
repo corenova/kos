@@ -1,5 +1,5 @@
-'use strict'
 
+'use strict'
 const { kos = require('..') } = global
 const debug  = require('./debug')
 const render = require('./render')
@@ -16,14 +16,14 @@ module.exports = kos.create('run')
   })
 
   .in('process')
-  .out('observer')
+  .out('persona')
   .bind(initialize)
 
   .in('program','process')
   .out('load', 'read', 'show', 'prompt')
   .bind(start)
 
-  // TODO: consider making this a separate observer
+  // TODO: consider making this a separate persona
   .pre('process','module/readline')
   .in('prompt')
   .out('render')
@@ -31,8 +31,8 @@ module.exports = kos.create('run')
 
   .pre('module/path')
   .in('load')
-  .out('observer')
-  .bind(loadObserver)
+  .out('persona')
+  .bind(loadPersona)
 
   .in('load/path')
   .bind(updateLoadPath)
@@ -45,18 +45,18 @@ module.exports = kos.create('run')
   .in('read')
   .bind(readKSONFile)
 
-  .in('observer')
+  .in('persona')
   .out('require')
-  .bind(requireObserver)
+  .bind(requirePersona)
 
   .pre('process','show')
-  .in('observer')
+  .in('persona')
   .out('render')
-  .bind(renderObserver)
+  .bind(renderPersona)
 
 // self-initialize
 function initialize(process) { 
-  this.send('observer', this.flow)
+  this.send('persona', this.flow)
 }
 
 function start(program, process) {
@@ -67,18 +67,18 @@ function start(program, process) {
 
   this.save({ verbose })
 
-  // write tokens seen by this observer into stdout
-  kos.on('flow', (token, flow) => {
-    if (token.origin !== 'unknown' && !token.match(ignores)) {
+  // write stimuli seen by this persona into stdout
+  kos.on('flow', (stimulus, flow) => {
+    if (stimulus.origin !== 'unknown' && !stimulus.match(ignores)) {
       kos.emit('clear')
-      stdout.write(token.toKSON() + "\n")
+      stdout.write(stimulus.toKSON() + "\n")
     }
     if (flow.includes('accept') && flow.includes('reject')) {
-      this.warn(`unrecognized token "${token.key}"`)
+      this.warn(`unrecognized stimulus "${stimulus.key}"`)
     }
   })
-  kos.on('data', token => {
-    const { key } = token
+  kos.on('data', stimulus => {
+    const { key } = stimulus
     const logs = [ 'error', 'warn', 'info', 'debug' ]
     const level = logs.indexOf(key)
     if ((level === -1) || (verbose >= (level-1))) kos.emit('clear')
@@ -100,7 +100,7 @@ function start(program, process) {
   else stdin.pipe(kos, { end: false })
 }
 
-function loadObserver(name) {
+function loadPersona(name) {
   const [ path, loadpath ] = this.get('module/path','loadpath')
   const search = [ 
     path.resolve(name),
@@ -108,30 +108,30 @@ function loadObserver(name) {
     path.resolve(__dirname, name),
     name
   ]
-  let observer
+  let persona
   let location
   for (location of search) {
-    try { observer = require(location); break }
+    try { persona = require(location); break }
     catch (e) { 
       if (e.code !== 'MODULE_NOT_FOUND') throw e
     }
   }
-  if (!observer) 
-    throw new Error(`unable to locate observer "${name}" from ${search}`)
+  if (!persona) 
+    throw new Error(`unable to locate persona "${name}" from ${search}`)
     
-  if (observer.type !== Symbol.for('kos:observer'))
-    throw new Error(`unable to load incompatible observer "${name}" from ${location}`)
+  if (persona.type !== Symbol.for('kos:persona'))
+    throw new Error(`unable to load incompatible persona "${name}" from ${location}`)
 
-  this.send('observer', observer.join(kos))
+  this.send('persona', persona.join(kos))
 }
 
 function updateLoadPath(loadpath) {
   
 }
 
-function requireObserver(observer) { 
+function requirePersona(persona) { 
   const regex = /^module\/(.+)$/
-  observer.requires.forEach(key => {
+  persona.requires.forEach(key => {
     let match = key.match(regex, '$1')
     if (!match) return
     this.send('require', match[1])
@@ -199,13 +199,13 @@ function promptUser(prompt) {
     }
     cmd.prompt()
   })
-  kos.on('data', token => {
-    const { key } = token
+  kos.on('clear', clearPrompt)
+  kos.on('data', stimulus => {
+    const { key } = stimulus
     const logs = [ 'error', 'warn', 'info', 'debug' ]
     const level = logs.indexOf(key)
     if ((level === -1) || (verbose >= (level-1))) clearPrompt()
   })
-  kos.on('clear', clearPrompt)
   this.set('active', true)
   cmd.prompt()
 
@@ -216,11 +216,11 @@ function promptUser(prompt) {
   }
 }
 
-function renderObserver(observer) {
+function renderPersona(persona) {
   if (!this.get('show')) return
   const { stderr } = this.get('process')
   this.send('render', {
-    source: observer,
+    source: persona,
     target: stderr
   })
 }

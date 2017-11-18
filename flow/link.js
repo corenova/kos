@@ -12,8 +12,8 @@ const ws  = require('./ws')
 
 module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
-  .use(net)
-  .use(ws)
+  .load(net)
+  .load(ws)
   .init({ streams: new Map })
 
   .in('link/connect')

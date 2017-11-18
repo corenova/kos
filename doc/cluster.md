@@ -13,16 +13,16 @@ The **KOS** framework comes with a number of
 [available personas](../README.md#available-personas) designed
 specifically for providing distributed networking facilities.
 
-The [pull](../flow/pull.md) and [push](../flow/push.md) personas
+The [pull](../persona/pull.md) and [push](../persona/push.md) personas
 provide reactions to enable uni-directional
 [Stimuli](./intro.md#stimulus) flows across instances.
 
-The [sync](../flow/sync.md) persona provides the essential reactions
+The [sync](../persona/sync.md) persona provides the essential reactions
 to create a topology of [Runtime](./intro.md#runtime) instances that
 synchronizes [Stimuli](./intro.md#stimulus) flows across instances.
 
 For the purpose of discussing various distributed computing cluster
-models, we'll focus mainly on using the [sync](../flow/sync.md)
+models, we'll focus mainly on using the [sync](../persona/sync.md)
 persona.
 
 ## Full Stack
@@ -31,9 +31,9 @@ Since the **KOS** framework is written in JavaScript, enabling
 seamless **dataflow integration** between the web browser client and
 the backend Node.js server is extremely straight-forward.
 
-When using [sync](../flow/sync.md) persona to establish a dataflow
+When using [sync](../persona/sync.md) persona to establish a dataflow
 stream between a web browser client and the backend, we utilize the
-[ws](../flow/ws.md) persona for `WebSocket` based communications.
+[ws](../persona/ws.md) persona for `WebSocket` based communications.
 
 For a quick example on a **full stack** setup, you can also check out
 the [todo app](../example/todo) inside the [example](../example)
@@ -56,12 +56,12 @@ kos> load "sync"
 kos> sync/listen "ws://localhost:3000"
 ```
 
-You can also programatically use the [sync](../flow/sync.md)
+You can also programatically use the [sync](../persona/sync.md)
 persona:
 
 ```js
 const kos = require("kos")
-const sync = require("kos/flow/sync")
+const sync = require("kos/persona/sync")
 kos
   .load(sync)
   .feed('sync/listen', 'ws://localhost:3000')
@@ -76,14 +76,14 @@ On the client side, since you don't have the benefit of the `kos`
 utility, you will need to directly `import/require` the
 [Runtime](./intro.md#runtime) inside the web application
 (e.g. [kos.min.js](../dist/kos.min.js)) and *load* the pre-bundled
-[sync](../flow/sync.md) persona module into the runtime instance.
+[sync](../persona/sync.md) persona module into the runtime instance.
 
 Here's the complete client-side workflow:
 
 ```js
-import kos, { SyncFlow } from 'kos'
+import kos, { SyncPersona } from 'kos'
 kos
-  .load(SyncFlow)
+  .load(SyncPersona)
   .feed('module/url', require('url'))
   .feed('module/simple-websocket', require('simple-websocket'))
   .feed('sync/connect', "ws://localhost:3000")
@@ -113,7 +113,7 @@ as [browserify](http://browserify.org) and
 when generating the client-side web application.
 
 The `url` and the `simple-websocket` modules are needed by the
-[sync](../flow/sync.md) persona in order to perform reactions for
+[sync](../persona/sync.md) persona in order to perform reactions for
 establishing `WebSocket` connections.
 
 In the future, we can introduce a new persona using a web service
@@ -129,7 +129,7 @@ kos.feed('sync/connect', "ws://localhost:3000")
 
 The above `sync/connect` data token triggers the following
 [chain reaction](./intro.md#chain-reactions) using the
-[link](../flow/link.md) and [ws](../flow/ws.md) personas:
+[link](../persona/link.md) and [ws](../persona/ws.md) personas:
 
 ```
 sync/connect -> f(sync:syncConnect) -> link/connect/url
@@ -147,7 +147,7 @@ token (i.e. it's ok to start the client before the server).
 
 ### Synchronization between server/client
 
-So, what does it mean once you have a [sync](../flow/sync.md) persona
+So, what does it mean once you have a [sync](../persona/sync.md) persona
 active between the server and the client in a full stack scenario?
 
 Synchronization in **KOS** enables the participating instances to
@@ -157,7 +157,7 @@ other peer to trigger reactions as if those reactors were also locally
 available to itself.
 
 For example, if the server instance had the
-[http](../flow/http.md) persona loaded, then from the web client
+[http](../persona/http.md) persona loaded, then from the web client
 instance, it can [send](./usage.md#sending-stimuli) the
 `http/request/get` token and have the `http/response` data token
 produced by the server instance flow back to itself as if the actual
@@ -165,7 +165,7 @@ reaction took place inside the client instance.
 
 From the web client, it can even trigger a *reaction* to the server
 instance to have it **dynamically load** the
-[http](../flow/http.md) reactor:
+[http](../persona/http.md) reactor:
 
 ```js
 kos.feed('load', 'http')
@@ -173,7 +173,7 @@ kos.feed('load', 'http')
 
 Such ability is made possible for the web client instance because when
 it *synchronized* with the server instance, it discovered the
-[run](../flow/run.md) reactor from the server instance which
+[run](../persona/run.md) reactor from the server instance which
 contains a reactive trigger for the `load` data stimulus.
 
 In theory, we should also be able to trigger `require` data token and
@@ -183,7 +183,7 @@ between instances due to JSON serialization challenges for Node.js
 modules with `require` dependencies to other modules. Once again,
 volunteers are welcome for exploring this reaction. :-)
 
-The key takeaway in understanding [sync](../flow/sync.md) behavior is
+The key takeaway in understanding [sync](../persona/sync.md) behavior is
 this: **KOS synchronizes the *state machine* of each instance and NOT
 the actual state of each instance.**
 
@@ -193,7 +193,7 @@ The **KOS** instance running on the web client has limited options
 when establishing network relationships with other **KOS**
 instances. For one, it is not possible to have it *listen* for new
 connections. It is also unable to make direct TCP/UDP based
-connections using the [net](../flow/net.md) reactor.
+connections using the [net](../persona/net.md) reactor.
 
 However, it is fully capable of joining as many server endpoints as it
 wants and in turn act as a synchronization link across multiple
@@ -221,7 +221,7 @@ that of
 > unknown to the individual agents.
 
 When you build a network of **KOS** instances using the
-[sync](../flow/sync.md) persona, you are effectively creating a
+[sync](../persona/sync.md) persona, you are effectively creating a
 [Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence)
 system, where each individual instance contributes its own local
 limited reactive facilities which when combined together as a whole
@@ -239,7 +239,7 @@ becomes capable of individually behaving and acting like the
 **collective intelligence** even after it gets *pruned* from the
 network it once belonged to.
 
-Basically, using the [sync](../flow/sync.md) reactor, each *agent*
+Basically, using the [sync](../persona/sync.md) reactor, each *agent*
 learns ALL of the reactive facilities of the entire cluster that it
 joins and can then perform ALL of the reactions provided by the
 cluster even after being disonncected from the cluster.  Also, once

@@ -105,24 +105,24 @@ $ git clone https://github.com/corenova/kos
 ## Available Personas
 
 The following persona flow modules are included inside the **KOS**
-repository (see [personas](./flow)):
+repository (see [personas](./persona)):
 
 name | description
 ---  | ---
-[debug](./flow/debug.md) | reactions to send debugging messages to an output stream
-[http](./flow/http.md) | reactions to http client/server transactions
-[link](./flow/link.md) | reactions to dynamic client/server flows
-[mqtt](./flow/mqtt.md) | reactions to mqtt client/server transactions
-[net](./flow/net.md) | reactions to tcp/udp client/server transactions
-[npm](./flow/npm.md) | reactions to drive NPM operations
-[pull](./flow/pull.md) | reactions to pull dataflow from peers
-[push](./flow/push.md) | reactions to push dataflow to peers
-[react](./flow/react.md) | reactions to React.js component lifecycle
-[rest](./flow/rest.md) | reactions to RESTful transactions
-[run](./flow/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
-[snmp](./flow/snmp.md) | reactions to snmp client/server transactions
-[sync](./flow/sync.md) | reactions to sync dataflow with peers
-[ws](./flow/ws.md) | reactions to websockets client/server flows
+[debug](./persona/debug.md) | reactions to send debugging messages to an output stream
+[http](./persona/http.md) | reactions to http client/server transactions
+[link](./persona/link.md) | reactions to dynamic client/server flows
+[mqtt](./persona/mqtt.md) | reactions to mqtt client/server transactions
+[net](./persona/net.md) | reactions to tcp/udp client/server transactions
+[npm](./persona/npm.md) | reactions to drive NPM operations
+[pull](./persona/pull.md) | reactions to pull dataflow from peers
+[push](./persona/push.md) | reactions to push dataflow to peers
+[react](./persona/react.md) | reactions to React.js component lifecycle
+[rest](./persona/rest.md) | reactions to RESTful transactions
+[run](./persona/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
+[snmp](./persona/snmp.md) | reactions to snmp client/server transactions
+[sync](./persona/sync.md) | reactions to sync dataflow with peers
+[ws](./persona/ws.md) | reactions to websockets client/server flows
 
 ## License
   [Apache 2.0](LICENSE)

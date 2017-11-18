@@ -104,7 +104,7 @@ function loadPersona(name) {
   const [ path, loadpath ] = this.get('module/path','loadpath')
   const search = [ 
     path.resolve(name),
-    path.resolve('flow', name),
+    path.resolve('persona', name),
     path.resolve(__dirname, name),
     name
   ]

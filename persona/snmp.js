@@ -56,7 +56,7 @@ function request(req, session) {
   const snmp = this.get('module/net-snmp')
   const [ method, ...args ] = req
   session[method](args, (err, varbinds) => {
-    if (err) this.throw(err)
+    if (err) return this.error(err)
     varbinds = varbinds.filter(data => {
       let error = snmp.isVarbindError(data)
       if (error) this.error(snmp.varbindError(data))

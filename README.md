@@ -1,8 +1,6 @@
 # Kinetic Object Swarm
 
-Simple, adaptive,
-[Dataflow-driven](https://en.wikipedia.org/wiki/Dataflow)
-[Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence)
+A [Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence)
 framework for creating distributed data pipelines and
 [autonomic](https://en.wikipedia.org/wiki/Autonomic_Computing) neural
 networks.

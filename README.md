@@ -1,10 +1,11 @@
-# Kinetic Object Stream
+# Kinetic Object Swarm
 
 Simple, adaptive,
-[dataflow streaming](https://en.wikipedia.org/wiki/Dataflow) framework
-for creating
-[autonomic](https://en.wikipedia.org/wiki/Autonomic_Computing) data
-pipelines and state machines for your apps.
+[Dataflow-driven](https://en.wikipedia.org/wiki/Dataflow)
+[Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence)
+framework for creating distributed data pipelines and
+[autonomic](https://en.wikipedia.org/wiki/Autonomic_Computing) neural
+networks.
 
 It's a framework based on **data-centric**
 [reactive programming](https://en.wikipedia.org/wiki/Reactive_programming)
@@ -104,8 +105,8 @@ $ git clone https://github.com/corenova/kos
 
 ## Available Personas
 
-The following persona flow modules are included inside the **KOS**
-repository (see [personas](./persona)):
+The following [Persona](./doc/intro.md#persona) modules are included
+inside the **KOS** repository (see [/persona](./persona)):
 
 name | description
 ---  | ---

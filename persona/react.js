@@ -41,7 +41,7 @@ function wrapComponent(component) {
   }
   // attach a convenience function for trigger
   component.trigger = (key, ...args) => {
-    return this.send.bind(this, key, ...args)
+    return () => source.feed(key, ...args)
   }
 
   // treat 'state' and 'setState' specially

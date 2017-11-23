@@ -63,25 +63,15 @@ function start(program, process) {
   const engine = this.flow
   const { stdin, stdout, stderr } = process
   const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
-  const ignores = engine.inputs.concat([ 'module/*', 'sync', 'error', 'warn', 'info', 'debug' ])
+  const logs = [ 'error', 'warn', 'info', 'debug' ]
+  const ignores = engine.inputs.concat(logs, [ 'module/*', 'sync' ])
 
   this.save({ verbose })
 
-  // write stimuli seen by this persona into stdout
-  kos.on('flow', (stimulus, flow) => {
-    if (stimulus.origin !== 'unknown' && !stimulus.match(ignores)) {
-      kos.emit('clear')
+  // write stimuli seen by KOS persona's CORE into stdout
+  kos.core.on('data', stimulus => {
+    if (stimulus.origin && !stimulus.match(ignores))
       stdout.write(stimulus.toKSON() + "\n")
-    }
-    if (flow.includes('accept') && flow.includes('reject')) {
-      this.warn(`unrecognized stimulus "${stimulus.key}"`)
-    }
-  })
-  kos.on('data', stimulus => {
-    const { key } = stimulus
-    const logs = [ 'error', 'warn', 'info', 'debug' ]
-    const level = logs.indexOf(key)
-    if ((level === -1) || (verbose >= (level-1))) kos.emit('clear')
   })
   silent || kos.pipe(debug).feed('debug/level', verbose)
 
@@ -91,10 +81,7 @@ function start(program, process) {
     data.forEach(x => this.send('read', x))
   })
 
-  if (show) {
-    this.send('show', true)
-    return
-  }
+  if (show) return this.send('show', true)
 
   if (stdin.isTTY && stdout.isTTY) this.send('prompt', 'kos> ')
   else stdin.pipe(kos, { end: false })
@@ -199,13 +186,8 @@ function promptUser(prompt) {
     }
     cmd.prompt()
   })
-  kos.on('clear', clearPrompt)
-  kos.on('data', stimulus => {
-    const { key } = stimulus
-    const logs = [ 'error', 'warn', 'info', 'debug' ]
-    const level = logs.indexOf(key)
-    if ((level === -1) || (verbose >= (level-1))) clearPrompt()
-  })
+  kos.on('dropped', stimulus => this.warn(`unrecognized stimulus "${stimulus.key}"`))
+  kos.on('log', clearPrompt)
   this.set('active', true)
   cmd.prompt()
 

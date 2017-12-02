@@ -1,71 +1,87 @@
 'use strict'
 
 const { kos = require('..') } = global
-const debug = require('debug')
 
 module.exports = kos.create('debug')
   .desc('reactions to send debugging messages to an output stream')
-  .init({
+
+  .init({ 
+    'module/debug': require('debug'),
     loggers: new Map,
-    level: 0
+    namespaces: [ 'kos:error', 'kos:warn', 'kos:info', 'kos:debug', 'kos:trace' ]
   })
 
-  .in('debug/level').bind(setupLogger)
+  .pre('module/debug')
+  .in('debug/level')
+  .out('warn','info','debug')
+  .bind(setupLoggers)
 
+  .pre('debug/level')
   .in('error').bind(outputError)
+
   .in('warn').bind(outputMessage)
   .in('info').bind(outputMessage)
   .in('debug').bind(outputMessage)
 
-function setupLogger(level) {
+function setupLoggers(level) {
+  const debug = this.get('module/debug')
+  if (!this.get('initialized')) {
+    debug.enable(this.get('namespaces').join(','))
+    this.set('initialized', true)
+  }
   const loggers = this.get('loggers')
-  if (level < 0) return
-
-  this.save({ level })
-
-  let namespaces = [ 'kos:error', 'kos:warn' ]
-  if (level)     namespaces.push('kos:info')
-  if (level > 1) namespaces.push('kos:debug')
-  if (level > 2) namespaces.push('kos:trace')
-  if (level > 3) namespaces = [ 'kos:*' ]
-  debug.enable(namespaces.join(','))
-
-  loggers.set('error', debug('kos:error'))
-  loggers.set('warn',  debug('kos:warn'))
-  loggers.set('info',  debug('kos:info'))
-  loggers.set('debug', debug('kos:debug'))
-  loggers.set('trace', debug('kos:trace'))
-
-  if (level > 2 && !this.get('tracing')) {
-    this.flow.on('data', token => {
-      if (token.match(['error','warn','info','debug'])) return
-      const trace = loggers.get('trace')
-      const { key, value } = token
+  const logs = [ 'error', 'warn', 'info', 'debug', 'trace' ]
+  const callback = this.get('callback') || (
+    this.set('callback', (type, ...log) => this.send(type, log)).get('callback')
+  )
+  const tracer = this.get('tracer') || (
+    this.set('tracer', token => {
+      const trace = this.get('loggers').get('trace')
+      if (!trace) return
+      const { topic, value } = token
+      if (logs.indexOf(topic) !== -1) return
       switch (typeof value) {
       case 'function':
       case 'object':
-        trace('%s\n%O\n', key, value)
+        trace('%s\n%O\n', topic, value)
         break;
       default: 
-        trace('%s %o', key, value)
+        trace('%s %o', topic, value)
       }
-    })
-    this.set('tracing', true)
+    }).get('tracer')
+  )
+
+  // start fresh
+  loggers.clear()
+  kos.removeListener('log', callback) // XXX - this is a hack
+  kos.removeListener('data', tracer)
+
+  if (level < 0) return // silent and we don't want any log outputs
+
+  kos.on('log', callback) // XXX - this is a hack
+  loggers.set('error', debug('kos:error'))
+  if (level)     loggers.set('warn',  debug('kos:warn'))
+  if (level > 1) loggers.set('info',  debug('kos:info'))
+  if (level > 2) loggers.set('debug', debug('kos:debug'))
+  if (level > 3) {
+    loggers.set('trace', debug('kos:trace'))
+    kos.on('data', tracer)
   }
 }
 
 function outputError(err) {
+  const level = this.get('debug/level')
   const error = this.get('loggers').get('error')
-  const level = this.get('level')
-  const [ id, msg ] = err
+  const { origin, message } = err
   if (typeof error !== 'function') return
-  if (level > 2) console.error(id, msg)
-  if (level > 1) error(msg)
-  else error(msg.message)
+  if (level > 1) error(err)
+  else error(message)
+  if (level > 2) error(origin)
 }
 
 function outputMessage(data) {
   const logger = this.get('loggers').get(this.type)
   if (typeof logger !== 'function') return
+  kos.emit('clear') // XXX - this is a hack
   logger(...data)
 }

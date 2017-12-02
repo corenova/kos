@@ -63,17 +63,14 @@ function start(program, process) {
   const engine = this.flow
   const { stdin, stdout, stderr } = process
   const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
-  const logs = [ 'error', 'warn', 'info', 'debug' ]
-  const ignores = engine.inputs.concat(logs, [ 'module/*', 'sync' ])
-
-  this.save({ verbose })
 
   // write stimuli seen by KOS persona's CORE into stdout
   kos.core.on('data', stimulus => {
+    const ignores = engine.inputs.concat('module/*', 'sync', 'error')
     if (stimulus.origin && !stimulus.match(ignores))
       stdout.write(stimulus.toKSON() + "\n")
   })
-  silent || kos.pipe(debug).feed('debug/level', verbose)
+  silent || kos.pipe(debug({ 'debug/level': verbose }))
 
   args.forEach(x => this.send('load', x))
   process.nextTick(() => {
@@ -85,6 +82,8 @@ function start(program, process) {
 
   if (stdin.isTTY && stdout.isTTY) this.send('prompt', 'kos> ')
   else stdin.pipe(kos, { end: false })
+
+  this.debug('starting KOS...')
 }
 
 function loadPersona(name) {
@@ -104,16 +103,16 @@ function loadPersona(name) {
     }
   }
   if (!persona) 
-    throw new Error(`unable to locate persona "${name}" from ${search}`)
+    this.throw(`unable to locate persona "${name}" from ${search}`)
     
   if (persona.type !== Symbol.for('kos:persona'))
-    throw new Error(`unable to load incompatible persona "${name}" from ${location}`)
+    this.throw(`unable to load incompatible persona "${name}" from ${location}`)
 
   this.send('persona', persona.join(kos))
 }
 
 function updateLoadPath(loadpath) {
-  
+  // TBD
 }
 
 function requirePersona(persona) { 
@@ -148,13 +147,11 @@ function tryRequire(opts) {
 
 function promptUser(prompt) {
   const regex = /^module\//
-  const verbose = this.get('verbose')
   const readline = this.get('module/readline')
   const { stdin, stdout, stderr } = this.get('process')
 
   if (this.get('active')) return
 
-  this.debug('starting KOS...')
   const cmd = readline.createInterface({
     input: stdin,
     output: stderr,
@@ -186,8 +183,10 @@ function promptUser(prompt) {
     }
     cmd.prompt()
   })
-  kos.on('dropped', stimulus => this.warn(`unrecognized stimulus "${stimulus.key}"`))
-  kos.on('log', clearPrompt)
+
+  kos.on('ignore', ({ topic }) => this.warn(`unrecognized stimulus "${topic}"`))
+
+  kos.on('clear', clearPrompt)
   this.set('active', true)
   cmd.prompt()
 

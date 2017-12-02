@@ -67,8 +67,10 @@ function start(program, process) {
   // write stimuli seen by KOS persona's CORE into stdout
   kos.core.on('data', stimulus => {
     const ignores = engine.inputs.concat('module/*', 'sync', 'error')
-    if (stimulus.origin && !stimulus.match(ignores))
+    if (stimulus.origin && !stimulus.match(ignores)) {
+      kos.emit('clear')
       stdout.write(stimulus.toKSON() + "\n")
+    }
   })
   silent || kos.pipe(debug({ 'debug/level': verbose }))
 

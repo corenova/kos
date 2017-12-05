@@ -13,8 +13,7 @@ module.exports = kos.create('debug')
 
   .pre('module/debug')
   .in('debug/level')
-  .out('warn','info','debug')
-  .bind(setupLoggers)
+  .bind(initialize)
 
   .pre('debug/level')
   .in('error').bind(outputError)
@@ -23,20 +22,27 @@ module.exports = kos.create('debug')
   .in('info').bind(outputMessage)
   .in('debug').bind(outputMessage)
 
-function setupLoggers(level) {
+function initialize(level) {
   const debug = this.get('module/debug')
   if (!this.get('initialized')) {
     debug.enable(this.get('namespaces').join(','))
     this.set('initialized', true)
   }
   const loggers = this.get('loggers')
-  const logs = [ 'error', 'warn', 'info', 'debug', 'trace' ]
-  const callback = this.get('callback') || (
-    this.set('callback', (type, ...log) => this.send(type, log)).get('callback')
-  )
-  const tracer = this.get('tracer') || (
-    this.set('tracer', token => {
-      const trace = this.get('loggers').get('trace')
+  // start fresh
+  loggers.clear()
+
+  if (level < 0) return // silent and we don't want any log outputs
+  loggers.set('error', debug('kos:error'))
+  if (level)     loggers.set('warn',  debug('kos:warn'))
+  if (level > 1) loggers.set('info',  debug('kos:info'))
+  if (level > 2) loggers.set('debug', debug('kos:debug'))
+  if (level > 3) loggers.set('trace', debug('kos:trace'))
+
+  if (level > 3) {
+    this.flow.on('data', token => {
+      const trace = loggers.get('trace')
+      const logs = [ 'warn','info','debug','trace','error' ]
       if (!trace) return
       const { topic, value } = token
       if (logs.indexOf(topic) !== -1) return
@@ -48,24 +54,7 @@ function setupLoggers(level) {
       default: 
         trace('%s %o', topic, value)
       }
-    }).get('tracer')
-  )
-
-  // start fresh
-  loggers.clear()
-  kos.removeListener('log', callback) // XXX - this is a hack
-  kos.removeListener('data', tracer)
-
-  if (level < 0) return // silent and we don't want any log outputs
-
-  kos.on('log', callback) // XXX - this is a hack
-  loggers.set('error', debug('kos:error'))
-  if (level)     loggers.set('warn',  debug('kos:warn'))
-  if (level > 1) loggers.set('info',  debug('kos:info'))
-  if (level > 2) loggers.set('debug', debug('kos:debug'))
-  if (level > 3) {
-    loggers.set('trace', debug('kos:trace'))
-    kos.on('data', tracer)
+    })
   }
 }
 

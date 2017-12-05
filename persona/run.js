@@ -12,7 +12,8 @@ module.exports = kos.create('run')
   .load(render)
   .init({
     modules: new Map,
-    loadpath: new Set
+    loadpath: new Set,
+    prompt: colors.grey('kos>')
   })
 
   .in('process')
@@ -20,12 +21,12 @@ module.exports = kos.create('run')
   .bind(initialize)
 
   .in('program','process')
-  .out('load', 'read', 'show', 'prompt')
+  .out('load', 'read', 'show', 'iostream')
   .bind(start)
 
   // TODO: consider making this a separate persona
   .pre('process','module/readline')
-  .in('prompt')
+  .in('iostream')
   .out('render')
   .bind(promptUser)
 
@@ -60,30 +61,24 @@ function initialize(process) {
 }
 
 function start(program, process) {
-  const engine = this.flow
   const { stdin, stdout, stderr } = process
   const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
 
-  // write stimuli seen by KOS persona's CORE into stdout
-  kos.core.on('data', stimulus => {
-    const ignores = engine.inputs.concat('module/*', 'sync', 'error')
-    if (stimulus.origin && !stimulus.match(ignores)) {
-      kos.emit('clear')
-      stdout.write(stimulus.toKSON() + "\n")
-    }
-  })
-  silent || kos.pipe(debug({ 'debug/level': verbose }))
+  let io = this.flow.io()
+
+  // unless silent, turn on logging
+  silent || kos.logs.pipe(debug({ 'debug/level': verbose }))
 
   args.forEach(x => this.send('load', x))
   process.nextTick(() => {
-    expr.forEach(x => kos.write(x + "\n"))
+    expr.forEach(x => io.write(x + "\n"))
     data.forEach(x => this.send('read', x))
   })
 
   if (show) return this.send('show', true)
 
-  if (stdin.isTTY && stdout.isTTY) this.send('prompt', 'kos> ')
-  else stdin.pipe(kos, { end: false })
+  if (stdin.isTTY && stdout.isTTY) this.send('iostream', io)
+  else stdin.pipe(io, { end: false }).pipe(stdout)
 
   this.debug('starting KOS...')
 }
@@ -147,7 +142,7 @@ function tryRequire(opts) {
   }
 }
 
-function promptUser(prompt) {
+function promptUser(io) {
   const regex = /^module\//
   const readline = this.get('module/readline')
   const { stdin, stdout, stderr } = this.get('process')
@@ -157,7 +152,7 @@ function promptUser(prompt) {
   const cmd = readline.createInterface({
     input: stdin,
     output: stderr,
-    prompt: colors.grey(prompt),
+    prompt: this.get('prompt'),
     completer: (line) => {
       let inputs = kos.inputs.filter(x => !regex.test(x))
       let completions = Array.from(new Set(inputs)).sort().concat('.info','.help','.quit')
@@ -181,14 +176,13 @@ function promptUser(prompt) {
       process.exit(0)
       break;
     default:
-      kos.write(input + "\n")
+      io.write(input + "\n")
     }
     cmd.prompt()
   })
 
-  kos.on('ignore', ({ topic }) => this.warn(`unrecognized stimulus "${topic}"`))
+  io.on('data', clearPrompt).pipe(stdout)
 
-  kos.on('clear', clearPrompt)
   this.set('active', true)
   cmd.prompt()
 

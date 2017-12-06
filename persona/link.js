@@ -94,7 +94,9 @@ function createLinkStream(link) {
     (new kos.Dataflow).init(link)
 
   socket.on('active', () => {
-    let io = stream.io()
+    let io = stream.io({
+      persona: false
+    })
     socket.pipe(io).pipe(socket)
     socket.on('close', () => {
       socket.destroy()

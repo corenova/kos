@@ -192,11 +192,11 @@ function renderReactions(persona) {
 function renderPersona(persona) {
   const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
   const treeify = this.get('module/treeify')
-  const { id, label, purpose, passive, requires, personas, reactions } = persona
+  const { id, label, purpose, passive, enabled, requires, personas, reactions, state } = persona
   let funcWidth = findLongest(reactions.map((x => x.label))).length
   let str = ''
   let info = {
-    id:       id,
+    id, passive, enabled,
 	requires: requires.sort(),
     personas: personas.map(x => x.label),
     reactions: reactions.map(x => FUNC + `(${x.label})`),

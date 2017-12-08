@@ -7,13 +7,13 @@ const prompt = require('./prompt')
 
 module.exports = kos.create('run')
   .desc('reactions to runtime context')
+  .pass(true)
   .load(log)
   .load(render)
   .load(prompt)
 
   .init({
-    modules: new Map,
-    loadpath: new Set
+    loadpath: []
   })
 
   .in('process')
@@ -21,7 +21,7 @@ module.exports = kos.create('run')
   .bind(initialize)
 
   .in('program','process')
-  .out('load', 'read', 'show', 'log', 'prompt/io')
+  .out('load', 'read', 'show', 'log', 'iostream')
   .bind(start)
 
   .pre('module/path')
@@ -29,8 +29,8 @@ module.exports = kos.create('run')
   .out('persona')
   .bind(loadPersona)
 
-  .in('load/path')
-  .bind(updateLoadPath)
+  .in('path')
+  .bind(saveSearchPath)
 
   .in('require')
   .out('module/*')
@@ -42,15 +42,12 @@ module.exports = kos.create('run')
 
   .in('persona')
   .out('require')
-  .bind(requirePersona)
+  .bind(absorbPersona)
 
   .pre('process','show')
   .in('persona')
   .out('render')
   .bind(renderPersona)
-
-  .in('error')
-  .bind(trackErrors)
 
 // self-initialize
 function initialize(process) { 
@@ -59,10 +56,11 @@ function initialize(process) {
 
 function start(program, process) {
   const { stdin, stdout, stderr } = process
-  const { args=[], expr=[], data=[], show=false, silent=false, verbose=0 } = program
+  const { args=[], expr=[], file=[], show=false, silent=false, verbose=0 } = program
 
   let io = this.flow.io({
-    'error': false // ignore error topics
+    persona: false,
+    error: false // ignore error topics
   })
 
   // unless silent, turn on logging
@@ -71,12 +69,12 @@ function start(program, process) {
   args.forEach(x => this.send('load', x))
   process.nextTick(() => {
     expr.forEach(x => io.write(x + "\n"))
-    data.forEach(x => this.send('read', x))
+    file.forEach(x => this.send('read', x))
   })
 
   if (show) return this.send('show', true)
 
-  if (stdin.isTTY && stdout.isTTY) this.send('prompt/io', io)
+  if (stdin.isTTY && stdout.isTTY) this.send('iostream', io)
   else stdin.pipe(io, { end: false }).pipe(stdout)
 
   this.debug('starting KOS...')
@@ -108,13 +106,14 @@ function loadPersona(name) {
   this.send('persona', persona)
 }
 
-function updateLoadPath(loadpath) {
+function saveSearchPath(path) {
   // TBD
 }
 
-function requirePersona(persona) { 
+function absorbPersona(persona) { 
   const regex = /^module\/(.+)$/
-  persona.requires.forEach(key => {
+  persona.join(this.flow)
+  persona.enabled && persona.requires.forEach(key => {
     let match = key.match(regex, '$1')
     if (!match) return
     this.send('require', match[1])
@@ -129,12 +128,11 @@ function readKSONFile(filename) {
 }
 
 function tryRequire(opts) {
-  const modules = this.get('modules')
   if (typeof opts === 'string') opts = { name: opts }
   let { name, path } = opts
   try {
-    const m = modules.get(name) || require(path || name)
-    modules.has(name) || modules.set(name, m)
+    const m = this.get(name) || require(path || name)
+    this.has(name) || this.set(name, m)
     this.send('module/'+name, m)
   } catch (e) {
     e.target = name

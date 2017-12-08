@@ -11,14 +11,15 @@ module.exports = kos.create('prompt')
   })
 
   .pre('process','module/readline')
-  .in('prompt/io')
-  .out('prompt/cmd', 'render')
+  .in('iostream')
+  .out('prompt', 'render')
   .bind(promptUser)
 
 function promptUser(io) {
   const regex = /^module\//
   const readline = this.get('module/readline')
   const { stdin, stdout, stderr } = this.get('process')
+  const { parent } = io
 
   if (this.get('active')) return
 
@@ -27,7 +28,7 @@ function promptUser(io) {
     output: stderr,
     prompt: this.get('prompt'),
     completer: (line) => {
-      let inputs = kos.inputs.filter(x => !regex.test(x))
+      let inputs = parent.inputs.filter(x => !regex.test(x))
       let completions = Array.from(new Set(inputs)).sort().concat('.info','.help','.quit')
       const hits = completions.filter(c => c.indexOf(line) === 0)
       if (/\s+$/.test(line)) completions = []
@@ -42,7 +43,7 @@ function promptUser(io) {
       this.send('render', { source: kos, target: stderr })
       break;
     case '.help':
-      console.error("sorry, you're on your own for now...")
+      this.error("sorry, you're on your own for now...")
       break;
     case '.quit':
       process.exit(0)
@@ -52,14 +53,15 @@ function promptUser(io) {
     }
     cmd.prompt()
   })
-
-  io.on('data', clearPrompt).pipe(stdout)
-  kos.on('clear', clearPrompt)
+  cmd.on('clear', clearPrompt)
 
   this.set('active', true)
   process.nextTick(() => cmd.prompt(true))
 
-  this.send('prompt/cmd', cmd)
+  io.on('data', clearPrompt).pipe(stdout)
+  parent.on('reject', token => this.warn(`ignoring unknown topic: ${token.topic}`))
+
+  this.send('prompt', cmd)
 
   function clearPrompt() {
     readline.clearLine(stderr, -1)

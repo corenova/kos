@@ -14,7 +14,6 @@ module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
   .load(net)
   .load(ws)
-  .init({ streams: new Map })
 
   .in('link/connect')
   .out('net/connect','ws/connect')
@@ -87,15 +86,11 @@ function listenByUrl(dest) {
 
 function createLinkStream(link) {
   const { addr, socket, server } = link
-  const streams = this.get('streams')
-  const stream = 
-    streams.has(addr) ? 
-    streams.get(addr) : 
-    (new kos.Dataflow).init(link)
+  const stream = this.get(addr) || (new kos.Dataflow({ parent: this.flow })).init(link)
 
   socket.on('active', () => {
     let io = stream.io({
-      persona: false
+      error: false
     })
     socket.pipe(io).pipe(socket)
     socket.on('close', () => {
@@ -103,7 +98,7 @@ function createLinkStream(link) {
       if (server) {
         stream.emit('destroy')
         stream.end()
-        streams.delete(addr)
+        this.delete(addr)
       } else {
         stream.emit('inactive')
       }
@@ -111,8 +106,8 @@ function createLinkStream(link) {
     stream.resume()
     stream.emit('active', socket)
   })
-  if (!streams.has(addr)) {
-    streams.set(addr, stream)
+  if (!this.has(addr)) {
+    this.set(addr, stream)
     stream.once('active', () => this.send('link/stream', stream))
   }
 }

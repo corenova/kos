@@ -11,10 +11,6 @@ const kos = new Persona({
   passive: true
 })
 
-kos.in('persona').bind(function evolve(persona) {
-  persona.join(this.flow)
-})
-
 // expose main class definitions
 kos.Persona  = Persona
 kos.Reaction = Reaction

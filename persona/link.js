@@ -7,20 +7,23 @@
 'use strict'
 
 const { kos = require('..') } = global
-const net = require('./net')
-const ws  = require('./ws')
+const net  = require('./net')
+const ws   = require('./ws')
+const peer = require('./peer')
 
 module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
+
   .load(net)
   .load(ws)
+  .load(peer)
 
   .in('link/connect')
-  .out('net/connect','ws/connect')
+  .out('net/connect','ws/connect','link/connect/url')
   .bind(connect)
 
   .in('link/listen')
-  .out('net/listen','ws/listen')
+  .out('net/listen','ws/listen','link/listen/url')
   .bind(listen)
 
   .pre('module/url')
@@ -33,12 +36,11 @@ module.exports = kos.create('link')
   .out('link/listen')
   .bind(listenByUrl)
 
-  .in('link')
-  .out('link/stream')
-  .bind(createLinkStream)
-
+  .in('peer').bind(join)
 
 function connect(opts) {
+  if (typeof opts === 'string') return this.send('link/connect/url', opts)
+
   switch (opts.protocol) {
   case 'ws:':
   case 'wss:':
@@ -55,6 +57,8 @@ function connect(opts) {
 }
 
 function listen(opts) {
+  if (typeof opts === 'string') return this.send('link/listen/url', opts)
+
   switch (opts.protocol) {
   case 'ws:':
   case 'wss:':
@@ -84,30 +88,8 @@ function listenByUrl(dest) {
   this.send('link/listen', Object.assign(opts, opts.query))
 }
 
-function createLinkStream(link) {
-  const { addr, socket, server } = link
-  const stream = this.get(addr) || (new kos.Dataflow({ parent: this.flow })).init(link)
-
-  socket.on('active', () => {
-    let io = stream.io({
-      error: false
-    })
-    socket.pipe(io).pipe(socket)
-    socket.on('close', () => {
-      socket.destroy()
-      if (server) {
-        stream.emit('destroy')
-        stream.end()
-        this.delete(addr)
-      } else {
-        stream.emit('inactive')
-      }
-    })
-    stream.resume()
-    stream.emit('active', socket)
-  })
-  if (!this.has(addr)) {
-    this.set(addr, stream)
-    stream.once('active', () => this.send('link/stream', stream))
-  }
+function join(peer) { 
+  this.info('joining new peer to', this.parent.identity)
+  peer.feed('sync', this.parent)
+  peer.join(this.parent) 
 }

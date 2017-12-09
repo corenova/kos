@@ -1,31 +1,18 @@
 'use strict';
 
 const { kos = require('..') } = global
-const peerPersona = require('./peer')
-const linkPersona = require('./link')
 
 module.exports = kos.create('sync')
-  .desc('reactions to synchronize dataflow objects with remote stream(s)')
-  .load(linkPersona)
+  .desc('reactions to synchronize dataflow with remote peer(s)')
+  .in('peer').out('sync').bind(handshake)
 
-  .in('sync/connect')
-  .out('link/connect/url')
-  .bind(syncConnect)
+function handshake(peer) {
+  const addr = peer.state.get('addr')
+  const { repair } = peer.state.get('opts')
 
-  .in('sync/listen')
-  .out('link/listen/url')
-  .bind(syncListen)
+  // once the peer persona joins the intended target persona
+  
 
-  .in('link/stream')
-  .out('peer', 'unload')
-  .bind(synchronize)
-
-function syncConnect(url)     { this.send('link/connect/url', url) }
-function syncListen(url)      { this.send('link/listen/url', url) }
-
-function synchronize(stream) {
-  const addr = stream.state.get('addr')
-  const { repair } = stream.state.get('opts')
   const { parent } = this.flow
 
   // perform sync HANDSHAKE once stream is active
@@ -56,7 +43,7 @@ function synchronize(stream) {
     stream.once('active', () => {
       this.info('resuming dataflow to peer')
       peer.leave(kos)
-      this.feed('link/stream', stream) // re-initiate sync
+      this.feed('peer', peer) // re-initiate sync
     })
     stream.on('destroy', () => {
       this.debug('destroying sync stream, unload:', peer.label)
@@ -70,4 +57,10 @@ function synchronize(stream) {
     this.send('peer', peer)
   })
 
+}
+
+function synchronize(persona) {
+  if (persona.id !== kos.id) {
+    
+  }
 }

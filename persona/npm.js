@@ -9,8 +9,7 @@ const { kos = require('..') } = global
 module.exports = kos.create('npm')
   .desc("reactions to NPM package management requests")
   .init({
-    ready: false,
-    pending: new Set
+    ready: false
   })
 
   .in('module/npm')
@@ -47,7 +46,7 @@ function initialize(options) {
   npm.load(options, (err, res) => {
     if (err) this.throw(err)
     else {
-      this.save({ ready: true })
+      this.save({ pending: new Set, ready: true })
       this.send('npm/loaded', true)
     }
   })

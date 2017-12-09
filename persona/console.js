@@ -1,19 +1,27 @@
 'use strict'
 const { kos = require('..') } = global
 
+const render = require('./render')
+
 // TODO: shouldn't be explicit dependency?
 const colors = require('colors')
 
-module.exports = kos.create('prompt')
+module.exports = kos.create('console')
   .desc('reactions to user prompt interactions')
+  .load(render)
   .init({
     prompt: colors.grey('kos> ')
   })
 
   .pre('process','module/readline')
-  .in('iostream')
+  .in('stdio')
   .out('prompt', 'render')
   .bind(promptUser)
+
+  .pre('process','show')
+  .in('persona')
+  .out('render')
+  .bind(renderPersona)
 
 function promptUser(io) {
   const regex = /^module\//
@@ -40,7 +48,7 @@ function promptUser(io) {
     switch (input) {
     case '': break;
     case '.info':
-      this.send('render', { source: kos, target: stderr })
+      this.send('render', { source: parent, target: stderr })
       break;
     case '.help':
       this.error("sorry, you're on your own for now...")
@@ -68,5 +76,14 @@ function promptUser(io) {
     readline.cursorTo(stderr, 0)
     process.nextTick(() => cmd.prompt(true))
   }
+}
+
+function renderPersona(persona) {
+  if (!this.get('show')) return
+  const { stderr } = this.get('process')
+  this.send('render', {
+    source: persona,
+    target: stderr
+  })
 }
 

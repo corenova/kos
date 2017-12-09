@@ -4,7 +4,7 @@
 const program = require('commander')
 const pkginfo = require('../package.json')
 const kos = require('..')
-const run = require('../persona/run')
+const node = require('../persona/node')
 
 function collect(val, keys) { keys.push(val); return keys }
 
@@ -19,7 +19,7 @@ program
   .parse(process.argv)
 
 kos
-  .load(run)
+  .load(node)
   .feed('process', process)
   .feed('program', program)
 

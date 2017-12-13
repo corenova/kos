@@ -39,7 +39,7 @@ function runInstance(opts) {
   this.send('http/listen', opts)
   // Note: for now tap into the stream and "publish" every kinetic
   // object into runtime state. Should make this hierarchical...
-  this.flow.on('data', token => this.save({ token.key: token.value }))
+  this.reactor.on('data', token => this.save({ token.key: token.value }))
 }
 
 function runWebSocketServer(server) {
@@ -75,7 +75,7 @@ function deleteFlowState({ req, res }) {
 
 function postFlowState({ req, res }) {
   let key = url2key(req.url, this.get('basePath'))
-  let io = this.flow.io()
+  let io = this.io()
   io.write(key + ' ')
   req.pipe(io)
   res.statusCode = 203

@@ -71,6 +71,6 @@ function readKSONFile(filename) {
   const fs = this.get('module/fs')
   const kson = fs.createReadStream(filename)
   kson.on('error', this.error.bind(this))
-  kson.pipe(this.flow, { end: false })
+  kson.pipe(this.reactor, { end: false })
 }
 

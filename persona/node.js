@@ -26,14 +26,14 @@ module.exports = kos.create('node')
 
 // self-initialize
 function initialize(process) { 
-  this.send('persona', this.flow)
+  this.send('persona', this.parent)
 }
 
 function start(program, process) {
   const { stdin, stdout, stderr } = process
   const { args=[], expr=[], file=[], show=false, silent=false, verbose=0 } = program
 
-  let io = this.flow.io({
+  let io = this.io({
     persona: false,
     error: false // ignore error topics
   })
@@ -58,7 +58,7 @@ function start(program, process) {
 function absorbPersona(persona) { 
   if (!(persona instanceof kos.Persona)) return
   const regex = /^module\/(.+)$/
-  persona.join(this.flow)
+  persona.join(this.reactor)
   persona.enabled && persona.requires.forEach(key => {
     let match = key.match(regex, '$1')
     if (!match) return

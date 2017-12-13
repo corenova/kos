@@ -15,12 +15,10 @@ module.exports = kos.create('react')
   .desc('reactions to React lifecycle events')
   .init({ lifecycle })
 
-  .in('react:mounting').bind(function() { 
-    this.flow.parent.join(kos) 
-  })
-  .in('react:unmounting').bind(function() { 
-    this.flow.parent.leave(kos)
-  })
+  .in('react:mounting')
+  .bind(function attach() { this.join(kos) })
+  .in('react:unmounting')
+  .bind(function detach() { this.leave(kos) })
 
   .in('component')
   .out('react:*','*')
@@ -29,7 +27,6 @@ module.exports = kos.create('react')
 function wrapComponent(component) {
   const lifecycle = this.get('lifecycle')
   const { state, setState, trigger } = component // remember originals
-  const source = this.flow.parent
 
   // allow all lifecycle events to emit an internal event
   for (let event in lifecycle) {
@@ -41,27 +38,27 @@ function wrapComponent(component) {
   }
   // attach a convenience function for trigger
   component.trigger = (key, ...args) => {
-    return () => source.feed(key, ...args)
+    return () => this.send(key, ...args)
   }
 
   // treat 'state' and 'setState' specially
-  source.save(state, { emit: false })
+  this.save(state, { emit: false })
   component.setState = function (obj, ...rest) {
-    source.save(obj, { emit: false })
+    this.save(obj, { emit: false })
     return setState.call(component, obj, ...rest)
   }
-  // override to compute 'state' from source flow
+  // override to compute 'state' from parent reactor
   Object.defineProperty(component, 'state', {
     get() { 
       let obj = Object.create(null)
-      for (let [k,v] of source.state) obj[k] = v
+      for (let [k,v] of this.reactor.state) obj[k] = v
       return obj
     },
     set(obj) {
-      source.init(obj)
+      this.reactor.init(obj)
     }
   })
   // call the original setState
-  source.on('save', setState.bind(component))
+  this.reactor.on('save', setState.bind(component))
 }
 

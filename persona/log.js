@@ -17,7 +17,6 @@ function setup(opts) {
   const namespaces = [ 'kos:error', 'kos:warn', 'kos:info', 'kos:debug', 'kos:trace' ]
 
   const { level } = opts
-  const { parent } = this.flow
   const handlers = new Map
 
   if (!this.get('initialized')) {
@@ -54,10 +53,10 @@ function setup(opts) {
 
   if (level < 0) {
     this.info('logging disabled')
-    parent.removeListener('log', this.get('logger'))
+    kos.removeListener('log', this.get('logger'))
   } else  {
     this.info('logging initialized to level', level)
-    parent.on('log', this.get('logger'))
+    kos.on('log', this.get('logger'))
     handlers.set('error', debug('kos:error'))
   }
   if (level) {
@@ -67,8 +66,8 @@ function setup(opts) {
   if (level > 1) handlers.set('debug', debug('kos:debug'))
   if (level > 2) handlers.set('trace', debug('kos:trace'))
 
-  if (level > 2) this.flow.on('data', this.get('tracer'))
-  else this.flow.removeListener('data', this.get('tracer'))
+  if (level > 2) this.reactor.on('data', this.get('tracer'))
+  else this.reactor.removeListener('data', this.get('tracer'))
 }
 
 function savePrompt(prompt) { this.save({ prompt }) }

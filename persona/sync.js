@@ -13,7 +13,7 @@ function handshake(peer) {
   // once the peer persona joins the intended target persona
   
 
-  const { parent } = this.flow
+  const { parent } = this
 
   // perform sync HANDSHAKE once stream is active
   this.debug('synchronizing with:', addr);

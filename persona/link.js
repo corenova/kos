@@ -89,7 +89,8 @@ function listenByUrl(dest) {
 }
 
 function join(peer) { 
-  this.info('joining new peer to', this.parent.identity)
-  peer.feed('sync', this.parent)
-  peer.join(this.parent) 
+  const { parent } = this
+  this.info('joining new peer to', parent.identity)
+  peer.feed('persona', parent)
+  peer.join(kos)
 }

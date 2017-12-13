@@ -1,7 +1,7 @@
 'use strict'
 
 const kos = require('./node')
-const DebugPersona = require('./persona/debug')
+const LogPersona   = require('./persona/log')
 const LinkPersona  = require('./persona/link')
 const HttpPersona  = require('./persona/http')
 const SyncPersona  = require('./persona/sync')
@@ -12,7 +12,7 @@ const WebSocketPersona = require('./persona/ws')
 
 export default kos
 export { 
-  DebugPersona, 
+  LogPersona, 
   LinkPersona, 
   HttpPersona, 
   WebSocketPersona, 

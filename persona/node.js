@@ -59,10 +59,6 @@ function absorbPersona(persona) {
   if (!(persona instanceof kos.Persona)) return
   const regex = /^module\/(.+)$/
   persona.join(this.reactor)
-  persona.enabled && persona.requires.forEach(key => {
-    let match = key.match(regex, '$1')
-    if (!match) return
-    this.send('require', match[1])
-  })
+  persona.enabled && persona.depends.forEach(m => this.send('require', m))
 }
 

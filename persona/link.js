@@ -9,14 +9,12 @@
 const { kos = require('..') } = global
 const net  = require('./net')
 const ws   = require('./ws')
-const peer = require('./peer')
 
 module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
 
   .load(net)
   .load(ws)
-  .load(peer)
 
   .in('link/connect')
   .out('net/connect','ws/connect','link/connect/url')
@@ -36,7 +34,7 @@ module.exports = kos.create('link')
   .out('link/listen')
   .bind(listenByUrl)
 
-  .in('peer').bind(join)
+  .in('connection').out('link').bind(link)
 
 function connect(opts) {
   if (typeof opts === 'string') return this.send('link/connect/url', opts)
@@ -88,9 +86,26 @@ function listenByUrl(dest) {
   this.send('link/listen', Object.assign(opts, opts.query))
 }
 
-function join(peer) { 
-  const { parent } = this
-  this.info('joining new peer to', parent.identity)
-  peer.feed('persona', parent)
-  peer.join(kos)
+function link(connection) {
+  const { addr, socket, server, opts } = connection
+  const link = this.use(addr, kos.create('link').init(connection))
+
+  socket.on('active', () => {
+    let io = link.io({
+      error: false
+    })
+    socket.pipe(io).pipe(socket)
+    socket.on('close', () => {
+      socket.destroy()
+      if (server) {
+        link.leave()
+        link.end()
+        this.delete(addr)
+      } else {
+        link.emit('inactive')
+      }
+    })
+    link.resume()
+    this.send('link', link)
+  })
 }

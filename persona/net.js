@@ -11,18 +11,17 @@ const { kos = require('..') } = global
 module.exports = kos.create('net')
   .desc("reactions to establish TCP/UDP client/server communication links")
   .init({
-    protocols: ['tcp:', 'udp:'],
-    links: new Map
+    protocols: ['tcp:', 'udp:']
   })
 
   .pre('module/net')
   .in('net/connect')
-  .out('net/socket','link','net/connect')
+  .out('connection','net/socket','net/connect')
   .bind(connect)
 
   .pre('module/net')
   .in('net/listen')
-  .out('net/server','net/socket','link')
+  .out('connection','net/socket','net/server')
   .bind(listen)
 
   .pre('module/url')
@@ -37,7 +36,8 @@ module.exports = kos.create('net')
 
 
 function connect(opts) {
-  const [ net, protocols, links ] = this.get('module/net', 'protocols', 'links')
+  const [ net, protocols ] = this.get('module/net', 'protocols')
+  const connections = this.use('connections', new Map)
 
   // TODO: should be handled via data model schema
   let { protocol, hostname, port, retry, max } = opts = normalizeOptions(opts)
@@ -45,13 +45,13 @@ function connect(opts) {
     return this.error('unsupported protocol', protocol)
 
   const addr = `${protocol}//${hostname}:${port}`
-  if (links.has(addr)) return this.send('link', links.get(addr))
+  if (connections.has(addr)) return this.send('connection', connections.get(addr))
 
   const socket = new net.Socket
-  const link = { addr, socket, opts }
+  const connection = { addr, socket, opts }
 
-  links.set(addr, link)
-  this.send('link', link)
+  connections.set(addr, connection)
+  this.send('connection', connection)
 
   socket.setNoDelay()
   socket.on('connect', () => {
@@ -67,7 +67,7 @@ function connect(opts) {
         retry: Math.round(Math.min(max, retry * 1.5))
       })
       this.debug("attempt reconnect", addr)
-      links.delete(addr)
+      connections.delete(addr)
       this.feed('net/connect', opts)
     }, retry)
   })
@@ -87,7 +87,7 @@ function listen(opts) {
     let addr = `${protocol}//${socket.remoteAddress}:${socket.remotePort}`
     this.info('accept', addr)
     this.send('net/socket', socket)
-    this.send('link', { addr, socket, server, opts })
+    this.send('connection', { addr, socket, server, opts })
     socket.emit('active')
   })
   server.on('listening', () => {

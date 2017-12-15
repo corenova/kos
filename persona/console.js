@@ -36,8 +36,8 @@ function promptUser(io) {
     output: stderr,
     prompt: this.get('prompt'),
     completer: (line) => {
-      let inputs = parent.inputs.filter(x => !regex.test(x))
-      let completions = Array.from(new Set(inputs)).sort().concat('.info','.help','.quit')
+      let inputs = parent.absorbs.filter(x => !regex.test(x))
+      let completions = inputs.sort().concat('.info','.help','.quit')
       const hits = completions.filter(c => c.indexOf(line) === 0)
       if (/\s+$/.test(line)) completions = []
       return [hits.length ? hits : completions, line]
@@ -48,7 +48,7 @@ function promptUser(io) {
     switch (input) {
     case '': break;
     case '.info':
-      this.send('render', { source: parent, target: stderr })
+      this.send('render', { source: kos, target: stderr })
       break;
     case '.help':
       this.error("sorry, you're on your own for now...")

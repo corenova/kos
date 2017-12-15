@@ -14,7 +14,8 @@ const kos = new Persona({
 kos.in('persona').bind(absorb)
 
 function absorb(persona) { 
-  persona.join(this.reactor) 
+  if (persona instanceof Persona)
+    persona.join(this.reactor) 
 }
 
 // expose main class definitions

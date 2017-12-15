@@ -88,7 +88,7 @@ function listenByUrl(dest) {
 
 function link(connection) {
   const { addr, socket, server, opts } = connection
-  const link = this.use(addr, kos.create('link').init(connection))
+  const link = this.use(addr, kos.create('link').desc(addr).init(connection))
 
   socket.on('active', () => {
     let io = link.io({

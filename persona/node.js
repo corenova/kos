@@ -5,7 +5,6 @@ const console = require('./console')
 
 module.exports = kos.create('node')
   .desc('reactions to Node.js runtime context')
-  .pass(true)
   .load(console)
 
   .in('process')

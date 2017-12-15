@@ -4,12 +4,11 @@ const { kos = require('..') } = global
 
 module.exports = kos.create('hive')
   .desc('reactions to p2p hive communications')
-  .pass(true)
 
   .in('hive/connect').out('link/connect').bind(connect)
   .in('hive/listen').out('link/listen').bind(listen)
 
-  .in('link').bind(peer)
+  .in('link').out('persona').bind(peer)
 
 function connect(opts) { this.send('link/connect', opts) }
 function listen(opts)  { this.send('link/listen', opts) }
@@ -29,5 +28,5 @@ function peer(link) {
     }
   }
   //link.feed('persona', ...kos.personas)
-  link.join(this.reactor)
+  this.send('persona', link)
 }

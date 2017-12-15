@@ -19,6 +19,8 @@ function setup(opts) {
   const { level } = opts
   const handlers = new Map
 
+  if (level > 2) namespaces.push('kos:*')
+
   if (!this.get('initialized')) {
     debug.enable(namespaces.join(','))
     const logger = token => {

@@ -11,18 +11,17 @@ const { kos = require('..') } = global
 module.exports = kos.create('ws')
   .desc("reactions to establish WebSocket client/server communication links")
   .init({
-    protocols: ['ws:', 'wss:'],
-    links: new Map
+    protocols: ['ws:', 'wss:']
   })
 
   .pre('module/simple-websocket')
   .in('ws/connect')
-  .out('ws/socket','link','ws/connect')
+  .out('ws/socket','connection','ws/connect')
   .bind(connect)
 
   .pre('module/simple-websocket/server')
   .in('ws/listen')
-  .out('ws/server','ws/socket','link')
+  .out('ws/server','ws/socket','connection')
   .bind(listen)
 
   .pre('module/url')
@@ -38,20 +37,20 @@ module.exports = kos.create('ws')
 function connect(opts) {
   const WebSocket = this.get('module/simple-websocket')
   const protocols = this.get('protocols')
-  const links = this.get('links')
+  const connections = this.use('connections', new Map)
 
   let { protocol, hostname, port, path, retry, max } = opts = normalizeOptions(opts)
   if (!protocols.includes(protocol)) 
     return this.error('unsupported protocol', protocol)
 
   const addr = `${protocol}//${hostname}:${port}/${path}`
-  if (links.has(addr)) return this.send('link', links.get(addr))
+  if (connections.has(addr)) return this.send('connection', connections.get(addr))
 
   const socket = new WebSocket(addr)
-  const link = { addr, socket, opts }
+  const connection = { addr, socket, opts }
 
-  links.set(addr, link)
-  this.send('link', link)
+  connections.set(addr, connection)
+  this.send('connection', connection)
 
   socket.on('connect', () => {
     this.info("connected to", addr)
@@ -66,7 +65,7 @@ function connect(opts) {
         retry: Math.round(Math.min(max, retry * 1.5))
       })
       this.debug("attempt reconnect", addr)
-      links.delete(addr)
+      connections.delete(addr)
       this.feed('ws/connect', opts)
     }, retry)
   })
@@ -96,7 +95,7 @@ function listen(opts) {
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
     this.info('accept', addr)
     this.send('ws/socket', socket)
-    this.send('link', { addr, socket, server, opts })
+    this.send('connection', { addr, socket, server, opts })
     socket.emit('active')
   })
   server.on('error', this.error.bind(this))

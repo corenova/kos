@@ -7,8 +7,7 @@ const { kos = require('..') } = global
 module.exports = kos.create('snmp')
   .desc("reactions to GET/SET SNMP commands")
   .init({
-    protocols: ['snmp:'],
-    sessions: new Map
+    protocols: ['snmp:']
   })
 
   .pre('module/net-snmp')
@@ -38,7 +37,8 @@ function connect(opts) {
   if (typeof opts === 'string') return this.send('snmp/connect/url', opts)
 
   const snmp = this.get('module/net-snmp')
-  const [ protocols, sessions ] = this.get('protocols', 'sessions')
+  const protocols = this.get('protocols')
+  const sessions = this.use('sessions', new Map)
 
   const { protocol, hostname, port, community, retries, timeout, transport, version } = opts = normalizeOptions(opts)
   if (!protocols.includes(protocol)) this.throw("unsupported protocol", protocol)

@@ -16,7 +16,7 @@ module.exports = kos.create('net')
 
   .pre('module/net')
   .in('net/connect')
-  .out('connection','net/socket','net/connect')
+  .out('connection','net/socket')
   .bind(connect)
 
   .pre('module/net')

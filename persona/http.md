@@ -1,62 +1,42 @@
-# http flow observer
+# http persona
 
-This flow observer provides message based transaction using HTTP as a
-client and/or server.
+This persona provides message based transaction using HTTP as a client
+and/or server.
 
 Source code is available [here](./http.js).
 
 ## Usage
 
 ```js
-const HttpFlow = require('kos/flow/http')
+const HttpPersona = require('kos/persona/http')
 ```
 
-## kos show
+## kos --show http
 
 ```
-├─ name: http
-├─ purpose: Provides HTTP client and/or server flows
-├─ subflows
-│  ├─ kos-flow-http-client
-│  └─ kos-flow-http-server
-├─ actions
+http: reactions to HTTP client/server requests
+├─ id: 19c888a9-1297-457b-a0e0-1460d07fb7a9
+├─ passive: false
+├─ enabled: true
+├─ depends
+│  ├─ module/http
+│  ├─ module/superagent
+│  └─ module/url
+├─ reactions
+│  ├─ ƒ(clientRequest)
 │  ├─ ƒ(simpleGet)
-│  ├─ ƒ(extractBody)
-│  └─ ƒ(proxy)
+│  ├─ ƒ(createServer)
+│  ├─ ƒ(classifyServerTransaction)
+│  └─ ƒ(handleRoute)
 └──┐
-   ├─ kos-flow-http-client
-   │  ├─ summary: Provides HTTP client flows utilizing 'superagent' module
-   │  ├─ requires
-   │  │  └─ module/superagent
-   │  ├─ actions
-   │  │  ├─ ƒ(classify)
-   │  │  └─ ƒ(handleRequest)
-   │  └──┐
-   │     │                                             ┌╼ http/request/get
-   │     │                                             ├╼ http/request/post
-   │     ├─╼ http/request        ╾─╼ ƒ(classify)      ╾┼╼ http/request/put
-   │     │                                             ├╼ http/request/patch
-   │     │                                             └╼ http/request/delete
-   │     │┌╼ http/request/get    ╾┐
-   │     │├╼ http/request/post   ╾┤
-   │     └┼╼ http/request/put    ╾┼╼ ƒ(handleRequest) ╾─╼ http/response
-   │      ├╼ http/request/patch  ╾┤
-   │      └╼ http/request/delete ╾┘
-   │
-   ├─ kos-flow-http-server
-   │  ├─ summary: Provides HTTP server flows utilizing 'express' module
-   │  ├─ requires
-   │  │  └─ module/express
-   │  ├─ actions
-   │  │  ├─ ƒ(runServer)
-   │  │  └─ ƒ(handleRoute)
-   │  └──┐
-   │     ├─╼ http/listen    ╾─╼ ƒ(runServer)   ╾─╼ http/server
-   │     └┬╼ http/server    ╾┬╼ ƒ(handleRoute) ╾─╼ http/server/request
-   │      └╼ http/route     ╾┘
-   │
-   ├─╼ http/request/get/url ╾─╼ ƒ(simpleGet)   ╾─╼ http/request/get
-   ├─╼ http/response        ╾─╼ ƒ(extractBody) ╾─╼ http/response/body
-   └┬╼ http/server/request  ╾┬╼ ƒ(proxy)       ╾─╼ http/request
-    └╼ http/proxy           ╾┘
+   ├┬╼ module/superagent   ╾┬╼ ƒ(clientRequest)             ╾─╼ http/response
+   │└╼ http/request        ╾┘
+   ├─╼ http/request/get    ╾─╼ ƒ(simpleGet)                 ╾─╼ http/request
+   │┌╼ module/http         ╾┐                                ┌╼ http/server
+   ├┼╼ module/url          ╾┼╼ ƒ(createServer)              ╾┼╼ http/socket
+   │└╼ http/listen         ╾┘                                ├╼ link
+   │                                                         └╼ http/server/request
+   ├─╼ http/server/request ╾─╼ ƒ(classifyServerTransaction) ╾─╼ http/server/request/*
+   └┬╼ http/server         ╾┬╼ ƒ(handleRoute)               ╾─╼ http/server/request
+    └╼ http/route          ╾┘
 ```

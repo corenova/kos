@@ -13,16 +13,13 @@ The **KOS** framework comes with a number of
 [available personas](../README.md#available-personas) designed
 specifically for providing distributed networking facilities.
 
-The [pull](../persona/pull.md) and [push](../persona/push.md) personas
-provide reactions to enable uni-directional
-[Stimuli](./intro.md#stimulus) flows across instances.
-
-The [sync](../persona/sync.md) persona provides the essential reactions
-to create a topology of [Runtime](./intro.md#runtime) instances that
-synchronizes [Stimuli](./intro.md#stimulus) flows across instances.
+The [hive](../persona/hive.md) persona provides the essential
+reactions to create a topology of [Runtime](./intro.md#runtime)
+instances that synchronizes [Stimuli](./intro.md#stimulus) flows
+across instances.
 
 For the purpose of discussing various distributed computing cluster
-models, we'll focus mainly on using the [sync](../persona/sync.md)
+models, we'll focus mainly on using the [hive](../persona/hive.md)
 persona.
 
 ## Full Stack
@@ -31,7 +28,7 @@ Since the **KOS** framework is written in JavaScript, enabling
 seamless **dataflow integration** between the web browser client and
 the backend Node.js server is extremely straight-forward.
 
-When using [sync](../persona/sync.md) persona to establish a dataflow
+When using [hive](../persona/hive.md) persona to establish a dataflow
 stream between a web browser client and the backend, we utilize the
 [ws](../persona/ws.md) persona for `WebSocket` based communications.
 
@@ -44,7 +41,7 @@ folder.
 On the server side, you can simply use the `kos` utility as follows:
 
 ```
-$ kos -e 'sync/listen "ws://localhost:3000"' sync
+$ kos -e 'hive/listen "ws://localhost:3000"' hive
 ```
 
 Alternatively, you can manually feed in the necessary tokens via the
@@ -52,19 +49,19 @@ interactive prompt:
 
 ```
 $ kos
-kos> load "sync"
-kos> sync/listen "ws://localhost:3000"
+kos> load "hive"
+kos> hive/listen "ws://localhost:3000"
 ```
 
-You can also programatically use the [sync](../persona/sync.md)
+You can also programatically use the [hive](../persona/hive.md)
 persona:
 
 ```js
 const kos = require("kos")
-const sync = require("kos/persona/sync")
+const hive = require("kos/persona/hive")
 kos
-  .load(sync)
-  .feed('sync/listen', 'ws://localhost:3000')
+  .load(hive)
+  .feed('hive/listen', 'ws://localhost:3000')
 ```
 
 In general, using personas on the Node.js instance is just a matter of
@@ -76,17 +73,17 @@ On the client side, since you don't have the benefit of the `kos`
 utility, you will need to directly `import/require` the
 [Runtime](./intro.md#runtime) inside the web application
 (e.g. [kos.min.js](../dist/kos.min.js)) and *load* the pre-bundled
-[sync](../persona/sync.md) persona module into the runtime instance.
+[hive](../persona/hive.md) persona module into the runtime instance.
 
 Here's the complete client-side workflow:
 
 ```js
-import kos, { SyncPersona } from 'kos'
+import kos, { HivePersona } from 'kos'
 kos
-  .load(SyncPersona)
+  .load(HivePersona)
   .feed('module/url', require('url'))
   .feed('module/simple-websocket', require('simple-websocket'))
-  .feed('sync/connect', "ws://localhost:3000")
+  .feed('hive/connect', "ws://localhost:3000")
 ```
 
 The above snippet will establish a synchronous `WebSocket` dataflow
@@ -113,7 +110,7 @@ as [browserify](http://browserify.org) and
 when generating the client-side web application.
 
 The `url` and the `simple-websocket` modules are needed by the
-[sync](../persona/sync.md) persona in order to perform reactions for
+[hive](../persona/hive.md) persona in order to perform reactions for
 establishing `WebSocket` connections.
 
 In the future, we can introduce a new persona using a web service
@@ -121,33 +118,32 @@ In the future, we can introduce a new persona using a web service
 dependency resolution within the web client browser. Volunteers are
 welcome for contributing such persona. :-)
 
-#### Feeding `sync/connect` token
+#### Feeding `hive/connect` token
 
 ```js
-kos.feed('sync/connect', "ws://localhost:3000")
+kos.feed('hive/connect', "ws://localhost:3000")
 ```
 
-The above `sync/connect` data token triggers the following
+The above `hive/connect` data token triggers the following
 [chain reaction](./intro.md#chain-reactions) using the
 [link](../persona/link.md) and [ws](../persona/ws.md) personas:
 
 ```
-sync/connect -> f(sync:syncConnect) -> link/connect/url
-link/connect/url -> f(link:connectByUrl) -> link/connect
+hive/connect -> f(hive:connect) -> link/connect
 link/connect -> f(link:connect) -> ws/connect
-ws/connect -> f(ws:connect) -> ws/socket, link
-link -> f(link:createLinkStream) -> link/stream
-link/stream -> f(sync:syncStream) -> sync
+ws/connect -> f(ws:connect) -> ws/socket, connection
+connection -> f(link:stream) -> link
+link -> f(link:peer) -> persona
 ```
 
-Please note that the `sync/connect` reaction will continuously retry
+Please note that the `hive/connect` reaction will continuously retry
 connection attempts to the specified endpoint. You don't need to have
-the `sync/listen` endpoint active before *feeding* the `sync/connect`
+the `hive/listen` endpoint active before *feeding* the `hive/connect`
 token (i.e. it's ok to start the client before the server).
 
 ### Synchronization between server/client
 
-So, what does it mean once you have a [sync](../persona/sync.md) persona
+So, what does it mean once you have a [hive](../persona/hive.md) persona
 active between the server and the client in a full stack scenario?
 
 Synchronization in **KOS** enables the participating instances to
@@ -173,7 +169,7 @@ kos.feed('load', 'http')
 
 Such ability is made possible for the web client instance because when
 it *synchronized* with the server instance, it discovered the
-[run](../persona/run.md) reactor from the server instance which
+[node](../persona/node.md) reactor from the server instance which
 contains a reactive trigger for the `load` data stimulus.
 
 In theory, we should also be able to trigger `require` data token and
@@ -183,7 +179,7 @@ between instances due to JSON serialization challenges for Node.js
 modules with `require` dependencies to other modules. Once again,
 volunteers are welcome for exploring this reaction. :-)
 
-The key takeaway in understanding [sync](../persona/sync.md) behavior is
+The key takeaway in understanding [hive](../persona/hive.md) behavior is
 this: **KOS synchronizes the *state machine* of each instance and NOT
 the actual state of each instance.**
 
@@ -221,7 +217,7 @@ that of
 > unknown to the individual agents.
 
 When you build a network of **KOS** instances using the
-[sync](../persona/sync.md) persona, you are effectively creating a
+[hive](../persona/hive.md) persona, you are effectively creating a
 [Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence)
 system, where each individual instance contributes its own local
 limited reactive facilities which when combined together as a whole
@@ -239,7 +235,7 @@ becomes capable of individually behaving and acting like the
 **collective intelligence** even after it gets *pruned* from the
 network it once belonged to.
 
-Basically, using the [sync](../persona/sync.md) reactor, each *agent*
+Basically, using the [hive](../persona/hive.md) reactor, each *agent*
 learns ALL of the reactive facilities of the entire cluster that it
 joins and can then perform ALL of the reactions provided by the
 cluster even after being disonncected from the cluster.  Also, once

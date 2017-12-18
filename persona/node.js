@@ -44,6 +44,12 @@ function start(program, process) {
   const { stdin, stdout, stderr } = process
   const { args=[], expr=[], file=[], show=false, silent=false, verbose=0 } = program
 
+  if (show) {
+    this.send('show', true)
+    this.send('load', ...args)
+    return
+  }
+
   let io = kos.io({
     persona: false,
     resolve: false,
@@ -52,14 +58,12 @@ function start(program, process) {
 
   // unless silent, turn on logging
   silent || args.unshift('log')
-  args.forEach(x => this.send('load', x))
+  this.send('load', ...args)
   process.nextTick(() => {
     this.send('log', { level: verbose })
     expr.forEach(x => io.write(x + "\n"))
-    file.forEach(x => this.send('read', x))
+    this.send('read', ...file)
   })
-
-  if (show) return this.send('show', true)
 
   if (stdin.isTTY && stdout.isTTY) this.send('stdio', io)
   else stdin.pipe(io, { end: false }).pipe(stdout)

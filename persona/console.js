@@ -25,8 +25,8 @@ module.exports = kos.create('console')
 
 function promptUser(io) {
   const regex = /^module\//
-  const readline = this.get('module/readline')
-  const { stdin, stdout, stderr } = this.get('process')
+  const [ process, readline ] = this.get('process', 'module/readline')
+  const { stdin, stdout, stderr } = process
   const { parent } = io
 
   if (this.get('active')) return

@@ -34,7 +34,7 @@ module.exports = kos.create('link')
   .out('link/listen')
   .bind(listenByUrl)
 
-  .in('connection').out('link').bind(link)
+  .in('connection').out('link').bind(stream)
 
 function connect(opts) {
   if (typeof opts === 'string') return this.send('link/connect/url', opts)
@@ -86,7 +86,7 @@ function listenByUrl(dest) {
   this.send('link/listen', Object.assign(opts, opts.query))
 }
 
-function link(connection) {
+function stream(connection) {
   const { addr, socket, server, opts } = connection
   const link = this.use(addr, kos.create('link').desc(addr).init(connection))
 
@@ -94,7 +94,7 @@ function link(connection) {
     let io = link.io({
       error: false
     })
-    socket.pipe(io).pipe(socket)
+    io.link(socket)
     socket.on('close', () => {
       socket.destroy()
       if (server) {
@@ -102,7 +102,8 @@ function link(connection) {
         link.end()
         this.delete(addr)
       } else {
-        link.emit('inactive')
+        io.unlink(socket)
+        link.emit('inactive', io)
       }
     })
     link.resume()

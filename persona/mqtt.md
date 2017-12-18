@@ -1,6 +1,6 @@
-# mqtt flow observer
+# mqtt persona
 
-This flow observer provides message based transactions using MQTT as a
+This persona provides message based transactions using MQTT as a
 client. Server-side flow will be added soon.
 
 For additional usage example, you can refer to
@@ -12,26 +12,26 @@ Source code is available [here](./mqtt.js).
 ## Usage
 
 ```js
-const MqttFlow = require('kos/flow/mqtt')
+const Mqtt = require('kos/persona/mqtt')
 ```
 
-Enabling the flow:
+Enabling the persona:
 ```js
-MqttFlow
+Mqtt
   .feed('module/mqtt', require('mqtt'))
   .feed('module/url', require('url'))
 ```
 
 Connecting to MQTT broker and subscribing to a topic:
 ```js
-MqttFlow
+Mqtt
   .feed('mqtt/connect/url', 'mqtt://interlink.io')
   .feed('mqtt/subscribe', 'ping')
 ```
 
 Publishing a message to a topic:
 ```js
-MqttFlow
+Mqtt
   .feed('mqtt/message', {
     topic: 'hello',
     payload: 'world'
@@ -45,7 +45,7 @@ MqttFlow
   .feed('mqtt/message/hello', 'world')
 ```
 
-## kos show
+## kos --show mqtt
 
 ```
 ├─ name: mqtt

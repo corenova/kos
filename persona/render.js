@@ -3,7 +3,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.create('render')
-  .desc('reactions to visually render KOS flow personas')
+  .desc('reactions to visually render personas')
   .init({
     BOX: {
       L: {

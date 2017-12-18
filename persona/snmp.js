@@ -5,7 +5,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.create('snmp')
-  .desc("reactions to GET/SET SNMP commands")
+  .desc("reactions to SNMP GET/SET commands")
   .init({
     protocols: ['snmp:']
   })

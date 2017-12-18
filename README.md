@@ -108,19 +108,19 @@ inside the **KOS** repository (see [/persona](./persona)):
 
 name | description
 ---  | ---
-[debug](./persona/debug.md) | reactions to send debugging messages to an output stream
+[console](./persona/console.md) | reactions to user prompt interactions
+[hive](./persona/hive.md) | reactions to p2p hive communications
 [http](./persona/http.md) | reactions to http client/server transactions
 [link](./persona/link.md) | reactions to dynamic client/server flows
+[log](./persona/log.md) | reactions to send logging messages to an output stream
 [mqtt](./persona/mqtt.md) | reactions to mqtt client/server transactions
 [net](./persona/net.md) | reactions to tcp/udp client/server transactions
-[npm](./persona/npm.md) | reactions to drive NPM operations
-[pull](./persona/pull.md) | reactions to pull dataflow from peers
-[push](./persona/push.md) | reactions to push dataflow to peers
+[node](./persona/node.ms) | reactions to Node.js runtime context
+[npm](./persona/npm.md) | reactions to NPM package management requests
 [react](./persona/react.md) | reactions to React.js component lifecycle
+[render](./persona/render.md) | reactions to visually render personas
 [rest](./persona/rest.md) | reactions to RESTful transactions
-[run](./persona/run.md) | reactions to Node.js runtime context (see [kos](./bin/kos.js) cli)
 [snmp](./persona/snmp.md) | reactions to snmp client/server transactions
-[sync](./persona/sync.md) | reactions to sync dataflow with peers
 [ws](./persona/ws.md) | reactions to websockets client/server flows
 
 ## License

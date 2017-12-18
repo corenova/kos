@@ -2,8 +2,11 @@
 
 const { kos = require('..') } = global
 
+const link = require('./link')
+
 module.exports = kos.create('hive')
   .desc('reactions to p2p hive communications')
+  .load(link)
 
   .in('hive/connect').out('link/connect').bind(connect)
   .in('hive/listen').out('link/listen').bind(listen)
@@ -27,6 +30,10 @@ function peer(link) {
       this.load(persona)
     }
   }
+  link.once('inactive', io => {
+    // here we have an opportunity to attempt to repair it
+    
+  })
   //link.feed('persona', ...kos.personas)
   this.send('persona', link)
 }

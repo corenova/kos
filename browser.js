@@ -1,6 +1,6 @@
 'use strict'
 
-const kos = require('./node')
+const kos = require('./kos')
 const LogPersona   = require('./persona/log')
 const LinkPersona  = require('./persona/link')
 const HivePersona  = require('./persona/hive')

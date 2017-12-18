@@ -25,7 +25,7 @@ module.exports = kos.create('react')
 
   .pre('kos:parent')
   .in('component')
-  .out('react:*','*')
+  .out('react:*')
   .bind(wrap)
 
 function mount() {
@@ -52,7 +52,7 @@ function wrap(component) {
   }
   // attach a convenience function for trigger
   component.trigger = (key, ...args) => {
-    return () => this.send(key, ...args)
+    return () => this.reactor.send(key, ...args)
   }
 
   // treat 'state' and 'setState' specially

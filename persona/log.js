@@ -5,6 +5,7 @@ const { kos = require('..') } = global
 module.exports = kos.create('log')
   .desc('reactions to send logging messages to an output stream')
 
+  .pre('parent')
   .pre('module/debug')
   .in('log')
   .bind(setup)
@@ -13,7 +14,7 @@ module.exports = kos.create('log')
   .pre('log').in('error').bind(outputError)
 
 function setup(opts) {
-  const debug = this.get('module/debug')
+  const [ parent, debug ] = this.get('parent', 'module/debug')
   const namespaces = [ 'kos:error', 'kos:warn', 'kos:info', 'kos:debug', 'kos:trace' ]
 
   const { level } = opts
@@ -55,10 +56,10 @@ function setup(opts) {
 
   if (level < 0) {
     this.info('logging disabled')
-    kos.removeListener('log', this.get('logger'))
+    parent.removeListener('log', this.get('logger'))
   } else  {
     this.info('logging initialized to level', level)
-    kos.on('log', this.get('logger'))
+    parent.on('log', this.get('logger'))
     handlers.set('error', debug('kos:error'))
   }
   if (level) {

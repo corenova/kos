@@ -2,21 +2,22 @@
 const { kos = require('..') } = global
 
 const console = require('./console')
+const log = require('./log')
 
 module.exports = kos.create('node')
   .desc('reactions to Node.js runtime context')
-  .load(console)
+  .pass(true)
 
-  .in('process')
-  .out('resolve')
+  .load(console)
+  .load(log)
+
+  .in('process').out('resolve')
   .bind(initialize)
 
-  .in('program','process')
-  .out('load', 'read', 'show', 'log', 'stdio')
-  .bind(start)
-
-  .in('path')
-  .bind(saveSearchPath)
+  .pre('process')
+  .in('program')
+  .out('load', 'eval', 'read', 'log')
+  .bind(execute)
 
   .pre('module/path')
   .in('load')
@@ -33,40 +34,36 @@ module.exports = kos.create('node')
 
   .pre('module/fs')
   .in('read')
+  .out('*')
   .bind(readKSONFile)
 
-// self-initialize
+// self-initialize 
 function initialize(process) { 
-  this.send('resolve', ...this.parent.depends)
+  this.send('resolve', ...this.persona.depends)
+  this.save({ process })
 }
 
-function start(program, process) {
-  const { stdin, stdout, stderr } = process
-  const { args=[], expr=[], file=[], show=false, silent=false, verbose=0 } = program
+function execute(program) {
+  const { args=[], file=[], show=false, silent=false, verbose=0 } = program
+  const { stdin, stdout, stderr } = this.get('process')
+  const { io } = this
 
-  if (show) {
-    this.send('show', true)
-    this.send('load', ...args)
-    return
-  }
+  // unless silent, setup logging
+  silent || this.send('log', { level: verbose })
 
-  let io = kos.io({
-    persona: false,
-    resolve: false,
-    error: false // ignore error topics
-  })
+  // flush processing of 'load' tokens first
+  this.send('load', ...args).flush()
+  if (show) return
 
-  // unless silent, turn on logging
-  silent || args.unshift('log')
-  this.send('load', ...args)
-  process.nextTick(() => {
-    this.send('log', { level: verbose })
-    expr.forEach(x => io.write(x + "\n"))
-    this.send('read', ...file)
-  })
+  this.send('read', ...file)
 
-  if (stdin.isTTY && stdout.isTTY) this.send('stdio', io)
-  else stdin.pipe(io, { end: false }).pipe(stdout)
+  if (stdin.isTTY) {
+    this.send('prompt', { 
+      input: stdin, output: stderr, source: this.persona
+    })
+  } else stdin.pipe(io)
+
+  stdout.isTTY || io.pipe(stdout)
 
   this.info('started KOS Node.js persona...')
 }
@@ -99,6 +96,7 @@ function loadPersona(name) {
   if (persona.type !== Symbol.for('kos:persona'))
     this.throw(`unable to load incompatible persona "${name}" from ${location}`)
 
+  persona.join(this.persona)
   this.send('persona', persona)
   this.send('resolve', ...persona.depends)
 }
@@ -107,13 +105,6 @@ function resolveDependency(dep) {
   const regex = /^module\/(.+)$/
   let match = regex.exec(dep,'$1')
   if (match) this.send('require', match[1])
-}
-
-function readKSONFile(filename) {
-  const fs = this.get('module/fs')
-  const kson = fs.createReadStream(filename)
-  kson.on('error', this.error.bind(this))
-  kson.pipe(this.reactor, { end: false })
 }
 
 function tryRequire(opts) {
@@ -128,3 +119,11 @@ function tryRequire(opts) {
     this.error(e)
   }
 }
+
+function readKSONFile(filename) {
+  const fs = this.get('module/fs')
+  const kson = fs.createReadStream(filename)
+  kson.on('error', this.error.bind(this))
+  kson.pipe(this.io, { end: false })
+}
+

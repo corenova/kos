@@ -11,13 +11,6 @@ const kos = new Persona({
   passive: true
 })
 
-kos.in('persona').bind(absorb)
-
-function absorb(persona) { 
-  if (persona instanceof Persona)
-    persona.join(this.reactor) 
-}
-
 // expose main class definitions
 kos.Persona  = Persona
 kos.Reaction = Reaction

@@ -15,11 +15,11 @@ module.exports = kos.create('react')
   .desc('reactions to React lifecycle events')
   .init({ lifecycle })
 
-  .pre('kos:parent')
+  .pre('parent')
   .in('react:mounting')
   .bind(mount)
 
-  .pre('kos:parent')
+  .pre('parent')
   .in('react:unmounting')
   .bind(unmount)
 
@@ -29,12 +29,12 @@ module.exports = kos.create('react')
   .bind(wrap)
 
 function mount() {
-  const parent = this.get('kos:parent')
+  const parent = this.get('parent')
   parent.join(kos.core)
 }
 
 function unmount() {
-  const parent = this.get('kos:parent')
+  const parent = this.get('parent')
   parent.leave(kos.core)
 }
 

@@ -34,7 +34,6 @@ module.exports = kos.create('node')
 
   .pre('module/fs')
   .in('read')
-  .out('*')
   .bind(readKSONFile)
 
 // self-initialize 

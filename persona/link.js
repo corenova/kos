@@ -91,14 +91,12 @@ function stream(connection) {
   const link = this.use(addr, kos.create('link').desc(addr).init(connection))
 
   socket.on('active', () => {
-    let io = link.io({
-      error: false
-    })
+    let { io } = link
     io.link(socket)
     socket.on('close', () => {
       socket.destroy()
       if (server) {
-        link.leave()
+        //link.leave()
         link.end()
         this.delete(addr)
       } else {

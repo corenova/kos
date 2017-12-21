@@ -10,7 +10,7 @@ module.exports = kos.create('log')
   .in('log')
   .bind(setup)
 
-  .in('prompt').bind(savePrompt)
+  .in('console').bind(saveConsole)
   .pre('log').in('error').bind(outputError)
 
 function setup(opts) {
@@ -28,8 +28,8 @@ function setup(opts) {
       const { topic, origin } = token
       const handler = this.get('handlers').get(topic)
       if (typeof handler !== 'function') return
-      if (this.has('prompt')) {
-        this.get('prompt').emit('clear')
+      if (this.has('console')) {
+        this.get('console').emit('reset')
       }
       handler(origin.identity, ...token)
     }
@@ -58,9 +58,9 @@ function setup(opts) {
     this.info('logging disabled')
     parent.removeListener('log', this.get('logger'))
   } else  {
-    this.info('logging initialized to level', level)
     parent.on('log', this.get('logger'))
     handlers.set('error', debug('kos:error'))
+    this.info('logging initialized to level', level)
   }
   if (level) {
     handlers.set('warn', debug('kos:warn'))
@@ -73,15 +73,15 @@ function setup(opts) {
   else this.reactor.removeListener('data', this.get('tracer'))
 }
 
-function savePrompt(prompt) { this.save({ prompt }) }
+function saveConsole(console) { this.save({ console }) }
 
 function outputError(err) {
   const [ level, handlers ] = this.get('level','handlers')
   const error = handlers.get('error')
   const { origin, message } = err
   if (typeof error !== 'function') return
-  if (this.has('prompt')) 
-    this.get('prompt').emit('clear')
+  if (this.has('console')) 
+    this.get('console').emit('reset')
   if (level) error(err)
   else error(message)
 }

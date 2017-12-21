@@ -63,10 +63,11 @@ function processInput(console) {
   const { output, source } = this.get('prompt')
   const { io } = this
   console.on('line', line => {
-    switch(line.trim()) {
+    line = line.trim()
+    switch(line) {
       case '.info': this.send('render', { source, target: output }); break;
       case '.quit': exit(1)
-      default: io.write(line)
+      default: io.write(line+"\n")
     }
     console.prompt()
   })

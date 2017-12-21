@@ -6,6 +6,8 @@ const link = require('./link')
 
 module.exports = kos.create('hive')
   .desc('reactions to p2p hive communications')
+  .pass(true)
+
   .load(link)
 
   .in('hive/connect').out('link/connect').bind(connect)
@@ -34,6 +36,8 @@ function peer(link) {
     // here we have an opportunity to attempt to repair it
     
   })
+  link.join(this.persona)
+
   //link.feed('persona', ...kos.personas)
-  this.send('persona', link)
+  //this.send('persona', link)
 }

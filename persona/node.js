@@ -1,23 +1,13 @@
 'use strict'
 const { kos = require('..') } = global
 
-const console = require('./console')
-const log = require('./log')
-
 module.exports = kos.create('node')
-  .desc('reactions to Node.js runtime context')
+  .desc('reactions to Node.js runtime environment interactions')
   .pass(true)
 
-  .load(console)
-  .load(log)
-
+  .pre('parent')
   .in('process').out('resolve')
   .bind(initialize)
-
-  .pre('process')
-  .in('program')
-  .out('load', 'eval', 'read', 'log')
-  .bind(execute)
 
   .pre('module/path')
   .in('load')
@@ -36,40 +26,11 @@ module.exports = kos.create('node')
   .in('read')
   .bind(readKSONFile)
 
-// self-initialize 
+// self-initialize when part of kos layers (usually kos directly)
 function initialize(process) { 
-  this.send('resolve', ...this.persona.depends)
+  const parent = this.get('parent')
+  this.send('resolve', ...parent.depends)
   this.save({ process })
-}
-
-function execute(program) {
-  const { args=[], file=[], show=false, silent=false, verbose=0 } = program
-  const { stdin, stdout, stderr } = this.get('process')
-  const { io } = this
-
-  // unless silent, setup logging
-  silent || this.send('log', { level: verbose })
-
-  // flush processing of 'load' tokens first
-  this.send('load', ...args).flush()
-  if (show) return
-
-  this.send('read', ...file)
-
-  if (stdin.isTTY) {
-    this.send('prompt', { 
-      input: stdin, output: stderr, source: this.persona
-    })
-  } else stdin.pipe(io)
-
-  stdout.isTTY || io.pipe(stdout)
-
-  this.info('started KOS Node.js persona...')
-}
-
-function saveSearchPath(loadpath) {
-  // TBD
-  this.save({ loadpath })
 }
 
 function loadPersona(name) {

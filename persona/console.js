@@ -7,9 +7,15 @@ const render = require('./render')
 const colors = require('colors')
 
 module.exports = kos.create('console')
-  .desc('reactions to user prompt interactions')
+  .desc('reactions to command-line interactions')
 
   .load(render)
+
+  .pre('parent')
+  .in('process')
+  .in('program')
+  .out('load', 'read', 'log', 'prompt')
+  .bind(execute)
 
   .pre('process')
   .pre('module/readline')
@@ -28,6 +34,33 @@ module.exports = kos.create('console')
   .out('render')
   .bind(renderPersona)
 
+function execute(process, program) {
+  const parent = this.get('parent')
+  const { stdin, stdout, stderr } = process
+  const { args=[], file=[], show=false, silent=false, verbose=0 } = program
+  const { io } = this
+
+  // unless silent, setup logging
+  silent || this.send('log', { level: verbose })
+
+  // flush processing of 'load' tokens first
+  this.send('load', ...args).flush()
+  if (show) return
+
+  this.send('read', ...file)
+
+  if (stdin.isTTY) {
+    console.error('FOO', parent.accepts)
+    this.send('prompt', { 
+      input: stdin, output: stderr, source: parent
+    })
+  } else stdin.pipe(io)
+
+  stdout.isTTY || io.pipe(stdout)
+
+  this.info('started console...')
+}
+
 function createConsole(prompt) {
   const regex = /^module\//
   const [ process, readline ] = this.get('process', 'module/readline')
@@ -37,7 +70,7 @@ function createConsole(prompt) {
     input, output, 
     prompt: colors.grey(source.identity + '> '),
     completer: (line) => {
-      let inputs = source.absorbs.filter(x => !regex.test(x))
+      let inputs = source.accepts.filter(x => !source.depends.includes(x))
       let completions = inputs.sort().concat('.info','.help','.quit')
       const hits = completions.filter(c => c.indexOf(line) === 0)
       if (/\s+$/.test(line)) completions = []

@@ -3,8 +3,11 @@
 
 const program = require('commander')
 const pkginfo = require('../package.json')
+
 const kos = require('..')
 const node = require('../persona/node')
+const console = require('../persona/console')
+const log = require('../persona/log')
 
 function collect(val, keys) { keys.push(val); return keys }
 
@@ -19,5 +22,8 @@ program
 
 kos
   .load(node)
+  .load(console)
+  .load(log)
   .feed('process', process)
   .feed('program', program)
+

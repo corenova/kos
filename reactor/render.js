@@ -3,7 +3,7 @@
 const { kos = require('..') } = global
 
 module.exports = kos.create('render')
-  .desc('reactions to visually render personas')
+  .desc('reactions to visually render reactors')
   .init({
     BOX: {
       L: {
@@ -35,21 +35,21 @@ module.exports = kos.create('render')
   })
 
   .in('render')
-  .out('render/persona','render/output')
+  .out('render/reactor','render/output')
   .bind(render)
 
   .pre('module/treeify')
-  .in('render/persona')
-  .out('persona/tree')
-  .bind(renderPersonaAsTree)
+  .in('render/reactor')
+  .out('reactor/tree')
+  .bind(renderReactorAsTree)
 
-  .in('persona/tree','render/output')
-  .bind(outputPersonaTree)
+  .in('reactor/tree','render/output')
+  .bind(outputReactorTree)
 
 function render(opts) {
   const { source, target } = opts
   this.send('render/output', target)
-  this.send('render/persona', source)
+  this.send('render/reactor', source)
 }
 
 function indent(str, count=1, sep=' ') {
@@ -159,10 +159,10 @@ function renderReaction(reaction, funcWidth, inputWidth, outputWidth) {
   return block
 }
 
-function renderReactions(persona) {
+function renderReactions(reactor) {
   const [ BOX, SEP ] = this.get('BOX','SEP')
-  const { reactions, inputs, outputs } = persona
-  let inputWidth  = findLongest(inputs).length
+  const { reactions, consumes, outputs } = reactor
+  let inputWidth  = findLongest(consumes).length
   let outputWidth = findLongest(outputs).length
   let funcWidth   = findLongest(reactions.map((x => x.label))).length
   let lines = reactions.reduce(((acc, reaction, idx) => {
@@ -189,16 +189,16 @@ function renderReactions(persona) {
   return lines.join("\n")
 }
 
-function renderPersona(persona) {
+function renderReactor(reactor) {
   const [ BOX, SEP, FUNC ] = this.get('BOX','SEP','FUNC')
   const treeify = this.get('module/treeify')
-  const { id, label, purpose, passive, enabled, depends, personas, reactions, state } = persona
+  const { id, label, purpose, passive, enabled, depends, reactors, reactions, state } = reactor
   let funcWidth = findLongest(reactions.map((x => x.label))).length
   let str = ''
   let info = {
     id, passive, enabled,
 	depends: depends.sort(),
-    personas: personas.map(x => x.label),
+    reactors: reactors.map(x => x.label),
     reactions: reactions.map(x => FUNC + `(${x.label})`),
     // + SEP.repeat(funcWidth - x.label.length) + ` @ ${x.id}`),
     '': null
@@ -213,22 +213,22 @@ function renderPersona(persona) {
 	}
   }
   str += treeify.asTree(info, true)
-  for (let sub of personas) {
+  for (let sub of reactors) {
     str += '   ├─ ' + `${sub.label}: ${sub.purpose}` + "\n"
-    str += indent(renderPersona.call(this, sub), 1, '   │  ') + "\n"
+    str += indent(renderReactor.call(this, sub), 1, '   │  ') + "\n"
     str += "   │\n"
   }
-  str += indent(renderReactions.call(this, persona), 3)
+  str += indent(renderReactions.call(this, reactor), 3)
   return str
 }
 
-function renderPersonaAsTree(persona) {
-  const { label, purpose } = persona
-  let str = `${label}: ${purpose}\n` + renderPersona.call(this, persona)
-  this.send('persona/tree', str)
+function renderReactorAsTree(reactor) {
+  const { label, purpose } = reactor
+  let str = `${label}: ${purpose}\n` + renderReactor.call(this, reactor)
+  this.send('reactor/tree', str)
 }
 
-function outputPersonaTree(tree, output) { 
+function outputReactorTree(tree, output) { 
   output.write(tree + "\n")
   this.clear()
 }

@@ -1,18 +1,18 @@
 'use strict'
 
-const Persona  = require('./lib/persona')
+const Reactor  = require('./lib/reactor')
 const Reaction = require('./lib/reaction')
 const Dataflow = require('./lib/dataflow')
 const Stimulus = require('./lib/stimulus')
 
-const kos = new Persona({
+const kos = new Reactor({
   label: 'kos',
   purpose: 'reactions to flow of stimuli',
   passive: true
 })
 
 // expose main class definitions
-kos.Persona  = Persona
+kos.Reactor  = Reactor
 kos.Reaction = Reaction
 kos.Dataflow = Dataflow
 kos.Stimulus = Stimulus

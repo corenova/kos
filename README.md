@@ -28,10 +28,10 @@ expressed as a set of discrete atomic *reaction(s)* that
 observes from its incoming flow of data stimuli.
 
 Using **KOS**, you can create a new
-[Persona](./doc/intro.md#persona) instance with one or more
+[Reactor](./doc/intro.md#reactor) instance with one or more
 [Reaction](./doc/intro.md#reaction) functions and
 **feed/pipe** a stream of [Stimuli](./doc/intro.md#stimulus)
-into the Persona.
+into the Reactor.
 
 One of the most important concept in **KOS** is that these *reactive*
 functions are **never explicitly called** by other functions as part
@@ -71,7 +71,7 @@ documentation below:
   - [Programming Paradigms](./doc/intro.md#programming-paradigms)
 - [Using KOS](./doc/usage.md)
   - [Getting Started](./doc/usage.md#getting-started)
-  - [Loading Personas](./doc/usage.md#loading-personas)
+  - [Loading Reactors](./doc/usage.md#loading-reactors)
   - [Sending Stimuli](./doc/usage.md#sending-stimuli)
   - [Triggering Reactions](./doc/usage.md#triggering-reactions)
   - [CLI Reference](./doc/usage.md#cli-reference)
@@ -79,9 +79,9 @@ documentation below:
   - [Full Stack](./doc/cluster.md#full-stack)
   - [Hive Mind](./doc/cluster.md#hive-mind)
 
-The **developer's guide** to creating new personas and understanding
+The **developer's guide** to creating new reactors and understanding
 the **KOS** library APIs will be coming soon! In the meantime, taking
-a look at the [available personas](#available-personas) bundled with
+a look at the [available reactors](#available-reactors) bundled with
 the **KOS** framework should provide some indirect guidance.
 
 ## Installation
@@ -101,27 +101,27 @@ repo from:
 $ git clone https://github.com/corenova/kos
 ```
 
-## Available Personas
+## Available Reactors
 
-The following [Persona](./doc/intro.md#persona) modules are included
-inside the **KOS** repository (see [/persona](./persona)):
+The following [Reactor](./doc/intro.md#reactor) modules are included
+inside the **KOS** repository (see [/reactor](./reactor)):
 
 name | description
 ---  | ---
-[console](./persona/console.md) | reactions to user prompt interactions
-[hive](./persona/hive.md) | reactions to p2p hive communications
-[http](./persona/http.md) | reactions to http client/server transactions
-[link](./persona/link.md) | reactions to dynamic client/server flows
-[log](./persona/log.md) | reactions to send logging messages to an output stream
-[mqtt](./persona/mqtt.md) | reactions to mqtt client/server transactions
-[net](./persona/net.md) | reactions to tcp/udp client/server transactions
-[node](./persona/node.ms) | reactions to Node.js runtime context
-[npm](./persona/npm.md) | reactions to NPM package management requests
-[react](./persona/react.md) | reactions to React.js component lifecycle
-[render](./persona/render.md) | reactions to visually render personas
-[rest](./persona/rest.md) | reactions to RESTful transactions
-[snmp](./persona/snmp.md) | reactions to snmp client/server transactions
-[ws](./persona/ws.md) | reactions to websockets client/server flows
+[console](./reactor/console.md) | reactions to user prompt interactions
+[hive](./reactor/hive.md) | reactions to p2p hive communications
+[http](./reactor/http.md) | reactions to http client/server transactions
+[link](./reactor/link.md) | reactions to dynamic client/server flows
+[log](./reactor/log.md) | reactions to send logging messages to an output stream
+[mqtt](./reactor/mqtt.md) | reactions to mqtt client/server transactions
+[net](./reactor/net.md) | reactions to tcp/udp client/server transactions
+[node](./reactor/node.ms) | reactions to Node.js runtime context
+[npm](./reactor/npm.md) | reactions to NPM package management requests
+[react](./reactor/react.md) | reactions to React.js component lifecycle
+[render](./reactor/render.md) | reactions to visually render reactors
+[rest](./reactor/rest.md) | reactions to RESTful transactions
+[snmp](./reactor/snmp.md) | reactions to snmp client/server transactions
+[ws](./reactor/ws.md) | reactions to websockets client/server flows
 
 ## License
   [Apache 2.0](LICENSE)

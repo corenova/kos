@@ -5,9 +5,9 @@ const program = require('commander')
 const pkginfo = require('../package.json')
 
 const kos = require('..')
-const node = require('../persona/node')
-const console = require('../persona/console')
-const log = require('../persona/log')
+const node = require('../reactor/node')
+const console = require('../reactor/console')
+const log = require('../reactor/log')
 
 function collect(val, keys) { keys.push(val); return keys }
 

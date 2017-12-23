@@ -1,7 +1,7 @@
 # User's Guide
 
 This documentation provides information on interacting with
-[Persona](./intro.md#persona) flow modules utilizing the `kos` CLI
+[Reactor](./intro.md#reactor) flow modules utilizing the `kos` CLI
 utility.
 
 The `kos` utility provides an **interactive-prompt** interface for
@@ -21,7 +21,7 @@ program and start interacting with it.
 ```
 $ kos
 kos>
-load       load/path  process    program    prompt     persona
+load       load/path  process    program    prompt     reactor
 read       require    show       .info      .help      .quit 
 ```
 
@@ -29,28 +29,28 @@ The above output is generated when you press `<TAB>` for
 auto-completion after entering the `kos` interactive shell.
 
 When you start the `kos` utility from the console, the
-[run](../persona/run.md) persona is loaded as one of the personas for the
-initial **KOS** operating environment.  The [run](../persona/run.md)
-persona provides runtime context reactions to the Node.js `process`
+[run](../reactor/run.md) reactor is loaded as one of the reactors for the
+initial **KOS** operating environment.  The [run](../reactor/run.md)
+reactor provides runtime context reactions to the Node.js `process`
 object as well as `program` object that captures the CLI arguments.
 It's worth taking the time to fully understand how the
-[run](../persona/run.md) persona works.
+[run](../reactor/run.md) reactor works.
 
 A typical operating lifecycle for an instance of `kos` is to
-[load](#loading-personas) one or more personas, then to
+[load](#loading-reactors) one or more reactors, then to
 [send](#sending-stimuli) one or more data stimuli to trigger reactions
-on the *loaded* personas.
+on the *loaded* reactors.
 
 The first **Stimulus** you typically supply into the
 [Runtime](./intro.md#runtime) instance is the `load` token in order to
-[load](#loading-personas) additional personas into itself from the
+[load](#loading-reactors) additional reactors into itself from the
 local filesystem.
 
-## Loading Personas
+## Loading Reactors
 
-Using **KOS** you can dynamically `load` personas into itself at any time.
+Using **KOS** you can dynamically `load` reactors into itself at any time.
 
-The `kos` utility allows you to pass in one or more personas as
+The `kos` utility allows you to pass in one or more reactors as
 arguments during instantiation:
 
 ```
@@ -76,18 +76,18 @@ kos> load "http"
 kos>
 ```
 
-As you `load` more personas into **KOS**, the runtime automatically
+As you `load` more reactors into **KOS**, the runtime automatically
 attains additional *reactions* that it can perform.  Pressing `<TAB>`
 from the prompt gives you a listing of currently possible **stimuli**
 that the runtime can react to.
 
-The ability to `load` additional personas from the local file system
+The ability to `load` additional reactors from the local file system
 at any time provides **KOS** with *unbounded* adaptive
 characteristics. The `load` token can also be sent to the **KOS**
 instance from a remote source.
 
 From the `kos>` prompt, you can also use the `.info` command to check
-the state of all internally loaded personas at any time.
+the state of all internally loaded reactors at any time.
 
 ## Sending Stimuli
 
@@ -116,7 +116,7 @@ foo // invalid
 ```
 
 When you send a **Stimulus** with a specific label, every
-[Persona](./intro.md#persona) that includes a
+[Reactor](./intro.md#reactor) that includes a
 [Reaction](./intro.md#reaction) for that particular *stimulus* will
 process that *stimulus* and attempt to fire the *reactive* function.
 
@@ -126,7 +126,7 @@ By the time the `kos>` prompt shows up after starting `kos`, there's
 already several *reactions* that have taken place inside the KOS
 runtime.
 
-The [run](../persona/run.md) reactor has already processed the
+The [run](../reactor/run.md) reactor has already processed the
 `process` and `program` data tokens that have been **fed** into the
 `kos` instance by the [kos](../bin/kos.js) CLI script when you
 executed the `kos` command. These initial data tokens then triggered a
@@ -143,30 +143,30 @@ prompt, process -> ƒ(promptUser) -> render
 ```
 
 Basically, the `kos>` prompt that you see after starting `kos` was
-produced as one of the *reactions* by the [run](../persona/run.md)
-persona when it recognized that the current `process` data stimulus
+produced as one of the *reactions* by the [run](../reactor/run.md)
+reactor when it recognized that the current `process` data stimulus
 contained `stdin.isTTY === true`. In addition, it was successfully
 produced because the current running system was also able to `require
 "readline"` and produce the `module/readline` data stimulus (which is
 a condition for executing the `f(promptUser)` trigger with the
 `prompt` data stimulus).  You can learn more about how the
-[run](../persona/run.md) operates by reviewing the documentation.
+[run](../reactor/run.md) operates by reviewing the documentation.
 
 The `kos>` prompt itself is simply another *dataflow interface* for
 which you can supply additional **Stimulus** into the currently
 running [Runtime](./intro.md#runtime).
 
-### Example using HTTP Persona
+### Example using HTTP Reactor
 
 A simple example reaction you can exercise from the `kos>` prompt is
-using the [http](../persona/http.md) persona.
+using the [http](../reactor/http.md) reactor.
 
 ```bash
 kos> load "http"
 kos> http/request/get "google.com"
 ```
 
-You first [load](#loading-personas) the [http](../persona/http.md) which
+You first [load](#loading-reactors) the [http](../reactor/http.md) which
 enables the [KOS Runtime](./intro.md#runtime) with HTTP related
 *reactions* and then [send](#sending-stimuli) the `http/request/get`
 data stimuli with the target URL as the data value.
@@ -191,10 +191,10 @@ into a common `http/request` data token object.
 The second reaction then performs the actual HTTP Client async
 transaction, producing `http/response` object if successful.
 
-The [http](../persona/http.md) persona can be used directly as shown
+The [http](../reactor/http.md) reactor can be used directly as shown
 above within a given [Runtime](./intro#runtime) instance, but its
 primary role is to be used by other
-[Persona](./intro#persona) modules for performing HTTP
+[Reactor](./intro#reactor) modules for performing HTTP
 related reactions *internally* as part of a larger workflow.
 
 ## CLI Reference
@@ -219,16 +219,16 @@ starting the `kos` program.
 ```
 
 The `kos` command-line utility internally uses the
-[run](../persona/run.md) persona to dynamically load persona flow modules
+[run](../reactor/run.md) reactor to dynamically load reactor flow modules
 from the local filesystem.
 
 ### kos --show
 
-The `--show` option provides a visual rendering of a persona flow
+The `--show` option provides a visual rendering of a reactor flow
 module.
 
 The below output was generated by performing *introspection* of the
-[run](../persona/run.md) persona used by the `kos` utility.
+[run](../reactor/run.md) reactor used by the `kos` utility.
 
 ```bash
 $ kos --show run
@@ -292,5 +292,5 @@ run: reactions to runtime context
 
 Using the `--show` option, you can easily extract useful information
 regarding data objects that the reactor `requires`, the various
-`reactions` and `personas` contained inside the reactor, as well as
+`reactions` and `reactors` contained inside the reactor, as well as
 the `inputs` and `outputs` for each of the reactions.

@@ -1,18 +1,18 @@
 'use strict'
 
 const kos = require('./kos')
-const LogPersona   = require('./persona/log')
-const LinkPersona  = require('./persona/link')
-const HivePersona  = require('./persona/hive')
-const HttpPersona  = require('./persona/http')
-const ReactPersona = require('./persona/react')
-const WebSocketPersona = require('./persona/ws')
+const LogReactor   = require('./reactor/log')
+const LinkReactor  = require('./reactor/link')
+const HiveReactor  = require('./reactor/hive')
+const HttpReactor  = require('./reactor/http')
+const ReactReactor = require('./reactor/react')
+const WebSocketReactor = require('./reactor/ws')
 
 export default kos
 export { 
-  LogPersona, 
-  LinkPersona, 
-  HivePersona,
-  HttpPersona, 
-  WebSocketPersona, 
-  ReactPersona }
+  LogReactor, 
+  LinkReactor, 
+  HiveReactor,
+  HttpReactor, 
+  WebSocketReactor, 
+  ReactReactor }

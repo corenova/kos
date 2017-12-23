@@ -43,14 +43,13 @@ function execute(process, program) {
   // unless silent, setup logging
   silent || this.send('log', { level: verbose })
 
-  // flush processing of 'load' tokens first
-  this.send('load', ...args).flush()
+  // immediate processing of 'load' tokens first
+  this.sendImmediate('load', ...args)
   if (show) return
 
   this.send('read', ...file)
 
   if (stdin.isTTY) {
-    console.error('FOO', parent.accepts)
     this.send('prompt', { 
       input: stdin, output: stderr, source: parent
     })

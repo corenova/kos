@@ -11,8 +11,8 @@ module.exports = kos.create('node')
 
   .pre('module/path')
   .in('load')
-  .out('persona','resolve')
-  .bind(loadPersona)
+  .out('reactor','resolve')
+  .bind(loadReactor)
 
   .in('resolve')
   .out('require')
@@ -30,35 +30,35 @@ module.exports = kos.create('node')
 function initialize(process) { 
   const parent = this.get('parent')
   this.send('resolve', ...parent.depends)
-  this.save({ process })
+  //this.save({ process })
 }
 
-function loadPersona(name) {
+function loadReactor(name) {
   const [ path, loadpath ] = this.get('module/path','loadpath')
   const search = [ 
     path.resolve(name),
-    path.resolve('persona', name),
+    path.resolve('reactor', name),
     path.resolve(__dirname, name),
     name
   ]
-  let persona
+  let reactor
   let location
   for (location of search) {
-    try { persona = require(location); break }
+    try { reactor = require(location); break }
     catch (e) { 
       if (e.code !== 'MODULE_NOT_FOUND') 
         this.throw(e)
     }
   }
-  if (!persona) 
-    this.throw(`unable to locate persona "${name}" from ${search}`)
+  if (!reactor) 
+    this.throw(`unable to locate reactor "${name}" from ${search}`)
     
-  if (persona.type !== Symbol.for('kos:persona'))
-    this.throw(`unable to load incompatible persona "${name}" from ${location}`)
+  if (reactor.type !== Symbol.for('kos:reactor'))
+    this.throw(`unable to load incompatible reactor "${name}" from ${location}`)
 
-  persona.join(this.persona)
-  this.send('persona', persona)
-  this.send('resolve', ...persona.depends)
+  reactor.join(this.parent)
+  this.send('reactor', reactor)
+  this.send('resolve', ...reactor.depends)
 }
 
 function resolveDependency(dep) {

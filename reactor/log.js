@@ -69,8 +69,8 @@ function setup(opts) {
   if (level > 1) handlers.set('debug', debug('kos:debug'))
   if (level > 2) handlers.set('trace', debug('kos:trace'))
 
-  if (level > 2) this.reactor.on('data', this.get('tracer'))
-  else this.reactor.removeListener('data', this.get('tracer'))
+  if (level > 2) parent.on('data', this.get('tracer'))
+  else parent.removeListener('data', this.get('tracer'))
 }
 
 function saveConsole(console) { this.save({ console }) }

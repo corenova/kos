@@ -119,7 +119,7 @@ You can use the **Dataflow** interface to directly
 into the stream.
 
 It also serves as the base class for the
-[Persona](#persona) entity.
+[Reactor](#reactor) entity.
 
 You can reference the source code [here](../lib/dataflow.js).
 
@@ -139,27 +139,19 @@ When the *bound* function is *reactively* invoked, the function
 executes with the `this` context bound to an instance of
 [Context](#context).
 
-The *reactions* are usually created as part of a [Persona](#persona)
+The *reactions* are usually created as part of a [Reactor](#reactor)
 declaration but can be utilized independently if desired.
 
 You can reference the source code [here](../lib/reaction.js).
 
-### Context
+### Reactor
 
-The **Context** entity provides the execution context for performing
-the [Reaction](#reaction). It exposes useful interfaces to the
-underlying [Dataflow](#dataflow) instance that it is operating on.
-
-You can reference the source code [here](../lib/context.js).
-
-### Persona
-
-The **Persona** entity represents the control interface for managing
+The **Reactor** entity represents the control interface for managing
 one-or-more dataflow streams. It extends the [Dataflow](#dataflow)
 interface and enables loading of one or more [Reaction(s)](#reaction)
-as well as other [Persona(s)](#persona).
+as well as other [Reactor(s)](#reactor).
 
-The *persona* is a **continuously flowing** data stream. It contains
+The *reactor* is a **continuously flowing** data stream. It contains
 an internal `core` stream that is used to form a
 [closed-loop feedback](https://en.wikipedia.org/wiki/Feedback) route
 back to itself.
@@ -167,29 +159,29 @@ back to itself.
 It's primary role is to be a *logical* container for declaring related
 *reactive* functions as a cohesive aspect.
 
-You can reference the source code [here](../lib/persona.js).
+You can reference the source code [here](../lib/reactor.js).
 
 ### Runtime
 
-The **Runtime** is a *singleton* instance of the [Persona](#persona)
+The **Runtime** is a *singleton* instance of the [Reactor](#reactor)
 which serves as the primary operating environment where one or more
-[Persona](#persona) flow modules are *loaded and reacting* to the
+[Reactor](#reactor) flow modules are *loaded and reacting* to the
 running environment.
 
 It's the `kos` library module itself, so when you `require("kos")` or
 `import "kos"`, you are simply accessing the **Runtime** instance
-itself. It operates as a `passive` persona, which means that it allows
+itself. It operates as a `passive` reactor, which means that it allows
 *passthrough* of [Stimuli](#stimulus) it observes directly to one or
-more *loaded* [Persona](#persona) flow modules.
+more *loaded* [Reactor](#reactor) flow modules.
 
 It's primary role is to represent the *logical root* container for a
 given **KOS** instance as well as enabling *creation* of additional
-[Persona](#persona) flow modules for programmatic use.
+[Reactor](#reactor) flow modules for programmatic use.
 
 For most usage scenario, you should only have a single **Runtime**
 operating inside a given application instance. Please note that
-*loading* [Persona](#persona) modules into the **Runtime** is
-completely optional. You can *load/use* other [Persona](#persona) flow
+*loading* [Reactor](#reactor) modules into the **Runtime** is
+completely optional. You can *load/use* other [Reactor](#reactor) flow
 module instances directly without first loading them into the
 **Runtime**. It's simply a matter of *convenience* to have them all
 *loaded* in one place.
@@ -233,7 +225,7 @@ program* using `kos`:
 ```js
 const kos = require('kos')
 const example = kos.create('example')
-  .desc('An example persona that computes "b+c" to produce "a"')
+  .desc('An example reactor that computes "b+c" to produce "a"')
   .in('b','c').out('a').bind(doAddition)
   .in('a').bind(printResult)
 // define the reactive functions
@@ -246,14 +238,14 @@ function printResult(a) {
 ```
 
 In the above example, we've created a new
-[Persona](#persona) that *will trigger* a simple
+[Reactor](#reactor) that *will trigger* a simple
 arithmetic addition when it observes *both* inputs labeled `b` and `c`
 to produce a new output labeled `a`.  In addition, we express a simple
 **chain reaction** that will trigger once `a` is observed within the
-persona to print its value to the console.
+reactor to print its value to the console.
 
 We can then explicitly trigger the reactions by
-[feeding](./usage.md#feeding-stimuli) the persona instance with
+[feeding](./usage.md#feeding-stimuli) the reactor instance with
 input objects:
 
 ```js
@@ -273,7 +265,7 @@ example.feed('b', 100) // resulting "a" is now 105
 example.feed('c', 50)  // resulting "a" is now 150
 ```
 
-With **KOS**, you can create and compose various personas and
+With **KOS**, you can create and compose various reactors and
 reactions into the operating environment that can **pipe** the flow of
 data objects between each other in a closed loop.
 

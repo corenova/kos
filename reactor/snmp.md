@@ -1,13 +1,13 @@
-# snmp persona
+# snmp reactor
 
-This persona provides reactions to SNMP client/server connections.
+This reactor provides reactions to SNMP client/server connections.
 
 Source code is [here](./snmp.js).
 
 ## Usage
 
 ```js
-const SnmpPersona = require('kos/persona/snmp')
+const SnmpReactor = require('kos/reactor/snmp')
 ```
 
 ## kos --show ws

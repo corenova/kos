@@ -1,6 +1,6 @@
-# npm persona
+# npm reactor
 
-This persona provides basic NPM client transactions with the NPM
+This reactor provides basic NPM client transactions with the NPM
 registry. It enables you to install/uninstall external modules to any
 given endpoint running KOS. For example, it can be used in conjunction
 with [node](./node.md) to auto-resolve dependencies via a simple
@@ -11,7 +11,7 @@ Source code is [here](./npm.js).
 ## Usage
 
 ```js
-const npm = require('kos/persona/npm')
+const npm = require('kos/reactor/npm')
 ```
 
 Simple example:

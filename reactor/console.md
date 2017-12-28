@@ -1,13 +1,13 @@
-# console persona
+# console reactor
 
-This persona provides reactions to user prompt interactions.
+This reactor provides reactions to user prompt interactions.
 
 Source code is available [here](./console.js).
 
 ## Usage
 
 ```js
-const ConsolePersona = require('kos/persona/console')
+const ConsoleReactor = require('kos/reactor/console')
 ```
 
 ## kos --show console
@@ -20,13 +20,13 @@ console: reactions to user prompt interactions
 ├─ depends
 │  ├─ module/readline
 │  └─ module/treeify
-├─ personas
+├─ reactors
 │  └─ render
 ├─ reactions
 │  ├─ ƒ(promptUser)
-│  └─ ƒ(renderPersona)
+│  └─ ƒ(renderReactor)
 └──┐
-   ├─ render: reactions to visually render personas
+   ├─ render: reactions to visually render reactors
    │  ├─ id: 651dcba4-c880-4c47-92d9-a5f3e0f6d7b3
    │  ├─ passive: false
    │  ├─ enabled: true
@@ -34,20 +34,20 @@ console: reactions to user prompt interactions
    │  │  └─ module/treeify
    │  ├─ reactions
    │  │  ├─ ƒ(render)
-   │  │  ├─ ƒ(renderPersonaAsTree)
-   │  │  └─ ƒ(outputPersonaTree)
+   │  │  ├─ ƒ(renderReactorAsTree)
+   │  │  └─ ƒ(outputReactorTree)
    │  └──┐
-   │     ├─╼ render         ╾─╼ ƒ(render)              ╾┬╼ render/persona
+   │     ├─╼ render         ╾─╼ ƒ(render)              ╾┬╼ render/reactor
    │     │                                              └╼ render/output
-   │     ├┬╼ module/treeify ╾┬╼ ƒ(renderPersonaAsTree) ╾─╼ persona/tree
-   │     │└╼ render/persona ╾┘
-   │     └┬╼ persona/tree   ╾┬╼ ƒ(outputPersonaTree)
+   │     ├┬╼ module/treeify ╾┬╼ ƒ(renderReactorAsTree) ╾─╼ reactor/tree
+   │     │└╼ render/reactor ╾┘
+   │     └┬╼ reactor/tree   ╾┬╼ ƒ(outputReactorTree)
    │      └╼ render/output  ╾┘
    │
    │┌╼ process         ╾┐                    ┌╼ prompt
    ├┼╼ module/readline ╾┼╼ ƒ(promptUser)    ╾┴╼ render
    │└╼ stdio           ╾┘
    │┌╼ process         ╾┐
-   └┼╼ show            ╾┼╼ ƒ(renderPersona) ╾─╼ render
-    └╼ persona         ╾┘
+   └┼╼ show            ╾┼╼ ƒ(renderReactor) ╾─╼ render
+    └╼ reactor         ╾┘
 ```

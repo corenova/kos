@@ -1,6 +1,6 @@
-# link persona
+# link reactor
 
-This persona provides reactions to protocol-agnostic client/server
+This reactor provides reactions to protocol-agnostic client/server
 communication links.
 
 Source code is available [here](./link.js).
@@ -8,7 +8,7 @@ Source code is available [here](./link.js).
 ## Usage
 
 ```js
-const LinkPersona = require('kos/persona/link')
+const LinkReactor = require('kos/reactor/link')
 ```
 
 ## kos --show http
@@ -23,7 +23,7 @@ link: reactions to stream dynamic client/server links
 │  ├─ module/simple-websocket
 │  ├─ module/simple-websocket/server
 │  └─ module/url
-├─ personas
+├─ reactors
 │  ├─ net
 │  └─ ws
 ├─ reactions

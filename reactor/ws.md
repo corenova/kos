@@ -1,13 +1,13 @@
-# ws persona
+# ws reactor
 
-This persona provides reactions to WebSocket client/server connections.
+This reactor provides reactions to WebSocket client/server connections.
 
 Source code is [here](./ws.js).
 
 ## Usage
 
 ```js
-const WsPersona = require('kos/persona/ws')
+const WsReactor = require('kos/reactor/ws')
 ```
 
 ## kos --show ws

@@ -1,6 +1,6 @@
-# http persona
+# http reactor
 
-This persona provides message based transaction using HTTP as a client
+This reactor provides message based transaction using HTTP as a client
 and/or server.
 
 Source code is available [here](./http.js).
@@ -8,7 +8,7 @@ Source code is available [here](./http.js).
 ## Usage
 
 ```js
-const HttpPersona = require('kos/persona/http')
+const HttpReactor = require('kos/reactor/http')
 ```
 
 ## kos --show http

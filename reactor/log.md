@@ -1,6 +1,6 @@
-# log persona
+# log reactor
 
-The log persona can be utilized to send debugging messages generated
+The log reactor can be utilized to send debugging messages generated
 by the reactions to an output stream (such as console).
 
 Source code is [here](./log.js)
@@ -9,16 +9,16 @@ Source code is [here](./log.js)
 
 ### Using with `kos`
 
-The `kos` utility intrinsically utilizes the [node](./node.md) Persona
-which interally loads the [log](./log.md) persona.
+The `kos` utility intrinsically utilizes the [node](./node.md) Reactor
+which interally loads the [log](./log.md) reactor.
 
 The `program` stimuli produces `log` output according to the
-command-line arguments and causes `log` persona to take effect.
+command-line arguments and causes `log` reactor to take effect.
 
 ### Using as a module
 
 ```js
-const LogPersona = require('kos/persona/log')
+const LogReactor = require('kos/reactor/log')
 ```
 
 It depends on `module/debug` (a Node.js
@@ -26,7 +26,7 @@ It depends on `module/debug` (a Node.js
 into the observer as follows:
 
 ```js
-LogPersona.feed('module/debug', require('debug'))
+LogReactor.feed('module/debug', require('debug'))
 ```
 
 ## kos --show

@@ -1,23 +1,23 @@
-# react persona
+# react reactor
 
-This persona provides reactions to React.js lifecycle events.
+This reactor provides reactions to React.js lifecycle events.
 
-It's designed to be used as a sub-persona by being loaded into another
-Persona.
+It's designed to be used as a sub-reactor by being loaded into another
+Reactor.
 
 Source code is [here](./react.js).
 
 ## Usage
 
 ```js
-const ReactPersona = require('kos/persona/react')
+const ReactReactor = require('kos/reactor/react')
 ```
 
 Simple example:
 
 ```js
-const MyPersona = kos.create('some-reactive-persona')
-  .load(ReactPersona)
+const MyReactor = kos.create('some-reactive-reactor')
+  .load(ReactReactor)
   .in('react:mounted').bind(foo)
 ```
 

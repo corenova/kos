@@ -23,23 +23,23 @@ module.exports = kos.create('react')
   .in('react:unmounting')
   .bind(unmount)
 
-  .pre('kos:parent')
+  .pre('parent')
   .in('component')
   .out('react:*')
   .bind(wrap)
 
 function mount() {
   const parent = this.get('parent')
-  parent.join(kos.core)
+  parent.join(kos)
 }
 
 function unmount() {
   const parent = this.get('parent')
-  parent.leave(kos.core)
+  parent.leave(kos)
 }
 
 function wrap(component) {
-  const [ parent, lifecycle ] = this.get('kos:parent', 'lifecycle')
+  const [ parent, lifecycle ] = this.get('parent', 'lifecycle')
   const { state, setState, trigger } = component // remember originals
 
   // allow all lifecycle events to emit an internal event
@@ -65,7 +65,7 @@ function wrap(component) {
   Object.defineProperty(component, 'state', {
     get() { 
       let obj = Object.create(null)
-      for (let [k,v] of parent.state) obj[k] = v
+      for (let [k,v] of parent.map) obj[k] = v
       return obj
     },
     set(obj) {

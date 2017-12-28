@@ -1,13 +1,13 @@
-# hive persona
+# hive reactor
 
-This persona provides reactions to p2p link communications.
+This reactor provides reactions to p2p link communications.
 
 Source code is available [here](./hive.js).
 
 ## Usage
 
 ```js
-const HivePersona = require('kos/persona/hive')
+const HiveReactor = require('kos/reactor/hive')
 ```
 
 ## kos --show hive
@@ -22,7 +22,7 @@ hive: reactions to p2p hive communications
 │  ├─ module/simple-websocket
 │  ├─ module/simple-websocket/server
 │  └─ module/url
-├─ personas
+├─ reactors
 │  └─ link
 ├─ reactions
 │  ├─ ƒ(connect)
@@ -38,7 +38,7 @@ hive: reactions to p2p hive communications
    │  │  ├─ module/simple-websocket
    │  │  ├─ module/simple-websocket/server
    │  │  └─ module/url
-   │  ├─ personas
+   │  ├─ reactors
    │  │  ├─ net
    │  │  └─ ws
    │  ├─ reactions
@@ -110,5 +110,5 @@ hive: reactions to p2p hive communications
    │
    ├─╼ hive/connect                   ╾─╼ ƒ(connect) ╾─╼ link/connect
    ├─╼ hive/listen                    ╾─╼ ƒ(listen)  ╾─╼ link/listen
-   └─╼ link                           ╾─╼ ƒ(peer)    ╾─╼ persona
+   └─╼ link                           ╾─╼ ƒ(peer)    ╾─╼ reactor
 ```

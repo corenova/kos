@@ -1,6 +1,6 @@
-# mqtt persona
+# mqtt reactor
 
-This persona provides message based transactions using MQTT as a
+This reactor provides message based transactions using MQTT as a
 client. Server-side flow will be added soon.
 
 For additional usage example, you can refer to
@@ -12,10 +12,10 @@ Source code is available [here](./mqtt.js).
 ## Usage
 
 ```js
-const Mqtt = require('kos/persona/mqtt')
+const Mqtt = require('kos/reactor/mqtt')
 ```
 
-Enabling the persona:
+Enabling the reactor:
 ```js
 Mqtt
   .feed('module/mqtt', require('mqtt'))

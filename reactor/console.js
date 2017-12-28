@@ -30,15 +30,15 @@ module.exports = kos.create('console')
   .bind(processInput)
 
   .pre('process','program')
-  .in('persona')
+  .in('reactor')
   .out('render')
-  .bind(renderPersona)
+  .bind(renderReactor)
 
 function execute(process, program) {
   const parent = this.get('parent')
   const { stdin, stdout, stderr } = process
   const { args=[], file=[], show=false, silent=false, verbose=0 } = program
-  const { io } = this
+  const { io } = kos
 
   // unless silent, setup logging
   silent || this.send('log', { level: verbose })
@@ -93,7 +93,7 @@ function createConsole(prompt) {
 function processInput(console) {
   const { exit } = this.get('process')
   const { output, source } = this.get('prompt')
-  const { io } = this
+  const { io } = kos
   console.on('line', line => {
     line = line.trim()
     switch(line) {
@@ -105,12 +105,12 @@ function processInput(console) {
   })
 }
 
-function renderPersona(persona) {
+function renderReactor(reactor) {
   const { show } = this.get('program')
   const { stderr } = this.get('process')
   if (show) {
     this.send('render', {
-      source: persona,
+      source: reactor,
       target: stderr
     })
   }

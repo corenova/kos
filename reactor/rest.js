@@ -6,7 +6,7 @@ const http = require('./http')
 const ws   = require('./ws')
 
 module.exports = kos.create('rest')
-  .desc('reactions to RElational State Transfer interactions with KOS personas')
+  .desc('reactions to RElational State Transfer interactions with KOS reactors')
   .load(http)
   .load(ws)
   .init({ basePath: '/' })

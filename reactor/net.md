@@ -1,13 +1,13 @@
-# net persona
+# net reactor
 
-This persona provides reactions to TCP/UDP client/server connections.
+This reactor provides reactions to TCP/UDP client/server connections.
 
 Source code is [here](./net.js).
 
 ## Usage
 
 ```js
-const NetPersona = require('kos/persona/net')
+const NetReactor = require('kos/reactor/net')
 ```
 
 ## kos --show net

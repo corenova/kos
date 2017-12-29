@@ -48,11 +48,16 @@ function wrap(component) {
     component[event] = (...args) => {
       this.send(label, args)
       if (f) return f.apply(component, args)
+      return component
     }
   }
   // attach a convenience function for trigger
   component.trigger = (key, ...args) => {
-    return () => this.reactor.send(key, ...args)
+    this.debug(component, 'register trigger', key)
+    this.out(key) // register the 'key' as one of output topics
+    return (evt) => {
+      args.length ? this.send(key, ...args) : this.send(key, evt)
+    }
   }
 
   // treat 'state' and 'setState' specially

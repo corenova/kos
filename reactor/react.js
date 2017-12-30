@@ -16,6 +16,11 @@ module.exports = kos.create('react')
   .init({ lifecycle })
 
   .pre('parent')
+  .in('component')
+  .out('react:*')
+  .bind(initialize)
+
+  .pre('parent')
   .in('react:mounting')
   .bind(mount)
 
@@ -23,24 +28,28 @@ module.exports = kos.create('react')
   .in('react:unmounting')
   .bind(unmount)
 
+  .pre('react:mounted')
+  .in('react:state')
+  .bind(update)
+
   .pre('parent')
-  .in('component')
-  .out('react:*')
-  .bind(wrap)
+  .in('react:event')
+  .bind(translate)
 
-function mount() {
-  const parent = this.get('parent')
-  parent.join(kos)
-}
-
-function unmount() {
-  const parent = this.get('parent')
-  parent.leave(kos)
-}
-
-function wrap(component) {
+function initialize(component) {
   const [ parent, lifecycle ] = this.get('parent', 'lifecycle')
-  const { state, setState, trigger } = component // remember originals
+  const { state, setState } = component
+
+  this.save({ component, setState }) // remember original component and setState
+  parent.save(state) // update initial state
+
+  // override component to compute 'state' from parent reactor
+  Object.defineProperty(component, 'state', {
+    get()    { return parent.state },
+    set(obj) { parent.state = obj }
+  })
+  // override component setState to update parent reactor
+  component.setState = parent.save.bind(parent)
 
   // allow all lifecycle events to emit an internal event
   for (let event in lifecycle) {
@@ -51,33 +60,35 @@ function wrap(component) {
       return component
     }
   }
-  // attach a convenience function for trigger
-  component.trigger = (key, ...args) => {
-    this.debug(component, 'register trigger', key)
-    this.out(key) // register the 'key' as one of output topics
+  // attach a convenience function to observe and respond to synthetic events
+  component.observe = (event) => {
+    event.stopPropagation()
+    this.send('react:event', event)
+  }
+  component.to = (topic, ...args) => {
+    this.debug(component, 'registered', topic)
+    this.out(topic) // register the 'key' as one of output topics
     return (evt) => {
-      args.length ? this.send(key, ...args) : this.send(key, evt)
+      args.length ? this.send(topic, ...args) : this.send(topic, evt)
     }
   }
-
-  // treat 'state' and 'setState' specially
-  parent.save(state, { emit: false })
-  component.setState = function (obj, ...rest) {
-    parent.save(obj, { emit: false })
-    return setState.call(component, obj, ...rest)
-  }
-  // override to compute 'state' from parent reactor
-  Object.defineProperty(component, 'state', {
-    get() { 
-      let obj = Object.create(null)
-      for (let [k,v] of parent.map) obj[k] = v
-      return obj
-    },
-    set(obj) {
-      parent.init(obj)
-    }
-  })
-  // call the original setState
-  parent.on('save', setState.bind(component))
+  parent.on('save', obj => this.send('react:state', obj))
 }
 
+function mount()   { this.get('parent').join(kos) }
+function unmount() { this.get('parent').leave(kos) }
+
+function update(state) { 
+  const [ component, setState ] = this.get('component', 'setState')
+  setState.call(component, state)
+}
+
+function translate(event) {
+  const parent = this.get('parent')
+  const { target } = event
+  const { type, name, value } = target
+  this.debug(target)
+  if (!name) return
+  this.out(name)
+  this.send(name, value)
+}

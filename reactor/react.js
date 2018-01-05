@@ -34,7 +34,7 @@ module.exports = kos.create('react')
 
   .pre('parent')
   .in('react:event')
-  .bind(translate)
+  .bind(observe)
 
 function initialize(component) {
   const [ parent, lifecycle ] = this.get('parent', 'lifecycle')
@@ -83,7 +83,7 @@ function update(state) {
   setState.call(component, state)
 }
 
-function translate(event) {
+function observe(event) {
   const parent = this.get('parent')
   const { target } = event
   const { type, name, value } = target
@@ -91,4 +91,5 @@ function translate(event) {
   if (!name) return
   this.out(name)
   this.send(name, value)
+  parent.save({ [name]: value })
 }

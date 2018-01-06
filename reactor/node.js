@@ -9,6 +9,10 @@ module.exports = kos.create('node')
   .in('process').out('resolve')
   .bind(initialize)
 
+  .in('program')
+  .out('load', 'read', 'log')
+  .bind(execute)
+
   .pre('module/path')
   .in('load')
   .out('reactor','resolve')
@@ -31,6 +35,17 @@ function initialize(process) {
   const parent = this.get('parent')
   this.send('resolve', ...parent.depends)
   //this.save({ process })
+}
+
+function execute(program) {
+  const { args=[], file=[], silent=false, verbose=0 } = program
+
+  // unless silent, setup logging
+  silent || this.send('log', { level: verbose })
+
+  // immediate processing of 'load' tokens first
+  this.sendImmediate('load', ...args)
+  this.send('read', ...file)
 }
 
 function loadReactor(name) {

@@ -80,7 +80,17 @@ function unmount() { this.get('parent').leave(kos) }
 
 function update(state) { 
   const [ component, setState ] = this.get('component', 'setState')
-  setState.call(component, state)
+  const prevState = this.get('prevState') || {}
+  const keys = Object.keys(state)
+  let diff = false
+  for (let k of keys) {
+    if (prevState[k] !== state[k]) {
+      diff = true
+      break
+    }
+  }
+  if (diff) setState.call(component, state)
+  this.set('prevState', state)
 }
 
 function observe(event) {

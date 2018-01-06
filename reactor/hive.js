@@ -29,14 +29,14 @@ function peer(link) {
       const { label, id } = reactor
       reactor.enabled = false
       this.info(`importing '${label}' reactor (${id}) from:`, addr)
-      this.load(reactor)
+      this.parent.load(reactor)
     }
   }
   link.once('inactive', io => {
     // here we have an opportunity to attempt to repair it
     
   })
-  link.join(this.reactor)
+  link.join(this.parent)
 
   //link.feed('reactor', ...kos.reactors)
   //this.send('reactor', link)

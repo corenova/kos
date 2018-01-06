@@ -14,8 +14,8 @@ module.exports = kos.create('console')
   .pre('parent')
   .in('process')
   .in('program')
-  .out('load', 'read', 'log', 'prompt')
-  .bind(execute)
+  .out('prompt')
+  .bind(initialize)
 
   .pre('process')
   .pre('module/readline')
@@ -34,20 +34,13 @@ module.exports = kos.create('console')
   .out('render')
   .bind(renderReactor)
 
-function execute(process, program) {
+function initialize(process, program) {
   const parent = this.get('parent')
   const { stdin, stdout, stderr } = process
-  const { args=[], file=[], show=false, silent=false, verbose=0 } = program
+  const { show=false } = program
   const { io } = kos
 
-  // unless silent, setup logging
-  silent || this.send('log', { level: verbose })
-
-  // immediate processing of 'load' tokens first
-  this.sendImmediate('load', ...args)
   if (show) return
-
-  this.send('read', ...file)
 
   if (stdin.isTTY) {
     this.send('prompt', { 

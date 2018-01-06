@@ -31,7 +31,7 @@ function setup(opts) {
       if (this.has('console')) {
         this.get('console').emit('reset')
       }
-      handler(origin.identity, ...token)
+      handler(origin.identity, ...token.values)
     }
     const tracer = token => {
       const trace = handlers.get('trace')

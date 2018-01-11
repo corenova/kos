@@ -42,6 +42,8 @@
     "colors": "^1.1.2",
     "commander": "^2.9.0",
     "debug": "^2.6.0",
+    "deep-equal": "^1.0.1",
+    "deepmerge": "^2.0.1",
     "delegates": "^1.0.0",
     "treeify": "^1.0.1",
     "uuid": "^3.0.1"

@@ -55,7 +55,7 @@ function clientRequest(req) {
   case 'put':
   case 'patch':
     agent[method](url).type(type).send(data).end((err, res) => { 
-      if (err) this.throw(err.response.error)
+      if (err) this.throw(err)
       else this.send('http/response', res) 
     })
     break;

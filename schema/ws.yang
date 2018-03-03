@@ -1,0 +1,90 @@
+module kinetic-websocket {
+  prefix ws;
+  
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  import kinetic-node-js {
+    prefix node;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  /*
+   * Features
+   */
+  feature websocket-client {
+    reference "npm://simple-websocket";
+  }
+  feature websocket-server {
+    if-feature ws:simple-websocket;
+    reference "npm://simple-websocket/server";
+  }
+  
+  /*
+   * Type definitions
+   */
+  typedef protocols {
+    type enumeration {
+      enum 'ws:';
+      enum 'wss:';
+    }
+  }
+  /*
+   * Groupings
+   */
+  grouping options {
+    leaf protocol {
+      type ws:protocols;
+      default 'ws:';
+    }
+    uses kos:link-params {
+      refine "port" {
+        default 80;
+      }
+    }
+  }
+  grouping socket {
+    
+  }
+  grouping server {
+    
+  }
+  grouping connect {
+    //kos:priority 1;
+    //kos:max-rate 10000;
+    uses ws:options;
+  }
+  grouping listen {
+    uses ws:options;
+  }
+  /*
+   * Personas
+   */
+  kos:persona controller {
+    description
+      "reactions to establish WebSocket client/server communication links";
+    kos:reaction connect {
+      if-feature ws:websocket-client;
+      input {
+        kos:data ws:connect;
+      }
+      output {
+        kos:data kos:connection;
+        kos:data ws:socket;
+      }
+      container connections;
+    }
+    kos:reaction listen {
+      if-feature ws:websocket-server;
+      input {
+        kos:data ws:listen;  
+      }
+      output {
+        kos:data kos:connection;
+        kos:data ws:socket;
+        kos:data ws:server;
+      }
+    }
+  }
+}

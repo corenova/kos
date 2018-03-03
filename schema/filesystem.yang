@@ -1,0 +1,67 @@
+module kos-filesystem {
+  prefix fs;
+
+  import kinetic-object-swarm { prefix kos; }
+  import kos-node-js { prefix node; }
+
+  list file {
+    notification end;
+    notification line;
+    notification chunk;
+  }
+  /*
+   * Notifications (top-level)
+   */
+  notification open {
+    leaf path {
+      type string;
+      mandatory true;
+    }
+    leaf mode {
+      type string;
+      default 'read'
+    }
+    leaf format {
+      type string;
+      default 'utf-8'
+    }
+  }
+  notification read {
+    leaf delim {
+      type enumeration {
+        enum 'line';
+        enum 'chunk';
+      }
+      default 'line';
+    }
+  }
+  notification file {
+
+  }
+  /*
+   * Personas
+   */
+  kos:persona getter {
+    kos:reaction openFileStream {
+      if-feature node:fs;
+      input {
+        kos:event "/fs:open";
+      }
+      output {
+        kos:event "/fs:file";
+        kos:event "/fs:file/end";
+      }
+      container streams;
+    }
+    kos:reaction readFileStream {
+      input {
+        kos:event "/fs:read";
+        kos:event "/fs:file";
+      }
+      output {
+        kos:event "/fs:file/line";
+        kos:event "/fs:file/chunk";
+      }
+    }
+  }
+}

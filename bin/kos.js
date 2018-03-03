@@ -5,15 +5,15 @@ const program = require('commander')
 const pkginfo = require('../package.json')
 
 const kos = require('..')
-const node = require('../reactor/node')
-const console = require('../reactor/console')
-const log = require('../reactor/log')
+const NodeSchema    = require('../schema/node')
+const ConsoleSchema = require('../schema/console')
+const LogSchema     = require('../schema/log')
 
 function collect(val, keys) { keys.push(val); return keys }
 
 program
   .version(pkginfo.version)
-  .arguments('<personas...>')
+  .arguments('<schemas...>')
   .option('-f, --file <file>', 'feed KSON file contents into KOS', collect, [])
   .option('-s, --show', 'print detailed info about persona(s)')
   .option('-v, --verbose', 'enable more verbose output', ( (v, t) => t + 1), 0)
@@ -21,9 +21,8 @@ program
   .parse(process.argv)
 
 kos
-  .load(node)
-  .load(console)
-  .load(log)
-  .feed('process', process)
-  .feed('program', program)
-
+  .link(NodeSchema)
+  .link(ConsoleSchema)
+  .link(LogSchema)
+  .feed('kos:process', process)
+  .feed('kos:program', program)

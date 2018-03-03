@@ -1,12 +1,12 @@
 'use strict'
 
 const kos = require('./kos')
-const LogReactor   = require('./reactor/log')
-const LinkReactor  = require('./reactor/link')
-const HiveReactor  = require('./reactor/hive')
-const HttpReactor  = require('./reactor/http')
-const ReactReactor = require('./reactor/react')
-const WebSocketReactor = require('./reactor/ws')
+const SyntheticLog       = require('./reactor/log')
+const SyntheticLink      = require('./reactor/link')
+const SyntheticHive      = require('./reactor/hive')
+const SyntheticHttp      = require('./reactor/http')
+const SyntheticReact     = require('./reactor/react')
+const SyntheticWebSocket = require('./reactor/ws')
 
 export default kos
 export { 

@@ -1,0 +1,111 @@
+module kinetic-object-swarm {
+  prefix kos;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  /*
+   * Extensions
+   */
+  extension interface {
+    argument "interface-name";
+  }
+  extension reaction {
+    argument "function-name";
+  }
+  extension data {
+    argument "grouping-identifier";
+  }
+  extension node {
+    argument "target-node";
+  }
+  extension extends {
+    argument "target-interface";
+  }
+  /*
+   * Identities
+   */
+  identity protocol {
+    description "base identity for protocols";
+  }
+  identity kos {
+    base protocol;
+  }
+  identity nodejs {
+    base protocol;
+  }
+  /*
+   * Features
+   */
+  feature url {
+    reference "nodejs://url";
+  }
+  feature stream {
+    reference "nodejs://stream";
+  }
+  feature net {
+    reference "nodejs://net";
+  }
+  /*
+   * Groupings
+   */
+  grouping schema {
+    
+  }
+  grouping stream {
+    
+  }
+  grouping uri {
+    leaf uri {
+      type inet:uri;
+    }
+  }
+  grouping interface {
+    uses kos:uri;
+    leaf protocol {
+      type identityref {
+        base kos:protocol;
+      }
+    }
+    leaf hostname {
+      type inet:host;
+      default '0.0.0.0';
+    }
+    leaf port {
+      type inet:port-number;
+    }
+    leaf path {
+      type string;
+    }
+    container query;
+  }
+  grouping connection {
+    leaf uri {
+      type inet:uri;
+      mandatory true;
+    }
+    anydata socket {
+      mandatory true;
+    }
+  }
+  grouping nodes-list {
+    list node {
+      
+    }
+  }
+  grouping links-list {
+    list link {
+      
+    }
+  }
+  /*
+   * Operational state data nodes
+   */
+  container topology {
+    config false;
+    description
+      "Contains KOS network topology information.";
+    uses nodes-list;
+    uses links-list;
+  }
+}

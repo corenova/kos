@@ -1,0 +1,170 @@
+module kinetic-network {
+  prefix net;
+  
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  /*
+   * Identities
+   */
+  identity tcp {
+    base kos:protocol;
+  }
+  identity udp {
+    base kos:protocol;
+  }
+  identity unix {
+    base kos:protocol;
+  }
+  /*
+   * Groupings
+   */
+  grouping persist-params {
+    leaf retry {
+      type union {
+        type boolean;
+        type uint16;
+      }
+      default false;
+    }
+    leaf max {
+      type uint16;
+      units 'ms';
+      default 5000;
+    }
+    leaf repair {
+      type boolean;
+      default false;
+    }
+  }
+  grouping interface {
+    uses kos:interface {
+      refine "protocol" {
+        default "tcp";
+        must ". = 'tcp' or . = 'udp' or . = 'unix'" {
+          error-message "A net protocol must be 'tcp' or 'udp' or 'unix'";
+        }
+      }
+      refine "port" {
+        default 12345;
+      }
+    }
+  }
+  grouping remote {
+    uses net:interface {
+      augment "query" {
+        uses persist-params;
+      }
+    }
+    leaf active {
+      config false;
+      type boolean;
+      default false;
+    }
+    anydata socket {
+      if-feature kos:net;
+      config false;
+    }
+  }
+  grouping remote-uri {
+    uses kos:uri;
+  }
+  grouping local-uri {
+    uses kos:uri;
+  }
+  grouping local {
+    uses net:interface;
+    leaf active {
+      config false;
+      type boolean;
+      default false;
+    }
+    leaf-list connections {
+      config false;
+      type leafref {
+        path "/kos:connection/uri";
+      }
+    }
+    anydata server {
+      if-feature kos:net;
+      config false;
+    }
+  }
+  /*
+   * Module State Nodes
+   */
+  list remote {
+    key uri;
+    uses net:remote;
+  }
+  list local {
+    key uri;
+    uses net:local;
+  }
+  rpc connect {
+    input {
+      uses net:remote;
+    }
+    output {
+      uses kos:connection;
+    }
+  }
+  rpc listen {
+    input {
+      uses net:local;
+    }
+    output {
+      uses kos:connection;
+    }
+  }
+  /*
+   * Kinetic Reactions
+   */
+  kos:reaction composeRemote {
+    if-feature kos:url;
+    input {
+      kos:data net:remote-uri;
+    }
+    output {
+      kos:data net:remote;
+    }
+  }
+  kos:reaction composeLocal {
+    if-feature kos:url;
+    input {
+      kos:data net:local-uri;
+    }
+    output {
+      kos:data net:local;
+    }
+  }
+  kos:reaction invokeConnect {
+    input {
+      kos:data net:remote;
+    }
+    output {
+      kos:node "/net:connect";
+      kos:data kos:connection;
+    }
+  }
+  kos:reaction invokeListen {
+    input {
+      kos:data net:local;
+    }
+    output {
+      kos:node "/net:listen";
+      kos:data kos:connection;
+    }
+  }
+  kos:reaction streamify {
+    input {
+      kos:data kos:connection;
+    }
+    output {
+      kos:data kos:stream;
+    }
+  }
+}

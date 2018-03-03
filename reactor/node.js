@@ -1,7 +1,8 @@
 'use strict'
 const { kos = require('..') } = global
+const { Neuron } = kos
 
-module.exports = kos.create('node')
+module.exports = kos.define('node')
   .desc('reactions to Node.js runtime environment interactions')
   .pass(true)
 
@@ -34,7 +35,6 @@ module.exports = kos.create('node')
 function initialize(process) { 
   const parent = this.get('parent')
   this.send('resolve', ...parent.depends)
-  //this.save({ process })
 }
 
 function execute(program) {

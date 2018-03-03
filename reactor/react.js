@@ -119,11 +119,57 @@ function observe(event) {
   const parent = this.get('parent')
   //const [ topic, merge ] = this.get('topic', 'module/deepmerge')
   const { target } = event
-  const { type, name, value } = target
+  const { type, name } = target
+  let value
   this.debug(event, target)
   if (!name) return
+  if (type === 'checkbox') {
+    value = target.checked
+  } else {
+    value = target.value
+  }
   //this.send(topic, data)
   this.out(name)
   this.send(name, value)
   parent.save({ [name]: value })
 }
+
+
+import kos, {ReactReactor} from 'kos'
+
+const FormReactor = kos.create('react-form')
+  .desc('reactions to form input')
+  .load(ReactReactor)
+
+  .init({ 'module/deepmerge': require('deepmerge') })
+
+  .pre('module/deepmerge')
+  .pre('action')
+  .in('react:updated')
+  .out('{action}')
+  .bind(trigger)
+
+function trigger() { 
+  const merge = this.get('module/deepmerge')
+  const { state } = this.parent
+  let data = {}
+  for (let [k,v] of Object.entries(state)) {
+    data = merge(data, objectify(k,v))
+  }
+  this.info(data)
+  this.send(this.get('action'), data) 
+
+  function objectify(key, val) {
+    let keys = key.split('/')
+    let last, obj, root, k
+    obj = root = {}
+    while ((k = keys.shift())) {
+      last = { root, k }
+      root = root[k] = {}
+    }
+    last.root[last.k] = val
+    return obj
+  }
+}
+
+

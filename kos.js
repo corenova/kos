@@ -1,20 +1,14 @@
 'use strict'
 
-const Reactor  = require('./lib/reactor')
-const Reaction = require('./lib/reaction')
-const Dataflow = require('./lib/dataflow')
-const Stimulus = require('./lib/stimulus')
+const { Automata, Persona, Reaction, Interface, Transform } = require('./lib')
 
-const kos = new Reactor({
-  label: 'kos',
-  purpose: 'reactions to flow of stimuli',
-  passive: true
-})
+const kos = new Automata(require('./schema/kos'))
 
 // expose main class definitions
-kos.Reactor  = Reactor
-kos.Reaction = Reaction
-kos.Dataflow = Dataflow
-kos.Stimulus = Stimulus
+kos.Automata  = Automata
+kos.Persona   = Persona
+kos.Interface = Interface
+kos.Reaction  = Reaction
+kos.Transform = Transform
 
 global.kos = module.exports = kos['default'] = kos.kos = kos

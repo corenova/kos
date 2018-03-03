@@ -1,0 +1,121 @@
+module kinetic-http {
+  prefix http;
+    description "interfaces to HTTP client/server requests";
+
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  import kinetic-node-js {
+    prefix node;
+  }
+  import kinetic-net {
+    prefix net;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  /*
+   * Features
+   */
+  feature superagent;
+  /*
+   * Groupings
+   */
+  grouping request {
+    leaf url {
+      type inet:uri;
+    }
+    leaf method {
+      type enumeration {
+        enum 'GET';
+        enum 'POST';
+        enum 'DELETE';
+        enum 'POST';
+        enum 'PUT';
+        enum 'PATCH';
+      }
+    }
+    leaf type {
+      type string;
+      default "json";
+    }
+    anydata data;
+  }
+  /*
+   * Pulse definitions
+   */
+  kos:pulsedef request {
+    uses http:request;
+  }
+  kos:pulsedef response {
+    
+  }
+  kos:pulsedef request-get {
+    uses http:request {
+      refine "method" {
+        config false;
+        default "GET";
+      }
+    }
+  }
+  kos:pulsedef listen {
+    
+  }
+  kos:pulsedef server {
+    
+  }
+  kos:pulsedef server-request {
+    
+  }
+  kos:pulsedef route {
+    
+  }
+  /*
+   * Interfaces
+   */
+  kos:interface core {
+    description
+      "interface to HTTP client/server requests";
+    kos:transform request {
+      if-feature superagent;
+      input {
+        kos:pulse http:request;
+      }
+      output {
+        kos:pulse http:response;
+      }
+    }
+    kos:transform get {
+      input {
+        kos:pulse http:request-get;
+      }
+      output {
+        kos:pulse http:request;
+      }
+    }
+    kos:transform listen {
+      if-feature node:http;
+      if-feature node:url;
+
+      input {
+        kos:pulse http:listen;
+      }
+      output {
+        kos:pulse http:server;
+        kos:pulse net:socket;
+        kos:pulse kos:connection;
+        kos:pulse http:server-request;
+      }
+    }
+    kos:transform route {
+      input {
+        kos:pulse http:server;
+        kos:pulse http:route;
+      }
+      output {
+        kos:pulse http:server-request;
+      }
+    }
+  }
+}
+

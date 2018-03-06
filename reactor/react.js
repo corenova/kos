@@ -119,9 +119,12 @@ function observe(event) {
   const parent = this.get('parent')
   //const [ topic, merge ] = this.get('topic', 'module/deepmerge')
   const { target } = event
-  const { type, name, value } = target
+  let { type, name, value } = target
   this.debug(event, target)
   if (!name) return
+  if (type === 'checkbox') {
+    value = target.checked
+  }
   //this.send(topic, data)
   this.out(name)
   this.send(name, value)

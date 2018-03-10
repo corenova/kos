@@ -1,6 +1,6 @@
 module kinetic-http {
   prefix http;
-    description "interfaces to HTTP client/server requests";
+  description "interfaces to HTTP client/server requests";
 
   import kinetic-object-swarm {
     prefix kos;

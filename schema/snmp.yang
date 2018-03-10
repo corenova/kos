@@ -1,0 +1,128 @@
+module kinetic-snmp {
+  prefix snmp;
+  yang-version "1.1";
+
+  import kinetic-operating-system {
+    prefix kos;
+  }
+  import ietf-yang-types {
+    prefix yang;
+  }
+  feature net-snmp {
+    
+  }
+  identity snmp {
+    base kos:protocol;
+  }
+  typedef session-instance-ref {
+    type leafref {
+      path "/snmp:session/id";
+    }
+  }
+  typedef oid {
+    type yang:object-identifier-128;
+  }
+  grouping endpoint {
+    uses kos:endpoint {
+      refine "protocol" {
+        must ". = 'snmp'";
+      }
+      refine "port" {
+        default 161;
+      }
+      augment "query" {
+        leaf community {
+          type string;
+          default 'public'
+        }
+        leaf version {
+          type enumeration {
+            enum v1 { value 0; }
+            enum v2 { value 1; }
+          }
+          default 0;
+        }
+        leaf retries {
+          type uint8;
+        }
+        leaf timeout {
+          type uint16;
+          units "ms";
+        }
+        leaf transport;
+      }
+    }
+  }
+  grouping data {
+    leaf oid {
+      type snmp:oid;
+    }
+    leaf type {
+      type uint8;
+    }
+    leaf value;
+  }
+  grouping session {
+    leaf id {
+      type kos:unique-identifier;
+      mandatory true;
+    }
+    container endpoint {
+      uses snmp:endpoint;
+    }
+    leaf active {
+      config false;
+      type boolean;
+      default false;
+    }
+    action get {
+      input {
+        leaf-list oids {
+          type snmp:oid;
+          min-elements 1;
+        }
+      }
+      output {
+        list data {
+          key oid;
+          uses snmp:data;
+        }
+      }
+    }
+    action set {
+      input {
+        list data {
+          key oid;
+          uses snmp:data;
+          min-elements 1;
+        }
+      }
+      output {
+        
+      }
+    }
+  }
+  /*
+   * Configuration data nodes
+   */ 
+  list session {
+    config false;
+    key id;
+    uses snmp:session;
+    anydata instance {
+      mandatory true;
+    }
+  }
+  /*
+   * Operation interfaces
+   */
+  rpc connect {
+    if-feature snmp:net-snmp;
+    input {
+      uses snmp:endpoint;
+    }
+    output {
+      uses snmp:session;
+    }
+  }
+}

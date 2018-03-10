@@ -1,11 +1,19 @@
-module kinetic-object-swarm {
+module kinetic-operating-system {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-operating-system";
   prefix kos;
 
-  import ietf-inet-types {
-    prefix inet;
+  organization
+    "Corenova Technologies, Inc.";
+
+  contact
+    "Peter K. Lee <peter@corenova.com>";
+
+  revision 2018-03-10 {
+    description
+      "Initial revision.";
   }
   /*
-   * Extensions
+   * Custom YANG Language Extensions
    */
   extension interface {
     argument "interface-name";
@@ -23,16 +31,13 @@ module kinetic-object-swarm {
     argument "target-interface";
   }
   /*
-   * Identities
-   */
-  identity protocol {
-    description "base identity for protocols";
+   * Dependencies
+   */ 
+  import ietf-yang-types {
+    prefix yang;
   }
-  identity kos {
-    base protocol;
-  }
-  identity nodejs {
-    base protocol;
+  import ietf-inet-types {
+    prefix inet;
   }
   /*
    * Features
@@ -47,11 +52,26 @@ module kinetic-object-swarm {
     reference "nodejs://net";
   }
   /*
+   * Identities
+   */
+  identity protocol {
+    description "base identity for protocols";
+  }
+  identity kos {
+    base protocol;
+  }
+  identity nodejs {
+    base protocol;
+  }
+  /*
+   * Type Definitions
+   */
+  typedef unique-identifer {
+    type yang:uuid;
+  }
+  /*
    * Groupings
    */
-  grouping schema {
-    
-  }
   grouping stream {
     
   }
@@ -60,7 +80,7 @@ module kinetic-object-swarm {
       type inet:uri;
     }
   }
-  grouping interface {
+  grouping endpoint {
     uses kos:uri;
     leaf protocol {
       type identityref {
@@ -88,14 +108,30 @@ module kinetic-object-swarm {
       mandatory true;
     }
   }
-  grouping nodes-list {
+  grouping node-list {
     list node {
       
     }
   }
-  grouping links-list {
+  grouping link-list {
     list link {
       
+    }
+  }
+  grouping flow-list {
+    list flow {
+      leaf id {
+        type kos:unique-identifier;
+        mandatory true;
+      }
+      leaf name {
+        type yang:yang-identifier;
+      }
+      leaf-list steps {
+        type instance-identifier {
+          require-instance false;
+        }
+      }
     }
   }
   /*
@@ -105,7 +141,8 @@ module kinetic-object-swarm {
     config false;
     description
       "Contains KOS network topology information.";
-    uses nodes-list;
-    uses links-list;
+    uses node-list;
+    uses link-list;
+    uses flow-list;
   }
 }

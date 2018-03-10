@@ -12,16 +12,38 @@
     "url": "git+https://github.com/corenova/kos.git"
   },
   "keywords": [
+    "action",
+    "actor",
     "adaptive",
+    "atomic",
+    "automata",
+    "autonomic",
+    "autonomy",
     "dataflow",
-    "react",
+    "datamodel",
+    "distributed",
+    "hive",
     "kinetic",
-    "stream",
+    "flow",
+    "interface",
+    "model",
+    "network",
+    "neural",
+    "neuron",
+    "p2p",
+    "persona",
+    "petri",
     "pipeline",
     "pipe",
-    "flow",
-    "action",
-    "transform"
+    "react",
+    "reaction",
+    "reactor",
+    "schema",
+    "state",
+    "stream",
+    "swarm",
+    "transform",
+    "transition"
   ],
   "author": "Peter K. Lee <peter@corenova.com>",
   "license": "Apache-2.0",
@@ -39,12 +61,15 @@
   },
   "yang": {
     "resolve": {
-      "kinetic-object-swarm": "./schema/kos.js",
+      "kinetic-operating-system": "./schema/kos.js",
       "kinetic-link": "./schema/link.js",
       "kinetic-network": "./schema/net.js",
-      "kinetic-websocket": "./schema/ws.js",
       "kinetic-node-js": "./schema/node.js",
-      "ietf-inet-types": "yang-js"
+      "kinetic-snmp": "./schema/snmp.js",
+      "kinetic-websocket": "./schema/ws.js",
+      "ietf-inet-types": "yang-js",
+      "ietf-yang-library": "yang-js",
+      "ietf-yang-types": "yang-js"
     }
   },
   "dependencies": {

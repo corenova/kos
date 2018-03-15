@@ -1,0 +1,36 @@
+module kinetic-cognitive-data-exchange {
+  prefix codex;
+
+  import kinetic-object-swarm { prefix kos; }
+  import kinetic-snmp { prefix snmp; }
+
+  rpc translate {
+    input {
+      
+    }
+    output {
+      
+    }
+  }
+  
+  kos:reaction toSnmpRequest {
+    if-feature kos:xpath;
+    input {
+
+      "/snmp:session";
+      
+      
+    }
+    output {
+      "/snmp:get";
+    }
+  }
+
+  kos:reaction fromSnmpRequest {
+
+    input {
+      
+    }
+  }
+  
+}

@@ -69,19 +69,21 @@ module kinetic-operating-system {
   typedef unique-identifer {
     type yang:uuid;
   }
+  typedef reaction-identifer {
+    description
+      "A reference to a reaction node in the data model.";
+    type instance-identifier {
+      require-instance true;
+    }
+  }
+  
   /*
    * Groupings
    */
-  grouping stream {
-    
-  }
-  grouping uri {
+  grouping endpoint {
     leaf uri {
       type inet:uri;
     }
-  }
-  grouping endpoint {
-    uses kos:uri;
     leaf protocol {
       type identityref {
         base kos:protocol;
@@ -99,14 +101,8 @@ module kinetic-operating-system {
     }
     container query;
   }
-  grouping connection {
-    leaf uri {
-      type inet:uri;
-      mandatory true;
-    }
-    anydata socket {
-      mandatory true;
-    }
+  grouping stream {
+    // define Stream object schema
   }
   grouping node-list {
     list node {
@@ -118,20 +114,24 @@ module kinetic-operating-system {
       
     }
   }
+  grouping flow {
+    leaf name {
+      type yang:yang-identifier;
+    }
+    leaf-list steps {
+      type kos:reaction-identifier {
+        require-instance true;
+      }
+    }
+  }
   grouping flow-list {
     list flow {
+      key id;
       leaf id {
         type kos:unique-identifier;
         mandatory true;
       }
-      leaf name {
-        type yang:yang-identifier;
-      }
-      leaf-list steps {
-        type instance-identifier {
-          require-instance false;
-        }
-      }
+      uses kos:flow;
     }
   }
   /*
@@ -144,5 +144,12 @@ module kinetic-operating-system {
     uses node-list;
     uses link-list;
     uses flow-list;
+  }
+  notification error {
+    leaf message;
+  }
+  notification log {
+    leaf level;
+    leaf message;
   }
 }

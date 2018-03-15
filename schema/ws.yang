@@ -4,8 +4,8 @@ module kinetic-websocket {
   import kinetic-object-swarm {
     prefix kos;
   }
-  import kinetic-node-js {
-    prefix node;
+  import kinetic-network {
+    prefix net;
   }
   import ietf-inet-types {
     prefix inet;
@@ -13,78 +13,71 @@ module kinetic-websocket {
   /*
    * Features
    */
-  feature websocket-client {
+  feature socket {
     reference "npm://simple-websocket";
   }
-  feature websocket-server {
-    if-feature ws:simple-websocket;
+  feature server {
+    if-feature ws:socket;
     reference "npm://simple-websocket/server";
   }
-  
   /*
-   * Type definitions
+   * Identities
    */
-  typedef protocols {
-    type enumeration {
-      enum 'ws:';
-      enum 'wss:';
-    }
+  identity ws {
+    base net:tcp;
+  }
+  identity wss {
+    base net:tcp;
   }
   /*
    * Groupings
    */
-  grouping options {
-    leaf protocol {
-      type ws:protocols;
-      default 'ws:';
-    }
-    uses kos:link-params {
+  grouping remote {
+    uses net:remote {
+      refine "protocol" {
+        default "ws";
+        must ". = 'ws' or . = 'wss'" {
+          error-message "A websocket protocol must be 'ws' or 'wss'";
+        }
+      }
       refine "port" {
         default 80;
       }
     }
   }
-  grouping socket {
-    
-  }
-  grouping server {
-    
-  }
-  grouping connect {
-    //kos:priority 1;
-    //kos:max-rate 10000;
-    uses ws:options;
-  }
-  grouping listen {
-    uses ws:options;
+  grouping local {
+    uses net:remote {
+      refine "protocol" {
+        default "ws";
+        must ". = 'ws' or . = 'wss'" {
+          error-message "A websocket protocol must be 'ws' or 'wss'";
+        }
+      }
+      refine "port" {
+        default 80;
+      }
+    }
   }
   /*
-   * Personas
+   * Kinetic Reactions
    */
-  kos:persona controller {
-    description
-      "reactions to establish WebSocket client/server communication links";
-    kos:reaction connect {
-      if-feature ws:websocket-client;
-      input {
-        kos:data ws:connect;
-      }
-      output {
-        kos:data kos:connection;
-        kos:data ws:socket;
-      }
-      container connections;
+  kos:reaction connect {
+    if-feature ws:socket;
+    input {
+      kos:flow ws:remote;
     }
-    kos:reaction listen {
-      if-feature ws:websocket-server;
-      input {
-        kos:data ws:listen;  
-      }
-      output {
-        kos:data kos:connection;
-        kos:data ws:socket;
-        kos:data ws:server;
-      }
+    output {
+      kos:flow net:connection;
+      kos:flow ws:remote;
+    }
+  }
+  kos:reaction listen {
+    if-feature ws:server;
+    input {
+      kos:flow ws:local;
+    }
+    output {
+      kos:flow net:server;
     }
   }
 }

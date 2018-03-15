@@ -1,5 +1,5 @@
 module kinetic-node-js {
-  prefix node-js;
+  prefix nodejs;
 
   import kinetic-object-swarm {
     prefix kos;

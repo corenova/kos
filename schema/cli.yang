@@ -1,0 +1,112 @@
+module kinetic-command-line-interface {
+  prefix cli;
+
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  import kinetic-node-js {
+    prefix nodejs;
+  }
+  grouping program {
+    uses nodejs:program {
+      
+    }
+  }
+  grouping prompt {
+    kos:stream input;
+    kos:stream output;
+    anydata source;
+  }
+
+  kos:persona commander {
+    kos:extends nodejs:resolver;
+    kos:reaction execute {
+      input {
+        kos:data nodejs:process;
+        kos:data cli:program;
+      }
+      output {
+        kos:data cli:prompt;
+      }
+    }
+    kos:reaction prompt {
+      
+    }
+  }
+  grouping console {
+    if-feature cli:readline;
+    action create {
+      input {
+        uses cli:prompt;
+      }
+      output {
+        uses cli:console;
+      }
+    }
+    action reset {
+      input {
+        uses cli:console;
+      }
+    }
+    action process {
+      input {
+        uses cli:console;
+      }
+      output {
+        
+      }
+    }
+    kos:reaction reset {
+      
+    }
+  }
+  kos:placedef stream {
+    
+  }
+  kos:interface logger {
+    if-feature debug;
+    action setup {
+      
+    }
+    kos:reaction 
+
+    kos:reaction outputMessage {
+      input {
+        kos:data log:stream;
+        kos:data kos:message;
+      }
+      output {
+        kos:data '/cli:stream';
+        kos:data '/cli:console/reset';
+      }
+    }
+    
+    kos:reaction outputError {
+      input {
+        kos:data log:error;
+        kos:place '/kos:error';
+      }
+      output {
+        kos:data log:error;
+        kos:place '/cli:console/reset';
+      }
+    }
+    
+  }
+  
+    kos:flow {
+      kos:step "cli:console/create";
+      kos:step "cli:console/process";
+    }
+    
+    kos:reaction create {
+      input {
+        kos:data cli:prompt;
+      }
+      output {
+        kos:data cli:console;
+      }
+    }
+  }
+  
+}

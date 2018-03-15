@@ -8,6 +8,15 @@ module kinetic-network {
     prefix inet;
   }
   /*
+   * Features
+   */
+  feature socket {
+    reference "nodejs://net?Socket";
+  }
+  feature server {
+    reference "nodejs://net?Server";
+  }
+  /*
    * Identities
    */
   identity tcp {
@@ -20,9 +29,17 @@ module kinetic-network {
     base kos:protocol;
   }
   /*
+   * Type Definitions
+   */ 
+  typedef connection-ref {
+    type leafref {
+      path "/net:session/connection/uri";
+    }
+  }
+  /*
    * Groupings
    */
-  grouping persist-params {
+  grouping persist-options {
     leaf retry {
       type union {
         type boolean;
@@ -40,8 +57,8 @@ module kinetic-network {
       default false;
     }
   }
-  grouping interface {
-    uses kos:interface {
+  grouping endpoint {
+    uses kos:endpoint {
       refine "protocol" {
         default "tcp";
         must ". = 'tcp' or . = 'udp' or . = 'unix'" {
@@ -51,120 +68,109 @@ module kinetic-network {
       refine "port" {
         default 12345;
       }
+      augment "query" {
+        uses persist-options;
+      }
     }
   }
   grouping remote {
-    uses net:interface {
-      augment "query" {
-        uses persist-params;
-      }
-    }
-    leaf active {
-      config false;
-      type boolean;
-      default false;
-    }
+    uses net:endpoint;
     anydata socket {
-      if-feature kos:net;
-      config false;
+      if-feature net:socket;
     }
-  }
-  grouping remote-uri {
-    uses kos:uri;
-  }
-  grouping local-uri {
-    uses kos:uri;
   }
   grouping local {
-    uses net:interface;
-    leaf active {
-      config false;
-      type boolean;
-      default false;
+    uses net:endpoint;
+    anydata server {
+      if-feature net:server;
     }
-    leaf-list connections {
-      config false;
+  }
+  grouping connection {
+    leaf uri {
+      type inet:uri;
+      mandatory true;
+    }
+    leaf server {
+      if-feature net:server;
       type leafref {
-        path "/kos:connection/uri";
+        path "/net:topology/local/uri";
       }
     }
-    anydata server {
-      if-feature kos:net;
+    anydata socket {
+      if-feature net:socket;
+      config false;
+    }
+    anydata stream {
+      if-feature kos:stream;
       config false;
     }
   }
   /*
-   * Module State Nodes
+   * Module Configuration and State
    */
-  list remote {
-    key uri;
-    uses net:remote;
-  }
-  list local {
-    key uri;
-    uses net:local;
-  }
-  rpc connect {
-    input {
+  container topology {
+    config false;
+    list remote {
+      key uri;
       uses net:remote;
+      leaf active {
+        config false;
+        type boolean;
+        default false;
+      }
+      max-elements 255;
     }
-    output {
-      uses kos:connection;
+    list local {
+      key uri;
+      uses net:local;
+      leaf active {
+        config false;
+        type boolean;
+        default false;
+      }
+      leaf-list connections {
+        config false;
+        type net:connection-ref;
+      }
+      max-elements 10;
     }
   }
-  rpc listen {
-    input {
-      uses net:local;
-    }
-    output {
-      uses kos:connection;
+  container session {
+    config false;
+    list connection {
+      key uri;
+      uses net:connection;
     }
   }
   /*
    * Kinetic Reactions
    */
-  kos:reaction composeRemote {
-    if-feature kos:url;
+  kos:reaction connect {
+    if-feature net:socket;
     input {
-      kos:data net:remote-uri;
+      kos:flow net:remote;
     }
     output {
-      kos:data net:remote;
+      kos:flow net:connection;
+      kos:flow net:remote;
     }
   }
-  kos:reaction composeLocal {
-    if-feature kos:url;
+  kos:reaction listen {
+    if-feature net:server;
     input {
-      kos:data net:local-uri;
+      kos:flow net:local;
     }
     output {
-      kos:data net:local;
-    }
-  }
-  kos:reaction invokeConnect {
-    input {
-      kos:data net:remote;
-    }
-    output {
-      kos:node "/net:connect";
-      kos:data kos:connection;
-    }
-  }
-  kos:reaction invokeListen {
-    input {
-      kos:data net:local;
-    }
-    output {
-      kos:node "/net:listen";
-      kos:data kos:connection;
+      kos:flow net:connection;
+      kos:flow net:server;
     }
   }
   kos:reaction streamify {
     input {
-      kos:data kos:connection;
+      kos:flow net:connection;
     }
     output {
-      kos:data kos:stream;
+      kos:flow kos:stream;
     }
   }
 }

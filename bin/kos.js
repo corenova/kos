@@ -4,7 +4,7 @@
 const program = require('commander')
 const pkginfo = require('../package.json')
 
-const kos = require('..')
+const Kos = require('..')
 const NodeSchema    = require('../schema/node')
 const ConsoleSchema = require('../schema/console')
 const LogSchema     = require('../schema/log')
@@ -20,9 +20,9 @@ program
   .option('--silent', 'suppress all debug/info/warn/error log messages')
   .parse(process.argv)
 
-kos
+Kos
   .link(NodeSchema)
   .link(ConsoleSchema)
   .link(LogSchema)
-  .feed('kos:process', process)
-  .feed('kos:program', program)
+  .feed('node:process', process)
+  .feed('node:program', program)

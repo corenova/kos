@@ -145,7 +145,7 @@ module.exports = require('./kos.yang').bind({
       }
     }
   },
-  "grouping(interface)": {
+  "grouping(endpoint)": {
     uri(value) {
       const Url = this.use('kos:url')
       if (arguments.length) { // setter

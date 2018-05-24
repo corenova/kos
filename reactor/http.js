@@ -39,27 +39,25 @@ function simpleGet(url) {
   this.send('http/request', { url: url, method: 'GET' })
 }
 
-function clientRequest(req) {
+function clientRequest(opts) {
   const agent = this.get('module/superagent')
-  let { url, type='json', method, data } = req
+  let { url, type='json', method, header={}, query='', data } = opts
   method = method.toLowerCase()
+  let request = agent[method](url).type(type).set(header).query(query)
+  this.debug(`curl -v -X ${method} ${url} -d '${JSON.stringify(data)}'`)
   switch (method) {
-  case 'get':
-  case 'delete':
-    agent[method](url).end((err, res) => { 
-      if (err) this.throw(err)
-      else this.send('http/response', res) 
-    })
-    break;
   case 'post':
   case 'put':
   case 'patch':
-    agent[method](url).type(type).send(data).end((err, res) => { 
-      if (err) this.throw(err)
-      else this.send('http/response', res) 
-    })
+    request = request.send(data)
     break;
   }
+  request
+    .then(res => this.send('http/response', res))
+    .catch(err => {
+      this.error(err)
+      this.warn(`${err.status} on ${method} ${url} got ${err.response.text}`)
+    })
 }
 
 function createServer(opts) {

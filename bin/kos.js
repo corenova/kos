@@ -13,7 +13,7 @@ function collect(val, keys) { keys.push(val); return keys }
 
 program
   .version(pkginfo.version)
-  .arguments('<personas...>')
+  .arguments('<reactors...>')
   .option('-f, --file <file>', 'feed KSON file contents into KOS', collect, [])
   .option('-s, --show', 'print detailed info about persona(s)')
   .option('-v, --verbose', 'enable more verbose output', ( (v, t) => t + 1), 0)

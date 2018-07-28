@@ -19,25 +19,32 @@ function connect(opts) { this.send('link/connect', opts) }
 function listen(opts)  { this.send('link/listen', opts) }
 
 function peer(link) {
-  link.pass(true).in('reactor').out('*').bind(sync)
-  function sync(reactor) {
+  link.pass(true).in('adapt').out('*').bind(sync)
+  function sync(change) {
     const addr = this.get('addr')
-    if (reactor instanceof kos.Reactor) {
+    if (change instanceof kos.Dataflow) {
       //this.reactor.link(reactor)
       //this.send('reactor', reactor)
     } else {
-      const { label, id } = reactor
-      reactor.enabled = false
-      this.info(`importing '${label}' reactor (${id}) from:`, addr)
-      this.parent.load(reactor)
+      const { id, type, label, parent } = change
+      //reactor.enabled = false
+      this.info(`importing '${label}' ${type} (${id}) @ ${parent} from:`, addr)
+      this.debug(change)
+      if (parent) {
+        let target = this.parent.find(parent)
+        target && target.load(change)
+      } else {
+        this.parent.load(change)
+      }
     }
   }
   link.once('inactive', io => {
     // here we have an opportunity to attempt to repair it
     
   })
+  // inform remote peer about itself
+  this.info(`informing remote peer about ${kos}:`)
+  link.feed('adapt', kos)
   link.join(this.parent)
-
-  //link.feed('reactor', ...kos.reactors)
   //this.send('reactor', link)
 }

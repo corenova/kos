@@ -19,6 +19,7 @@ function connect(opts) { this.send('link/connect', opts) }
 function listen(opts)  { this.send('link/listen', opts) }
 
 function peer(link) {
+  const root = this.parent.parent
   link.pass(true).in('adapt').out('*').bind(sync)
   function sync(change) {
     const addr = this.get('addr')
@@ -27,14 +28,15 @@ function peer(link) {
       //this.send('reactor', reactor)
     } else {
       const { id, type, label, parent } = change
-      //reactor.enabled = false
-      this.info(`importing '${label}' ${type} (${id}) @ ${parent} from:`, addr)
-      this.debug(change)
-      if (parent) {
-        let target = this.parent.find(parent)
-        target && target.load(change)
+      change.enabled = false
+      if (!root.find(id)) {
+        let target = parent ? this.parent.find(parent) : this.parent
+        if (!target) target = this.parent
+        this.info(`importing '${label}' ${type} (${id}) into ${target.identity} from`, addr)
+        target.load(change)
       } else {
-        this.parent.load(change)
+        // TODO: we should somehow suppress adapt topic about itself
+        this.info(`ignoring existing ${label}:${id} from peer`)
       }
     }
   }
@@ -42,9 +44,10 @@ function peer(link) {
     // here we have an opportunity to attempt to repair it
     
   })
-  // inform remote peer about itself
-  this.info(`informing remote peer about ${kos}:`)
-  link.feed('adapt', kos)
-  link.join(this.parent)
+  // inform remote peer about the root reactor
+  this.info(`informing remote peer about ${root}:`)
+  link.feed('adapt', root)
+  link.join(root)
+  //link.join(this.parent)
   //this.send('reactor', link)
 }

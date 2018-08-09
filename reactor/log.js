@@ -25,13 +25,20 @@ function setup(opts) {
   if (!this.get('initialized')) {
     debug.enable(namespaces.join(','))
     const logger = token => {
-      const { topic, origin } = token
+      const { topic, origin, value } = token
       const handler = this.get('handlers').get(topic)
       if (typeof handler !== 'function') return
       if (this.has('console')) {
         this.get('console').emit('reset')
       }
-      handler(origin.identity, ...token.values)
+      switch (typeof value) {
+      case 'function':
+      case 'object':
+        handler("%s\n%O\n", origin.identity, value)
+        break;
+      default:
+        handler(origin.identity, ...token.values)
+      }
     }
     const tracer = token => {
       const trace = handlers.get('trace')

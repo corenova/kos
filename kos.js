@@ -3,18 +3,17 @@
 const Reactor  = require('./lib/reactor')
 const Reaction = require('./lib/reaction')
 const Dataflow = require('./lib/dataflow')
-const Stimulus = require('./lib/stimulus')
+const Schema   = require('./lib/schema')
+const Pulse    = require('./lib/pulse')
 
-const kos = new Reactor({
-  label: 'kos',
-  purpose: 'reactions to flow of stimuli',
-  passive: true
-})
+const schema = require('./schema/kinetic-object-swarm')
+const kos = new Reactor({ schema }).pass(true)
 
 // expose main class definitions
 kos.Reactor  = Reactor
 kos.Reaction = Reaction
 kos.Dataflow = Dataflow
-kos.Stimulus = Stimulus
+kos.Schema   = Schema
+kos.Pulse    = Pulse
 
 global.kos = module.exports = kos['default'] = kos.kos = kos

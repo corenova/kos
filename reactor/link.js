@@ -7,18 +7,14 @@
 'use strict'
 
 const { kos = require('..') } = global
-const net  = require('./net')
-const ws   = require('./ws')
+const Schema = require('./link.yang')
+
+module.exports = kos.define(Schema).bind({
+  connect, listen, streamify
+})
 
 module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
-
-  .load(net)
-  .load(ws)
-
-  .in('link/connect')
-  .out('net/connect','ws/connect','link/connect/url')
-  .bind(connect)
 
   .in('link/listen')
   .out('net/listen','ws/listen','link/listen/url')
@@ -36,21 +32,20 @@ module.exports = kos.create('link')
 
   .in('connection').out('link').bind(stream)
 
-function connect(opts) {
-  if (typeof opts === 'string') return this.send('link/connect/url', opts)
-
-  switch (opts.protocol) {
-  case 'ws:':
-  case 'wss:':
-    this.send('ws/connect', opts)
+function connect(input) {
+  const { protocol } = input
+  switch (protocol) {
+  case 'ws':
+  case 'wss':
+    this.send('/ws:connect', input)
     break;
-  case 'tcp:':
-  case 'udp:':
+  case 'tcp':
+  case 'udp':
   case undefined:
-    this.send('net/connect', opts)
+    this.send('/net:connect', input)
     break;
   default:
-    this.warn('unsupported protocol', opts.protocol)
+    this.warn('unsupported protocol', protocol)
   }
 }
 
@@ -86,25 +81,25 @@ function listenByUrl(dest) {
   this.send('link/listen', Object.assign(opts, opts.query))
 }
 
-function stream(connection) {
+function streamify(connection) {
   const { addr, socket, server, opts } = connection
-  const link = this.use(addr, kos.create('link').desc(addr).init(connection))
+  const stream = this.use(addr, kos.create('session').desc(addr).init(connection))
 
   socket.on('active', () => {
-    let { io } = link
+    let { io } = stream
     io.link(socket)
     socket.on('close', () => {
       socket.destroy()
       if (server) {
         //link.leave()
-        link.end()
+        stream.end()
         this.delete(addr)
       } else {
         io.unlink(socket)
-        link.emit('inactive', io)
+        stream.emit('inactive', io)
       }
     })
-    link.resume()
-    this.send('link', link)
+    stream.resume()
+    this.send('/link:session', { addr, stream })
   })
 }

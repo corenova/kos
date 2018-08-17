@@ -1,0 +1,159 @@
+module kinetic-object-swarm {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-object-swarm";
+  prefix kos;
+
+  description
+    "The origin of chaos from which order is created.";
+  organization
+    "Corenova Technologies, Inc.";
+  contact
+    "Peter K. Lee <peter@corenova.com>";
+  revision 2018-03-10 {
+    description
+      "Initial revision.";
+  }
+  /*
+   * Custom YANG Language Extensions
+   */
+  extension interface {
+    argument "interface-name";
+  }
+  extension reaction {
+    argument "function-name";
+  }
+  extension data {
+    argument "grouping-identifier";
+  }
+  extension node {
+    argument "target-node";
+  }
+  extension extends {
+    argument "target-interface";
+  }
+
+  /*
+   * Dependencies
+   */
+  import ietf-yang-types { prefix yang; }
+  import ietf-inet-types { prefix inet; }
+
+  /*
+   * Features
+   */
+  feature url {
+    reference "nodejs://url";
+  }
+  feature stream {
+    reference "nodejs://stream";
+  }
+  feature net {
+    reference "nodejs://net";
+  }
+
+  /*
+   * Identities
+   */
+  identity protocol {
+    description "base identity for all protocols";
+  }
+  identity kos {
+    base protocol;
+  }
+  identity nodejs {
+    base protocol;
+  }
+
+  /*
+   * Type Definitions
+   */
+  typedef unique-identifier {
+    type yang:uuid;
+  }
+  typedef reaction-identifier {
+    description
+      "A reference to a reaction node in the data model.";
+    type instance-identifier {
+      require-instance true;
+    }
+  }
+
+  /*
+   * Groupings
+   */
+  grouping resource {
+    leaf uri {
+      type inet:uri;
+    }
+    leaf protocol {
+      type identityref {
+        base kos:protocol;
+      }
+    }
+    leaf hostname {
+      type inet:host;
+      default '0.0.0.0';
+    }
+    leaf port {
+      type inet:port-number;
+    }
+    leaf path {
+      type string;
+    }
+    container query;
+  }
+  grouping stream {
+    // define Stream object schema
+  }
+  grouping node-list {
+    list node {
+
+    }
+  }
+  grouping link-list {
+    list link {
+
+    }
+  }
+  grouping flow {
+    leaf name {
+      type yang:yang-identifier;
+    }
+    leaf-list steps {
+      type kos:reaction-identifier {
+        require-instance true;
+      }
+    }
+  }
+  grouping flow-list {
+    list flow {
+      key id;
+      leaf id {
+        type kos:unique-identifier;
+        mandatory true;
+      }
+      uses kos:flow;
+    }
+  }
+
+  /*
+   * Operational state data nodes
+   */
+  container topology {
+    config false;
+    description
+      "Contains KOS network topology information.";
+    leaf checksum;
+    uses node-list;
+    uses link-list;
+    uses flow-list;
+  }
+
+  notification error {
+    leaf message;
+  }
+
+  notification log {
+    leaf level;
+    leaf message;
+  }
+}

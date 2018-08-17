@@ -1,4 +1,4 @@
-# Kinetic Operating System
+# Kinetic Object Swarm
 
 A [Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence)
 framework for creating distributed data pipelines and

@@ -1,10 +1,6 @@
 'use strict'
 
-const Reactor  = require('./lib/reactor')
-const Reaction = require('./lib/reaction')
-const Dataflow = require('./lib/dataflow')
-const Schema   = require('./lib/schema')
-const Pulse    = require('./lib/pulse')
+const { Reactor, Reaction, Dataflow, Schema, Pulse } = require('./lib')
 
 const schema = require('./schema/kinetic-object-swarm')
 const kos = new Reactor({ schema }).pass(true)

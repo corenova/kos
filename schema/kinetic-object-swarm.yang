@@ -76,10 +76,13 @@ module kinetic-object-swarm {
       require-instance true;
     }
   }
-
   /*
    * Groupings
    */
+  grouping persona {
+    leaf id;
+    
+  }
   grouping resource {
     leaf uri {
       type inet:uri;

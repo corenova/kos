@@ -61,7 +61,7 @@
   },
   "yang": {
     "resolve": {
-      "kinetic-operating-system": "./schema/kos.js",
+      "kinetic-object-swarm": "./schema/kos.js",
       "kinetic-link": "./schema/link.js",
       "kinetic-network": "./schema/net.js",
       "kinetic-node-js": "./schema/node.js",

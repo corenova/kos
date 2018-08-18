@@ -1,5 +1,5 @@
-module kinetic-operating-system {
-  namespace "urn:ietf:params:xml:ns:yang:kinetic-operating-system";
+module kinetic-object-swarm {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-object-swarm";
   prefix kos;
 
   organization
@@ -66,10 +66,10 @@ module kinetic-operating-system {
   /*
    * Type Definitions
    */
-  typedef unique-identifer {
+  typedef unique-identifier {
     type yang:uuid;
   }
-  typedef reaction-identifer {
+  typedef reaction-identifier {
     description
       "A reference to a reaction node in the data model.";
     type instance-identifier {
@@ -80,6 +80,9 @@ module kinetic-operating-system {
   /*
    * Groupings
    */
+  grouping schema {
+    
+  }
   grouping endpoint {
     leaf uri {
       type inet:uri;

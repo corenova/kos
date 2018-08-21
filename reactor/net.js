@@ -8,10 +8,10 @@
 
 const { kos = require('..') } = global
 
-const Schema = require('./net.yang').bind({
-  connect
+// const Schema = require('./net.yang').bind({
+//   connect
 
-})
+// })
 
 module.exports = kos.create('net')
   .desc("reactions to establish TCP/UDP client/server communication links")
@@ -20,8 +20,8 @@ module.exports = kos.create('net')
   })
 
   .pre('module/net')
-  .in('/net:connect')
-  .out('net:connection','net:socket')
+  .in('net/connect')
+  .out('connection','net/socket')
   .bind(connect)
 
   .pre('module/net')
@@ -30,8 +30,8 @@ module.exports = kos.create('net')
   .bind(listen)
 
   .pre('module/url')
-  .in('net:connect/url')
-  .out('net:connect')
+  .in('net/connect/url')
+  .out('net/connect')
   .bind(connectByUrl)
 
   .pre('module/url')

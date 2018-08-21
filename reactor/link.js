@@ -7,14 +7,23 @@
 'use strict'
 
 const { kos = require('..') } = global
-const Schema = require('./link.yang')
+const net = require('./net')
+const ws  = require('./ws')
 
-module.exports = kos.define(Schema).bind({
-  connect, listen, streamify
-})
+//const Schema = require('./link.yang')
+// module.exports = kos.define(Schema).bind({
+//   connect, listen, streamify
+// })
 
 module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
+
+  .load(net)
+  .load(ws)
+
+  .in('link/connect')
+  .out('net/connect','ws/connect')
+  .bind(connect)
 
   .in('link/listen')
   .out('net/listen','ws/listen','link/listen/url')
@@ -30,19 +39,19 @@ module.exports = kos.create('link')
   .out('link/listen')
   .bind(listenByUrl)
 
-  .in('connection').out('link').bind(stream)
+  .in('connection').out('link').bind(streamify)
 
 function connect(input) {
   const { protocol } = input
   switch (protocol) {
   case 'ws':
   case 'wss':
-    this.send('/ws:connect', input)
+    this.send('ws/connect', input)
     break;
   case 'tcp':
   case 'udp':
   case undefined:
-    this.send('/net:connect', input)
+    this.send('net/connect', input)
     break;
   default:
     this.warn('unsupported protocol', protocol)

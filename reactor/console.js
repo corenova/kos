@@ -11,7 +11,6 @@ module.exports = kos.create('console')
 
   .load(render)
 
-  .pre('parent')
   .in('process')
   .in('program')
   .out('prompt')
@@ -35,7 +34,7 @@ module.exports = kos.create('console')
   .bind(renderReactor)
 
 function initialize(process, program) {
-  const parent = this.get('parent')
+  const { parent } = this
   const { stdin, stdout, stderr } = process
   const { show=false } = program
   const { io } = kos
@@ -44,7 +43,7 @@ function initialize(process, program) {
 
   if (stdin.isTTY) {
     this.send('prompt', { 
-      input: stdin, output: stderr, source: parent
+      input: stdin, output: stderr, source: kos
     })
   } else stdin.pipe(io)
 

@@ -5,7 +5,6 @@ module.exports = kos.create('node')
   .desc('reactions to Node.js runtime environment interactions')
   .pass(true)
 
-  .pre('parent')
   .in('process').out('resolve')
   .bind(initialize)
 
@@ -32,8 +31,8 @@ module.exports = kos.create('node')
 
 // self-initialize when part of kos layers (usually kos directly)
 function initialize(process) { 
-  const parent = this.get('parent')
-  this.send('resolve', ...parent.depends)
+  //const { parent } = this
+  this.send('resolve', ...kos.depends)
   //this.save({ process })
 }
 

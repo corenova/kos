@@ -8,7 +8,7 @@ const kos = require('..')
 const node = require('../reactor/node')
 const console = require('../reactor/console')
 const log = require('../reactor/log')
-const hive = require('../reactor/hive')
+//const hive = require('../reactor/hive')
 
 function collect(val, keys) { keys.push(val); return keys }
 
@@ -25,7 +25,7 @@ kos
   .load(node)
   .load(console)
   .load(log)
-  .load(hive)
+  //.load(hive)
   .feed('process', process)
   .feed('program', program)
 

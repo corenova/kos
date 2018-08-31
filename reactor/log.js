@@ -14,7 +14,8 @@ module.exports = kos.create('log')
   .pre('log').in('error').bind(outputError)
 
 function setup(opts) {
-  const [ parent, debug ] = this.get('parent', 'module/debug')
+  const parent = this.get('parent')
+  const debug = this.get('module/debug')
   const namespaces = [ 'kos:error', 'kos:warn', 'kos:info', 'kos:debug', 'kos:trace' ]
 
   const { level } = opts

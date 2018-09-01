@@ -6,9 +6,14 @@ const xpath = require('yang-js/lib/xpath')
 module.exports = kos.create('codex')
   .desc('reactions to perform cognitive data exchange transactions')
 
+  .init({
+    'snmp:bulk-request-size': 20
+  })
+
   .pre('codex:schema')
   .pre('snmp:session')
   .pre('snmp:root-oid')
+  .pre('snmp:bulk-request-size')
   .in('codex:get')
   .out('snmp:get')
   .bind(toSnmpRequest)
@@ -22,7 +27,7 @@ module.exports = kos.create('codex')
 
 function toSnmpRequest(urns) {
   const [ schema, oidRoot ] = this.get('codex:schema','snmp:root-oid')
-  const SNMP_GET_CHUNK_SIZE = 32
+  const BULK_REQUEST_SIZE = this.get('snmp:bulk-request-size')
   let requests = []
   urns = [].concat(urns)
   urns.forEach(urn => {
@@ -57,13 +62,30 @@ function toSnmpRequest(urns) {
       if (!index) return this.warn(`requested ${urn} does not contain table index required for '${table.datapath}'`)
     }
     if (target.nodes.length) {
+      // the target URN is a table
       oids = walk(target)
-          .reduce(flatten, [])
-          .map(oid => `${prefix.join('.')}.${oid}.${index}`)
+        .reduce(flatten, [])
+        .map(oid => `${prefix.join('.')}.${oid}.${index}`)
+      this.debug(urn, '->', oids.length, 'OIDs')
+      if (oids.length <= BULK_REQUEST_SIZE) chunkify(requests, oids)
+      else {
+        let keys = []
+        if (table) {
+          let _prefix = prefix.join('.')
+          let _keys = table.key.valueOf()
+          table.nodes.forEach((n,i) => {
+            _keys.includes(n.tag) && keys.push(`${_prefix}.${i+1}.${index}`)
+          })
+        }
+        for (let i = 0; i < oids.length; i += (BULK_REQUEST_SIZE - keys.length)) {
+          let chunk = oids.slice(i, i + BULK_REQUEST_SIZE - keys.length)
+          keys.length && chunk.push(...keys)
+          chunkify(requests, chunk)
+        }
+      }
     } else {
       // first, we push the original intended request
       oids.push(`${prefix.join('.')}.${index}`)
-      
       if (table) {
         // here we're retrieving a specific object from a table
         let keys = table.key.valueOf()
@@ -77,17 +99,8 @@ function toSnmpRequest(urns) {
           })
         }
       }
-    }
-    this.debug(urn, '->', oids.length, 'OIDs')
-    this.debug(oids)
-    // normalize requests to reasonable chunks
-    if (!requests.length) requests.push(oids)
-    else {
-      let current = requests[requests.length-1]
-      if (current.length + oids.length <= SNMP_GET_CHUNK_SIZE)
-        current.push(...oids)
-      else
-        requests.push(oids)
+      this.debug(urn, '->', oids.length, 'OIDs')
+      chunkify(requests, oids)
     }
   })
   this.send('snmp:get', ...requests)
@@ -104,6 +117,16 @@ function toSnmpRequest(urns) {
     if (b === 0) return a.concat(idx+1)
     let sub = b.reduce(flatten, []).map(x => (idx+1)+'.'+x)
     return a.concat(sub)
+  }
+  function chunkify(reqs, oids) {
+    if (!reqs.length) reqs.push(oids)
+    else {
+      let current = reqs[reqs.length-1]
+      if (current.length + oids.length <= BULK_REQUEST_SIZE)
+        current.push(...oids)
+      else
+        reqs.push(oids)
+    }
   }
 }
 

@@ -15,23 +15,23 @@ module.exports = kos.create('ws')
   })
 
   .pre('module/simple-websocket')
-  .in('ws/connect')
-  .out('ws/socket','connection','ws/connect')
+  .in('ws:connect')
+  .out('ws:socket','kos:connection','ws:connect')
   .bind(connect)
 
   .pre('module/simple-websocket/server')
-  .in('ws/listen')
-  .out('ws/server','ws/socket','connection')
+  .in('ws:listen')
+  .out('ws:server','ws:socket','kos:connection')
   .bind(listen)
 
   .pre('module/url')
-  .in('ws/connect/url')
-  .out('ws/connect')
+  .in('ws:connect/url')
+  .out('ws:connect')
   .bind(connectByUrl)
 
   .pre('module/url')
-  .in('ws/listen/url')
-  .out('ws/listen')
+  .in('ws:listen/url')
+  .out('ws:listen')
   .bind(listenByUrl)
 
 function connect(opts) {
@@ -44,17 +44,17 @@ function connect(opts) {
     return this.error('unsupported protocol', protocol)
 
   const addr = `${protocol}//${hostname}:${port}/${path}`
-  if (connections.has(addr)) return this.send('connection', connections.get(addr))
+  if (connections.has(addr)) return this.send('kos:connection', connections.get(addr))
 
   const socket = new WebSocket(addr)
   const connection = { addr, socket, opts }
 
   connections.set(addr, connection)
-  this.send('connection', connection)
+  this.send('kos:connection', connection)
 
   socket.on('connect', () => {
     this.info("connected to", addr)
-    this.send('ws/socket', socket)
+    this.send('ws:socket', socket)
     socket.emit('active')
     if (retry) retry = 100
   })
@@ -66,7 +66,7 @@ function connect(opts) {
       })
       this.debug("attempt reconnect", addr)
       connections.delete(addr)
-      this.feed('ws/connect', opts)
+      this.feed('ws:connect', opts)
     }, retry)
   })
   socket.on('error', this.error.bind(this))
@@ -84,18 +84,18 @@ function listen(opts) {
   if (server) {
     server = new Server({ server })
     this.info('listening on existing server instance')
-    this.send('ws/server', server)
+    this.send('ws:server', server)
   } else {
     server = new Server({ host: hostname, port: port, path: path })
     this.info('listening', hostname, port, path)
-    this.send('ws/server', server)
+    this.send('ws:server', server)
   }
   server.on('connection', socket => {
     let sock = socket._ws._socket
     let addr = `${protocol}//${sock.remoteAddress}:${sock.remotePort}`
     this.info('accept', addr)
-    this.send('ws/socket', socket)
-    this.send('connection', { addr, socket, server, opts })
+    this.send('ws:socket', socket)
+    this.send('kos:connection', { addr, socket, server, opts })
     socket.emit('active')
   })
   server.on('error', this.error.bind(this))
@@ -105,14 +105,14 @@ function connectByUrl(dest) {
   let url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.slashes) opts = url.parse('ws://'+dest, true)
-  this.send('ws/connect', Object.assign(opts, opts.query))
+  this.send('ws:connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
   let url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.slashes) opts = url.parse('ws://'+dest, true)
-  this.send('ws/listen', Object.assign(opts, opts.query))
+  this.send('ws:listen', Object.assign(opts, opts.query))
 }
 
 function normalizeOptions(opts) {

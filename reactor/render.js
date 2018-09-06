@@ -2,54 +2,59 @@
 
 const { kos = require('..') } = global
 
-module.exports = kos.create('render')
-  .desc('reactions to visually render reactors')
-  .init({
-    BOX: {
-      L: {
-	    top:  '┌╼ ',
-	    item: '├╼ ',
-	    last: '└╼ ',
-	    mid1: '┬╼ ',
-	    mid2: '┼╼ ',
-	    mid3: '┴╼ ',
-	    one:  '─╼ ',
-	    dash: '╼ '
-      },
-      R: {
-	    top:  ' ╾┐',
-	    item: ' ╾┤',
-	    last: ' ╾┘',
-	    mid1: ' ╾┬',
-	    mid2: ' ╾┼',
-	    mid3: ' ╾┴',
-	    one:  ' ╾─',
-	    dash: ' ╾'
-      },
-      nest: '│',
-      item: '├',
-      last: '└'
+const schema = require('../schema/kinetic-render')
+const state = {
+  BOX: {
+    L: {
+	  top:  '┌╼ ',
+	  item: '├╼ ',
+	  last: '└╼ ',
+	  mid1: '┬╼ ',
+	  mid2: '┼╼ ',
+	  mid3: '┴╼ ',
+	  one:  '─╼ ',
+	  dash: '╼ '
     },
-    FUNC: 'ƒ',
-    SEP: ' '
-  })
+    R: {
+	  top:  ' ╾┐',
+	  item: ' ╾┤',
+	  last: ' ╾┘',
+	  mid1: ' ╾┬',
+	  mid2: ' ╾┼',
+	  mid3: ' ╾┴',
+	  one:  ' ╾─',
+	  dash: ' ╾'
+    },
+    nest: '│',
+    item: '├',
+    last: '└'
+  },
+  FUNC: 'ƒ',
+  SEP: ' '
+}
+  
+module.exports = kos.create(schema, state)
 
-  .in('render')
-  .out('render/reactor','render/output')
-  .bind(render)
+  .reaction
+  .in('render:info')
+  .out('reander:reactor','render:output')
+  .bind(renderInfo)
 
+  .reaction
   .pre('module/treeify')
-  .in('render/reactor')
-  .out('reactor/tree')
+  .in('render:reactor')
+  .out('render:reactor-tree')
   .bind(renderReactorAsTree)
 
-  .in('reactor/tree','render/output')
+  .reaction
+  .in('render:reactor-tree')
+  .in('render:output')
   .bind(outputReactorTree)
 
-function render(opts) {
-  const { source, target } = opts
-  this.send('render/output', target)
-  this.send('render/reactor', source)
+function renderInfo(opts) {
+  const { source, output } = opts
+  this.send('render:output', output)
+  this.send('render:reactor', source)
 }
 
 function indent(str, count=1, sep=' ') {
@@ -225,7 +230,7 @@ function renderReactor(reactor) {
 function renderReactorAsTree(reactor) {
   const { label, purpose } = reactor
   let str = `${label}: ${purpose}\n` + renderReactor.call(this, reactor)
-  this.send('reactor/tree', str)
+  this.send('render:reactor-tree', str)
 }
 
 function outputReactorTree(tree, output) { 

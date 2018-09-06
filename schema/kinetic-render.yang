@@ -1,0 +1,10 @@
+module kinetic-render {
+  namespace "urn:ietf:params:xml:ns:yang:kos:kinetic-render";
+  prefix render;
+  description
+    "reactions to visually render reactors";
+
+  import kinetic-object-swarm { prefix kos; }
+  
+
+}

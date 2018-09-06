@@ -1,0 +1,25 @@
+module kinetic-node-js {
+  namespace "urn:ietf:params:xml:ns:yang:kos:kinetic-node-js";
+  prefix node;
+  description
+    "reactions to Node.js runtime environment";
+
+  import kinetic-object-swarm { prefix kos; }
+
+  feature path {
+    reference "nodejs://path";
+  }
+  grouping process;
+  grouping program;
+
+  kos:reaction loadReactor {
+    if-feature node:path;
+    input {
+      kos:data node:load;
+    }
+    output {
+      kos:data kos:reactor;
+      kos:data node:resolve;
+    }
+  }
+}

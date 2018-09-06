@@ -26,6 +26,6 @@ kos
   .load(console)
   .load(log)
   //.load(hive)
-  .feed('process', process)
-  .feed('program', program)
+  .feed('node:process', process)
+  .feed('node:program', program)
 

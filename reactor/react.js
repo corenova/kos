@@ -19,16 +19,16 @@ module.exports = kos.create('react')
     lifecycle
   })
 
-  .pre('parent')
+  .pre('kos:parent')
   .in('component')
   .out('react:*')
   .bind(initialize)
 
-  .pre('parent')
+  .pre('kos:parent')
   .in('react:mounting')
   .bind(mount)
 
-  .pre('parent')
+  .pre('kos:parent')
   .in('react:unmounting')
   .bind(unmount)
 
@@ -38,17 +38,17 @@ module.exports = kos.create('react')
   .in('react:state')
   .bind(update)
 
-  // .pre('parent')
+  // .pre('kos:parent')
   // .pre('module/deepmerge')
   // .pre('topic')
   //.out('{topic}')
 
-  .pre('parent')
+  .pre('kos:parent')
   .in('react:event')
   .bind(observe)
 
 function initialize(component) {
-  const [ parent, lifecycle ] = this.get('parent', 'lifecycle')
+  const [ parent, lifecycle ] = this.get('kos:parent', 'lifecycle')
   const { state, setState } = component
 
   this.send('react:setter', setState.bind(component))
@@ -96,8 +96,8 @@ function initialize(component) {
   parent.on('save', obj => this.send('react:state', obj))
 }
 
-function mount()   { this.get('parent').join(kos) }
-function unmount() { this.get('parent').leave(kos) }
+function mount()   { this.get('kos:parent').join(kos) }
+function unmount() { this.get('kos:parent').leave(kos) }
 
 function update(state) { 
   const equal = this.get('module/deep-equal')
@@ -116,7 +116,7 @@ function update(state) {
 }
 
 function observe(event) {
-  const parent = this.get('parent')
+  const parent = this.get('kos:parent')
   //const [ topic, merge ] = this.get('topic', 'module/deepmerge')
   const { target } = event
   let { type, name, value } = target

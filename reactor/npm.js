@@ -13,32 +13,32 @@ module.exports = kos.create('npm')
   })
 
   .in('module/npm')
-  .out('npm/load')
+  .out('npm:load')
   .bind(triggerLoad)
 
   .pre('module/npm')
-  .in('npm/load')
-  .out('npm/loaded')
+  .in('npm:load')
+  .out('npm:loaded')
   .bind(initialize)
 
   .pre('module/npm')
-  .in('npm/install')
+  .in('npm:install')
   .bind(queueInstall)
 
   .pre('module/npm')
-  .in('npm/install','npm/loaded')
-  .out('npm/installed')
+  .in('npm:install','npm:loaded')
+  .out('npm:installed')
   .bind(install)
 
   // reactions to "run" reactor
-  .in('error').out('npm/install').bind(autoFetchMissing)
-  .in('npm/installed').out('require').bind(handleAutoFetch)
+  .in('error').out('npm:install').bind(autoFetchMissing)
+  .in('npm:installed').out('node:require').bind(handleAutoFetch)
 
 
 //--- Kinetic Actions Handlers
 
 function triggerLoad(npm) {
-  this.send('npm/load', { loglevel: 'silent', progress: false, loaded: false })
+  this.send('npm:load', { loglevel: 'silent', progress: false, loaded: false })
 }
 
 function initialize(options) {
@@ -47,7 +47,7 @@ function initialize(options) {
     if (err) this.throw(err)
     else {
       this.save({ pending: new Set, ready: true })
-      this.send('npm/loaded', true)
+      this.send('npm:loaded', true)
     }
   })
 }
@@ -61,11 +61,11 @@ function install(pkgs=[]) {
   pkgs.forEach(pkg => pending.add(pkg))
   pkgs = Array.from(pending).filter(String)
   pending.clear()
-  this.delete('npm/install')
+  this.delete('npm:install')
 
   npm.commands.install(pkgs, (err, res) => {
     if (err) return this.error(err)
-    this.send('npm/installed', res)
+    this.send('npm:installed', res)
   })
 }
 
@@ -75,7 +75,7 @@ function autoFetchMissing(error) {
     const pending = this.get('pending')
     if (target === 'npm') return this.throw("cannot auto-resolve npm")
     if (pending.has(target)) return
-    this.send('npm/install', [ target ])
+    this.send('npm:install', [ target ])
   }
 }
 
@@ -83,7 +83,7 @@ function handleAutoFetch(installed) {
   const pkgmap = new Map(installed)
   for (let [pkg, path] of pkgmap) {
     let [ name, version ] = pkg.split('@')
-    this.send('require', { 
+    this.send('node:require', { 
       name: name,
       version: version,
       path: path

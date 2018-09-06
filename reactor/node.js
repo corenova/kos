@@ -1,38 +1,45 @@
 'use strict'
+
 const { kos = require('..') } = global
 
-module.exports = kos.create('node')
-  .desc('reactions to Node.js runtime environment interactions')
-  .pass(true)
+const schema = require('../schema/kinetic-node-js')
 
-  .in('process').out('resolve')
+module.exports = kos.create(schema)
+
+  .reaction
+  .in('node:process').out('node:resolve')
   .bind(initialize)
 
-  .in('program')
-  .out('load', 'read', 'log')
+  .reaction
+  .in('node:program')
+  .out('node:load', 'node:read', 'kos:log')
   .bind(execute)
 
+  .reaction
   .pre('module/path')
-  .in('load')
-  .out('reactor','resolve')
+  .in('node:load')
+  .out('kos:reactor','node:resolve')
   .bind(loadReactor)
 
-  .in('resolve')
-  .out('require')
+  .reaction
+  .in('node:resolve')
+  .out('node:require')
   .bind(resolveDependency)
 
-  .in('require')
+  .reaction
+  .in('node:require')
   .out('module/*')
   .bind(tryRequire)
 
+  .reaction
   .pre('module/fs')
-  .in('read')
+  .in('node:read')
   .bind(readKSONFile)
 
 // self-initialize when part of kos layers (usually kos directly)
 function initialize(process) { 
   //const { parent } = this
-  this.send('resolve', ...kos.depends)
+  this.send('node:resolve', ...kos.depends)
   //this.save({ process })
 }
 
@@ -40,11 +47,11 @@ function execute(program) {
   const { args=[], file=[], silent=false, verbose=0 } = program
 
   // unless silent, setup logging
-  silent || this.send('log', { level: verbose })
+  silent || this.send('kos:log', { level: verbose })
 
   // immediate processing of 'load' tokens first
-  this.sendImmediate('load', ...args)
-  this.send('read', ...file)
+  this.sendImmediate('node:load', ...args)
+  this.send('node:read', ...file)
 }
 
 function loadReactor(name) {
@@ -71,14 +78,14 @@ function loadReactor(name) {
     this.throw(`unable to load incompatible reactor "${name}" from ${location}`)
 
   reactor.join(this.parent)
-  this.send('reactor', reactor)
-  this.send('resolve', ...reactor.depends)
+  this.send('kos:reactor', reactor)
+  this.send('node:resolve', ...reactor.depends)
 }
 
 function resolveDependency(dep) {
   const regex = /^module\/(.+)$/
   let match = regex.exec(dep,'$1')
-  if (match) this.send('require', match[1])
+  if (match) this.send('node:require', match[1])
 }
 
 function tryRequire(opts) {

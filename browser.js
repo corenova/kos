@@ -1,6 +1,6 @@
 'use strict'
 
-const kos = require('./kos')
+const kos = require('./lib')
 const LogReactor   = require('./reactor/log')
 const LinkReactor  = require('./reactor/link')
 const HiveReactor  = require('./reactor/hive')

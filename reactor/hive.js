@@ -10,13 +10,13 @@ module.exports = kos.create('hive')
 
   .load(link)
 
-  .in('hive/connect').out('link/connect').bind(connect)
-  .in('hive/listen').out('link/listen').bind(listen)
+  .in('hive:connect').out('link:connect').bind(connect)
+  .in('hive:listen').out('link:listen').bind(listen)
 
-  .in('link').out('reactor').bind(peer)
+  .in('link:channel').out('kos:reactor').bind(peer)
 
-function connect(opts) { this.send('link/connect', opts) }
-function listen(opts)  { this.send('link/listen', opts) }
+function connect(opts) { this.send('link:connect', opts) }
+function listen(opts)  { this.send('link:listen', opts) }
 
 function peer(link) {
   const root = this.parent.parent

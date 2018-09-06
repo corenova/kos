@@ -1,0 +1,12 @@
+module kinetic-console {
+  namespace "urn:ietf:params:xml:ns:yang:kos:kinetic-console";
+  prefix console;
+  description
+    "reactions to command-line interactions";
+  
+  import kinetic-object-swarm { prefix kos; }
+  import kinetic-node-js { prefix node; }
+  import kinetic-render  { prefix render; }
+  
+  feature colors;
+}

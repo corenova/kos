@@ -79,7 +79,7 @@ module kinetic-object-swarm {
   /*
    * Groupings
    */
-  grouping persona {
+  grouping reactor {
     leaf id;
     
   }

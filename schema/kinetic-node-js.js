@@ -2,30 +2,29 @@
 
 const Yang = require('yang-js')
 
-module.exports = require('./node.yang').bind({
-  'feature(fs)':  function() { return require('fs') },
-  'feature(url)': function() { return require('url') },
-  'feature(net)': function() { return require('net') },
+module.exports = require('./kinetic-node-js.yang').bind({
+  'feature(fs)':  () => require('fs'),
+  'feature(url)': () => require('url'),
+  'feature(net)': () => require('net'),
 
   // self-initialize when part of kos layers (usually kos directly)
   initialize(process) { 
-    const parent = this.get('parent')
-    this.send('node:resolve', ...parent.depends)
+    //this.send('node:resolve', ...this.root.depends)
   },
 
   execute(program) {
     const { args=[], file=[], silent=false, verbose=0 } = program
 
     // unless silent, setup logging
-    silent || this.send('node:log', { level: verbose })
+    silent || this.send('kos:log', { level: verbose })
 
     // immediate processing of 'load' tokens first
-    this.sendImmediate('node:load', ...args)
-    this.send('node:read', ...file)
+    this.sendImmediate('nodejs:load', ...args)
+    this.send('nodejs:read', ...file)
   },
 
   load(name) {
-    const path = this.use('node:path')
+    const path = this.use('nodejs:path')
     const search = [ 
       path.resolve(name),
       path.resolve('schema', name),
@@ -48,13 +47,13 @@ module.exports = require('./node.yang').bind({
       this.throw(`unable to load incompatible schema "${name}" from ${location}`)
 
     this.send('kos:schema', schema)
-    this.send('node:resolve', ...schema.depends)
+    this.send('nodejs:resolve', ...schema.depends)
   },
 
   resolve(dep) {
     const regex = /^module\/(.+)$/
     let match = regex.exec(dep,'$1')
-    if (match) this.send('require', match[1])
+    if (match) this.send('nodejs:require', match[1])
   },
 
   require(opts) {
@@ -71,7 +70,7 @@ module.exports = require('./node.yang').bind({
   },
 
   read(filename) {
-    const fs = this.get('module/fs')
+    const fs = this.use('nodejs:fs')
     const kson = fs.createReadStream(filename)
     kson.on('error', this.error.bind(this))
     kson.pipe(this.io, { end: false })

@@ -1,10 +1,10 @@
 'use strict';
 
-const { Interface, Reaction }  = require('../lib')
+const { Interface, Reaction }  = require('./lib')
 
-module.exports = require('./kos.yang').bind({
+module.exports = require('./kinetic-object-swarm.yang').bind({
 
-  'extension(interface)': function() {
+  'extension(flow)': function() {
     return {
       scope: {
         description:     '0..1',
@@ -72,6 +72,7 @@ module.exports = require('./kos.yang').bind({
         let outputs = this.output.exprs.filter(x => regex.test(x.kind)).map(extract)
         const depends  = new Map
         const requires = new Set
+        const triggers = new Set
         const consumes = new Set
         const produces = new Set
         for (let f of features) {
@@ -79,14 +80,15 @@ module.exports = require('./kos.yang').bind({
         }
         for (let data of inputs) {
           const { required, schema } = data
-          required ? requires.add(schema) : consumes.add(schema)
+          required ? requires.add(schema) : triggers.add(schema)
+          consumes.add(schema)
         }
         for (let data of outputs) {
           const { required, schema } = data
           produces.add(schema)
         }
         self.bounds = {
-          depends, requires, consumes, produces
+          depends, requires, triggers, consumes, produces
         }
         return self
       },
@@ -142,21 +144,6 @@ module.exports = require('./kos.yang').bind({
         iface = iface.clone()
         iface.tag = this.tag
         this.parent.extends(iface)
-      }
-    }
-  },
-  "grouping(endpoint)": {
-    uri(value) {
-      const Url = this.use('kos:url')
-      if (arguments.length) { // setter
-        if (value) {
-          this.content = value
-          this.in('..').set(Url.parse(value, true))
-        }
-        return undefined
-      } else { // getter
-        if (this.content) return this.content
-        return Url.format(this.in('..').content)
       }
     }
   }

@@ -5,8 +5,8 @@ const program = require('commander')
 const pkginfo = require('../package.json')
 
 const Kos = require('..')
-const NodeSchema    = require('../schema/node')
-// const ConsoleSchema = require('../schema/console')
+const NodeSchema    = require('../schema/kinetic-node-js')
+const ConsoleSchema = require('../schema/kinetic-console')
 // const LogSchema     = require('../schema/log')
 
 function collect(val, keys) { keys.push(val); return keys }
@@ -22,7 +22,7 @@ program
 
 Kos
   .use(NodeSchema)
-  // .use(ConsoleSchema)
+  .use(ConsoleSchema)
   // .use(LogSchema)
-  .feed('nodejs:process', process)
-  .feed('nodejs:program', program)
+  .feed('kos:process', process)
+  .feed('kos:program', program)

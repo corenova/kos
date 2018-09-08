@@ -15,8 +15,8 @@ module kinetic-object-swarm {
   /*
    * Custom YANG Language Extensions
    */
-  extension interface {
-    argument "interface-name";
+  extension flow {
+    argument "flow-name";
   }
   extension reaction {
     argument "function-name";
@@ -35,9 +35,6 @@ module kinetic-object-swarm {
    */ 
   import ietf-yang-types {
     prefix yang;
-  }
-  import ietf-inet-types {
-    prefix inet;
   }
   /*
    * Features
@@ -80,32 +77,29 @@ module kinetic-object-swarm {
   /*
    * Groupings
    */
+  grouping process {
+    
+  }
+  grouping program {
+    
+  }
   grouping schema {
     
   }
-  grouping endpoint {
-    leaf uri {
-      type inet:uri;
-    }
-    leaf protocol {
-      type identityref {
-        base kos:protocol;
-      }
-    }
-    leaf hostname {
-      type inet:host;
-      default '0.0.0.0';
-    }
-    leaf port {
-      type inet:port-number;
-    }
-    leaf path {
-      type string;
-    }
-    container query;
-  }
   grouping stream {
     // define Stream object schema
+  }
+  grouping debug {
+    
+  }
+  grouping info {
+    
+  }
+  grouping warn {
+    
+  }
+  grouping log {
+    
   }
   grouping node-list {
     list node {

@@ -17,6 +17,22 @@ module.exports = require('./net.yang').bind({
     }
   },
 
+  "grouping(endpoint)": {
+    uri(value) {
+      const Url = this.use('kos:url')
+      if (arguments.length) { // setter
+        if (value) {
+          this.content = value
+          this.in('..').set(Url.parse(value, true))
+        }
+        return undefined
+      } else { // getter
+        if (this.content) return this.content
+        return Url.format(this.in('..').content)
+      }
+    }
+  }
+
   // Bind Reactions
   connect(remote) {
     const Socket = this.use('net:socket')

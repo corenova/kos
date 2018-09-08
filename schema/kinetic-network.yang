@@ -58,19 +58,31 @@ module kinetic-network {
     }
   }
   grouping endpoint {
-    uses kos:endpoint {
-      refine "protocol" {
-        default "tcp";
-        must ". = 'tcp' or . = 'udp' or . = 'unix'" {
-          error-message "A net protocol must be 'tcp' or 'udp' or 'unix'";
-        }
+    leaf uri {
+      type inet:uri;
+    }
+    leaf protocol {
+      type identityref {
+        base kos:protocol;
       }
-      refine "port" {
-        default 12345;
+      default "tcp";
+      must ". = 'tcp' or . = 'udp' or . = 'unix'" {
+        error-message "A net protocol must be 'tcp' or 'udp' or 'unix'";
       }
-      augment "query" {
-        uses persist-options;
-      }
+    }
+    leaf hostname {
+      type inet:host;
+      default '0.0.0.0';
+    }
+    leaf port {
+      type inet:port-number;
+      default 12345;
+    }
+    leaf path {
+      type string;
+    }
+    container query {
+      uses persist-options;
     }
   }
   grouping remote {

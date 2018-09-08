@@ -18,12 +18,6 @@ module kinetic-node-js {
   /*
    * Pulse definitions
    */
-  grouping process {
-    
-  }
-  grouping program {
-    
-  }
   grouping module {
     
   }
@@ -49,7 +43,7 @@ module kinetic-node-js {
   
   kos:reaction initialize {
     input {
-      kos:data nodejs:process;
+      kos:data kos:process;
     }
     output {
       kos:data nodejs:resolve;
@@ -57,12 +51,12 @@ module kinetic-node-js {
   }
   kos:reaction execute {
     input {
-      kos:data nodejs:program;
+      kos:data kos:program;
     }
     output {
       kos:data nodejs:load;
       kos:data nodejs:read;
-      kos:data nodejs:log;
+      kos:data kos:log;
     }
   }
   kos:reaction load {

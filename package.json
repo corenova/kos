@@ -60,13 +60,16 @@
     "test": "mocha"
   },
   "yang": {
+    "search": [ ".", "./schema", "yang-js" ],
     "resolve": {
-      "kinetic-object-swarm": "./schema/kos.js",
-      "kinetic-link": "./schema/link.js",
-      "kinetic-network": "./schema/net.js",
-      "kinetic-node-js": "./schema/node.js",
-      "kinetic-snmp": "./schema/snmp.js",
-      "kinetic-websocket": "./schema/ws.js",
+      "kinetic-object-swarm": "./kinetic-object-swarm.js",
+      "kinetic-console":   "./schema/kinetic-console.js",
+      "kinetic-link":      "./schema/kinetic-link.js",
+      "kinetic-network":   "./schema/kinetic-network.js",
+      "kinetic-node-js":   "./schema/kinetic-node-js.js",
+      "kinetic-render":    "./schema/kinetic-render.js",
+      "kinetic-snmp":      "./schema/kinetic-snmp.js",
+      "kinetic-websocket": "./schema/kinetic-ws.js",
       "ietf-inet-types": "yang-js",
       "ietf-yang-library": "yang-js",
       "ietf-yang-types": "yang-js"

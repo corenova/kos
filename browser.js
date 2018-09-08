@@ -1,6 +1,6 @@
 'use strict'
 
-const kos = require('./kos')
+const kos = require('./index.js')
 const SyntheticLog       = require('./reactor/log')
 const SyntheticLink      = require('./reactor/link')
 const SyntheticHive      = require('./reactor/hive')

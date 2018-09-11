@@ -64,11 +64,13 @@
     "resolve": {
       "kinetic-object-swarm": "./kinetic-object-swarm.js",
       "kinetic-console":   "./schema/kinetic-console.js",
+      "kinetic-http":      "./schema/kinetic-http.js",
       "kinetic-link":      "./schema/kinetic-link.js",
       "kinetic-network":   "./schema/kinetic-network.js",
       "kinetic-node-js":   "./schema/kinetic-node-js.js",
       "kinetic-render":    "./schema/kinetic-render.js",
       "kinetic-snmp":      "./schema/kinetic-snmp.js",
+      "kinetic-timer":     "./schema/kinetic-timer.js",
       "kinetic-websocket": "./schema/kinetic-ws.js",
       "ietf-inet-types": "yang-js",
       "ietf-yang-library": "yang-js",

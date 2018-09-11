@@ -3,8 +3,9 @@
 const { Interface, Reaction }  = require('./lib')
 
 module.exports = require('./kinetic-object-swarm.yang').bind({
-
-  'extension(flow)': function() {
+  'feature(url)': () => require('url'),
+  
+  'extension(interface)': function() {
     return {
       scope: {
         description:     '0..1',
@@ -54,14 +55,14 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           throw this.error("cannot contain data nodes in reaction input/output")
       },
       transform(self) {
-        const regex = /^kos:(data|node)$/
+        const regex = /^kos:(flow|node)$/
         const extract = node => {
           let { kind, tag, 'require-instance': required } = node
           let schema
           switch (kind) {
           case 'kos:node': schema = this.locate(tag)
             break;
-          case 'kos:data': schema = this.lookup('grouping', tag)
+          case 'kos:flow': schema = this.lookup('grouping', tag)
             break;
           }
           if (required) required = required.tag
@@ -97,7 +98,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       }
     }
   },
-  'extension(data)': function() {
+  'extension(flow)': function() {
     return {
       scope: {
         description:        '0..1',
@@ -119,10 +120,10 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
   'extension(node)': function() {
     return {
       scope: {
-        description: '0..1',
-        mandatory:   '0..1',
-        reference:   '0..1',
-        status:      '0..1'
+        description:        '0..1',
+        'require-instance': '0..1',
+        reference:          '0..1',
+        status:             '0..1'
       },
       target: {
         input:  '0..n',

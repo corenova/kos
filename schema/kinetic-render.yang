@@ -55,29 +55,29 @@ module kinetic-render {
 
   kos:reaction renderInfo {
     input {
-      kos:data render:info;
+      kos:flow render:info;
     }
     output {
-      kos:data render:reactor;
-      kos:data render:output;
+      kos:flow render:reactor;
+      kos:flow render:output;
     }
   }
   kos:reaction renderModelAsTree {
     if-feature render:theme;
     if-feature render:treeify;
     input {
-      kos:data render:reactor;
+      kos:flow render:reactor;
     }
     output {
-      kos:data render:reactor-tree;
+      kos:flow render:reactor-tree;
     }
   }
   kos:reaction outputModelTree {
     input {
-      kos:data render:output {
+      kos:flow render:output {
         require-instance true;
       }
-      kos:data render:reactor-tree;
+      kos:flow render:reactor-tree;
     }
     output {
       // no output...

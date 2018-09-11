@@ -50,7 +50,7 @@ function createConsole(process, io) {
   stream.prompt(true)
   source.on('reject', pulse => this.warn(`ignoring unknown topic: ${pulse.topic}`))
 
-  this.send('console:prompt', { stream })
+  this.send('console:prompt', stream)
 
   function resetPrompt() {
     readline.clearLine(output, -1)
@@ -62,9 +62,8 @@ function createConsole(process, io) {
 function processInput(process, io, cli) {
   const { exit } = process
   const { output, source } = io
-  const { stream } = cli
   
-  stream.on('line', line => {
+  cli.on('line', line => {
     line = line.trim()
     switch(line) {
     case '.info': this.send('render:info', { source, output }); break;
@@ -81,7 +80,7 @@ function processInput(process, io, cli) {
     case '.quit': exit(1)
     default: source.write(line+"\n")
     }
-    stream.prompt()
+    cli.prompt()
   })
 }
 

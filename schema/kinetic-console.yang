@@ -30,51 +30,51 @@ module kinetic-console {
   }
   kos:reaction initialize {
     input {
-      kos:data kos:process;
-      kos:data kos:program;
+      kos:flow kos:process;
+      kos:flow kos:program;
     }
     output {
-      kos:data console:io;
+      kos:flow console:io;
     }
   }
   kos:reaction createConsole {
     if-feature console:readline;
     if-feature console:colors;
     input {
-      kos:data kos:process {
+      kos:flow kos:process {
         require-instance true;
       }
-      kos:data console:io;
+      kos:flow console:io;
     }
     output {
-      kos:data console:prompt;
-      kos:data console:line;
+      kos:flow console:prompt;
+      kos:flow console:line;
     }
   }
   kos:reaction processInput {
     input {
-      kos:data kos:process {
+      kos:flow kos:process {
         require-instance true;
       }
-      kos:data console:io;
-      kos:data console:prompt;
+      kos:flow console:io;
+      kos:flow console:prompt;
     }
     output {
-      kos:data render:info;
+      kos:flow render:info;
     }
   }
   kos:reaction renderReactor {
     input {
-      kos:data kos:process {
+      kos:flow kos:process {
         require-instance true;
       }
-      kos:data kos:program {
+      kos:flow kos:program {
         require-instance true;
       }
-      //kos:data kos:reactor;
+      //kos:flow kos:reactor;
     }
     output {
-      kos:data render:info;
+      kos:flow render:info;
     }
   }
 }

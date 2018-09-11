@@ -15,13 +15,13 @@ module kinetic-object-swarm {
   /*
    * Custom YANG Language Extensions
    */
-  extension flow {
-    argument "flow-name";
+  extension interface {
+    argument "interface-name";
   }
   extension reaction {
     argument "function-name";
   }
-  extension data {
+  extension flow {
     argument "grouping-identifier";
   }
   extension node {
@@ -63,6 +63,9 @@ module kinetic-object-swarm {
   /*
    * Type Definitions
    */
+  typedef identifier {
+    type yang:yang-identifier;
+  }
   typedef unique-identifier {
     type yang:uuid;
   }
@@ -113,7 +116,7 @@ module kinetic-object-swarm {
   }
   grouping flow {
     leaf name {
-      type yang:yang-identifier;
+      type kos:identifier;
     }
     leaf-list steps {
       type kos:reaction-identifier {

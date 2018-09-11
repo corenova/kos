@@ -4,6 +4,9 @@ module kinetic-render {
   description
     "reactions to visually render reactors";
 
+  feature theme{
+    
+  }
   feature treeify {
     reference "npm://treeify";
   }
@@ -59,7 +62,8 @@ module kinetic-render {
       kos:data render:output;
     }
   }
-  kos:reaction renderReactorAsTree {
+  kos:reaction renderModelAsTree {
+    if-feature render:theme;
     if-feature render:treeify;
     input {
       kos:data render:reactor;
@@ -68,7 +72,7 @@ module kinetic-render {
       kos:data render:reactor-tree;
     }
   }
-  kos:reaction outputReactorTree {
+  kos:reaction outputModelTree {
     input {
       kos:data render:output {
         require-instance true;

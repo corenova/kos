@@ -87,7 +87,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           const { required, schema } = data
           produces.add(schema)
         }
-        self.bounds = {
+        self.scope = {
           depends, requires, triggers, consumes, produces
         }
         return self

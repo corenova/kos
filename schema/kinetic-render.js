@@ -34,28 +34,27 @@ const DEFAULT_THEME = {
 
 module.exports = require('./kinetic-render.yang').bind({
 
-  theme() {
-    return DEFAULT_THEME
-  },
+  'feature(theme)': () => DEFAULT_THEME,
 
-  renderInfo(opts) {
-    const { source, output } = opts
-    this.send('render:output', output)
-    this.send('render:reactor', source)
-  },
-
-  renderReactorAsTree(reactor) {
-    const { label, summary } = reactor
-    let str = `${label}: ${summary}\n` + renderReactor.call(this, reactor)
-    this.send('render:reactor-tree', str)
-  },
-
-  outputReactorTree(output, tree) { 
-    output.write(tree + "\n")
-    this.clear()
-  }
-
+  renderInfo, renderModelAsTree, outputModelTree
 })
+
+function renderInfo(opts) {
+  const { source, output } = opts
+  this.send('render:output', output)
+  this.send('render:reactor', source)
+}
+
+function renderModelAsTree(reactor) {
+  const { label, summary } = reactor
+  let str = `${label}: ${summary}\n` + renderReactor.call(this, reactor)
+  this.send('render:reactor-tree', str)
+}
+
+function outputModelTree(output, tree) { 
+  output.write(tree + "\n")
+  this.clear()
+}
 
 // BELOW METHOD IS NOT RECOMMENDED...
 
@@ -75,7 +74,7 @@ function findLongest(a) {
 }
 
 function renderListItem(item, i, options={}) {
-  const { BOX, SEP } = this.get('/render:theme')
+  const { BOX, SEP } = this.use('render:theme')
   let { width, height, isMiddle=false, left=BOX.L, right=BOX.R } = options
   let str = ''
   let label = item + SEP.repeat(width - item.length)
@@ -100,7 +99,7 @@ function renderListItem(item, i, options={}) {
 }
 
 function renderReaction(reaction, funcWidth, inputWidth, outputWidth) {
-  const { BOX, SEP, FUNC } = this.get('/render:theme')
+  const { BOX, SEP, FUNC } = this.use('render:theme')
   const { inputs, requires, outputs, label } = reaction
   let accepts = requires.concat(inputs)
   // BOX for consumed inputs
@@ -167,7 +166,7 @@ function renderReaction(reaction, funcWidth, inputWidth, outputWidth) {
 }
 
 function renderReactions(reactor) {
-  const { BOX, SEP } = this.get('/render:theme')
+  const { BOX, SEP } = this.use('render:theme')
   const { reactions, consumes, outputs } = reactor
   let inputWidth  = findLongest(consumes).length
   let outputWidth = findLongest(outputs).length
@@ -197,7 +196,7 @@ function renderReactions(reactor) {
 }
 
 function renderReactor(reactor) {
-  const { BOX, SEP, FUNC } = this.get('/render:theme')
+  const { BOX, SEP, FUNC } = this.use('render:theme')
   const treeify = this.use('render:treeify')
   const { id, label, purpose, passive, enabled, depends, reactors, reactions, state } = reactor
   let funcWidth = findLongest(reactions.map((x => x.label))).length

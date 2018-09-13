@@ -36,13 +36,9 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
   'extension(reaction)': function() {
     return {
       scope: {
-        container:     '0..n',
         description:   '0..1',
         'if-feature':  '0..n',
         input:         '1',
-        leaf:          '0..n',
-        'leaf-list':   '0..n',
-        list:          '0..n',
         output:        '1',
         reference:     '0..1',
         status:        '0..1'
@@ -53,44 +49,16 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       resolve() {
         if (this.input.nodes.length || this.output.nodes.length)
           throw this.error("cannot contain data nodes in reaction input/output")
+        let deps = this.match('if-feature','*')
+        if (deps && !deps.every(d => this.lookup('feature', d.tag)))
+          throw this.error('unable to resolve every feature dependency')
       },
       transform(self) {
-        const regex = /^kos:(flow|node)$/
-        const extract = node => {
-          let { kind, tag, 'require-instance': required } = node
-          let schema
-          switch (kind) {
-          case 'kos:node': schema = this.locate(tag)
-            break;
-          case 'kos:flow': schema = this.lookup('grouping', tag)
-            break;
-          }
-          if (required) required = required.tag
-          return { required, schema }
-        }
+        const { consumes, produces } = self
+        this.input.exprs.forEach(expr => expr.apply(consumes))
+        this.output.exprs.forEach(expr => expr.apply(produces))
         let features = this.match('if-feature','*') || []
-        let inputs  = this.input.exprs.filter(x => regex.test(x.kind)).map(extract)
-        let outputs = this.output.exprs.filter(x => regex.test(x.kind)).map(extract)
-        const depends  = new Map
-        const requires = new Set
-        const triggers = new Set
-        const consumes = new Set
-        const produces = new Set
-        for (let f of features) {
-          depends.set(f.tag, this.lookup('feature', f.tag))
-        }
-        for (let data of inputs) {
-          const { required, schema } = data
-          required ? requires.add(schema) : triggers.add(schema)
-          consumes.add(schema)
-        }
-        for (let data of outputs) {
-          const { required, schema } = data
-          produces.add(schema)
-        }
-        self.scope = {
-          depends, requires, triggers, consumes, produces
-        }
+        self.depends = features.map(f => this.lookup('feature', f.tag))
         return self
       },
       construct(parent, ctx) {
@@ -114,6 +82,13 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         let schema = this.lookup('grouping', this.tag)
         if (!schema)
           throw this.error(`unable to resolve ${this.tag} grouping definition`)
+      },
+      transform(data) {
+        let { 'require-instance': required } = data
+        let schema = this.lookup('grouping', this.tag)
+        if (required && required.tag) schema.sticky = true
+        data.add(schema)
+        return data
       }
     }
   },
@@ -133,6 +108,13 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         let schema = this.locate(this.tag)
         if (!schema)
           throw this.error(`unable to resolve ${this.tag} data node`)
+      },
+      transform(data) {
+        let { 'require-instance': required } = node
+        let schema = this.locate(this.tag)
+        if (required && required.tag) schema.sticky = true
+        data.add(schema)
+        return data
       }
     }
   },

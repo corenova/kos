@@ -9,7 +9,7 @@ module kinetic-console {
   }
 
   feature colors {
-    reference "nodejs://colors";
+    reference "npm://colors";
   }
   feature readline {
     reference "nodejs://readline";

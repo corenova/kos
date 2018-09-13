@@ -19,7 +19,7 @@ module.exports = require('./kinetic-node-js.yang').bind({
     silent || this.send('kos:log', { level: verbose })
 
     // immediate processing of 'load' tokens first
-    this.sendImmediate('nodejs:load', ...args)
+    this.push('nodejs:load', ...args)
     this.send('nodejs:read', ...file)
   },
 

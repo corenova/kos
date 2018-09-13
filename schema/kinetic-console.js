@@ -36,7 +36,7 @@ function createConsole(process, io) {
 
   const stream = readline.createInterface({
     input, output, 
-    prompt: colors.grey(source.label + '> '),
+    prompt: colors.grey(source.name + '> '),
     completer: (line) => {
       let inputs = Array.from(source.consumes).map(x => x.datakey)
       let completions = inputs.sort().concat('.info','.help','.quit')

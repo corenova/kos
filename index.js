@@ -1,8 +1,9 @@
-const { Persona, Interface, Reaction, Context, Pulse } = require('./lib')
+const { Agent, Persona, Interface, Reaction, Context, Pulse } = require('./lib')
 
 const schema = require('./kinetic-object-swarm')
-const kos = new Persona(schema)
+const kos = new Agent(schema)
 
+kos.Agent     = Agent
 kos.Persona   = Persona
 kos.Interface = Interface
 kos.Reaction  = Reaction

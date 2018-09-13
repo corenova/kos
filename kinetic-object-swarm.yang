@@ -89,6 +89,9 @@ module kinetic-object-swarm {
   grouping schema {
     
   }
+  grouping model {
+    
+  }
   grouping stream {
     // define Stream object schema
   }

@@ -3,6 +3,7 @@
 require('yang-js')
 
 module.exports = require('./kinetic-network.yang').bind({
+  'feature(net)': () => require('net'),
   'feature(net:socket)': () => require('net').Socket,
   'feature(net:server)': () => require('net').Server,
 
@@ -33,11 +34,11 @@ module.exports = require('./kinetic-network.yang').bind({
         return Url.format(this.in('..').content)
       }
     }
-  }
+  },
 
   // Bind Reactions
+  connect, request, listen, streamify
 })
-
 
 function connect(remote) {
   const Socket = this.use('net:socket')
@@ -67,6 +68,26 @@ function connect(remote) {
   //this.in('/net:topology/remote').add(remote)
   this.debug('attempt', uri)
   socket.connect(port, hostname)
+}
+
+function request(opts) {
+  const net = this.use('net:net');
+  let { uri, socket, data, query: { single } } = opts;
+  if (!socket || socket.closing) {
+    socket = net.createConnection(opts, () => {
+      this.debug(`connected to ${uri}`);
+      socket.write(data + '\r\n');
+    });
+    socket.on('data', (data) => {
+      this.send('net:response', { uri, socket, data });
+      if (single) socket.end()
+    });
+    socket.on('end', () => {
+      this.debug(`disconnected from ${uri}`);
+    })
+  } else {
+    socket.write(data + '\r\n');
+  }
 }
 
 function listen(local) {

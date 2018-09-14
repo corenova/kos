@@ -10,6 +10,9 @@ module kinetic-network {
   /*
    * Features
    */
+  feature net {
+    reference "nodejs://net";
+  }
   feature socket {
     reference "nodejs://net?Socket";
   }
@@ -100,6 +103,23 @@ module kinetic-network {
       if-feature net:server;
     }
   }
+  grouping request {
+    uses net:remote {
+      augment "query" {
+        leaf single {
+          type boolean;
+          default true;
+          description
+            "denote that the request will end connection after a single transaction";
+        }
+      }
+    }
+    anydata data;
+  }
+  grouping response {
+    uses net:remote;
+    anydata data;
+  }
   grouping connection {
     leaf uri {
       type inet:uri;
@@ -171,6 +191,15 @@ module kinetic-network {
     output {
       kos:flow net:connection;
       kos:flow net:remote;
+    }
+  }
+  kos:reaction request {
+    if-feature net:socket;
+    input {
+      kos:flow net:request;
+    }
+    output {
+      kos:flow net:response;
     }
   }
   kos:reaction listen {

@@ -4,7 +4,6 @@ module.exports = require('./kinetic-http.yang').bind({
   request, get, listen, route
 })
 
-
 function request(req) {
   const agent = this.use('superagent')
   let { url, type='json', method, header={}, query='', data } = req

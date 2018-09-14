@@ -30,7 +30,10 @@ module kinetic-network {
   }
   /*
    * Type Definitions
-   */ 
+   */
+  typedef uri {
+    type inet:uri;
+  }
   typedef connection-ref {
     type leafref {
       path "/net:session/connection/uri";

@@ -110,7 +110,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           throw this.error(`unable to resolve ${this.tag} data node`)
       },
       transform(data) {
-        let { 'require-instance': required } = node
+        let { 'require-instance': required } = data
         let schema = this.locate(this.tag)
         if (required && required.tag) schema.sticky = true
         data.add(schema)

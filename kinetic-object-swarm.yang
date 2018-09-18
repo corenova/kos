@@ -107,6 +107,9 @@ module kinetic-object-swarm {
   grouping log {
     
   }
+  grouping error {
+    
+  }
   grouping node-list {
     list node {
       

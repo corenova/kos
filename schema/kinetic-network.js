@@ -73,9 +73,11 @@ function connect(remote) {
 
 function request(opts) {
   const net = this.use('net:net');
-  let { uri, socket, data, query={} } = opts;
+  const { uri, socket, data, query={} } = opts;
   if (!socket || socket.closing) {
-    socket = net.createConnection(opts, () => {
+    const { hostname, port } = opts;
+    this.debug(`making a new connection to ${uri}...`)
+    socket = net.createConnection(port, hostname, () => {
       this.debug(`connected to ${uri}`);
       socket.write(data + '\r\n');
       // do we need this here?

@@ -3,7 +3,7 @@
 require('yang-js')
 
 module.exports = require('./kinetic-network.yang').bind({
-  'feature(net)': () => require('net'),
+  'feature(net:net)':    () => require('net'),
   'feature(net:socket)': () => require('net').Socket,
   'feature(net:server)': () => require('net').Server,
 
@@ -26,7 +26,8 @@ module.exports = require('./kinetic-network.yang').bind({
       if (arguments.length) { // setter
         if (value) {
           this.content = value
-          this.in('..').set(Url.parse(value, true))
+          let obj = Url.parse(value, true)
+          this.in('..').set(obj, { suppress: true })
         }
         return undefined
       } else { // getter
@@ -72,19 +73,23 @@ function connect(remote) {
 
 function request(opts) {
   const net = this.use('net:net');
-  let { uri, socket, data, query: { single } } = opts;
+  let { uri, socket, data, query={} } = opts;
   if (!socket || socket.closing) {
     socket = net.createConnection(opts, () => {
       this.debug(`connected to ${uri}`);
       socket.write(data + '\r\n');
+      // do we need this here?
+      if (query.single) socket.end()
     });
     socket.on('data', (data) => {
       this.send('net:response', { uri, socket, data });
-      if (single) socket.end()
+      // or do we need it here?
+      if (query.single) socket.end()
     });
     socket.on('end', () => {
       this.debug(`disconnected from ${uri}`);
     })
+    socket.on('error', this.error.bind(this))
   } else {
     socket.write(data + '\r\n');
   }

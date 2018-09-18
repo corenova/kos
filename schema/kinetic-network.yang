@@ -65,6 +65,7 @@ module kinetic-network {
   }
   grouping endpoint {
     leaf uri {
+      if-feature kos:url;
       type inet:uri;
     }
     leaf protocol {
@@ -194,7 +195,7 @@ module kinetic-network {
     }
   }
   kos:reaction request {
-    if-feature net:socket;
+    if-feature net:net;
     input {
       kos:flow net:request;
     }

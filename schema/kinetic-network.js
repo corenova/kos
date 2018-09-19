@@ -79,6 +79,7 @@ function request(opts) {
   let { socket, data } = opts;
   if (!socket || socket.closing) {
     const { uri, hostname, port, query={} } = opts;
+    let buffer = ''
     this.debug(`making a new connection to ${uri}...`)
     socket = net.createConnection(port, hostname, () => {
       this.debug(`connected to ${uri} sending:`);
@@ -87,12 +88,12 @@ function request(opts) {
       socket.end()
     });
     socket.on('data', (data) => {
-      this.debug(`received data from ${uri}:`);
-      this.debug(data.toString())
-      this.send('net:response', { uri, socket, data: data.toString() });
+      this.debug(`received ${data.length} bytes data from ${uri}`);
+      buffer += data.toString()
     });
     socket.on('end', () => {
       this.debug(`disconnected from ${uri}`);
+      this.send('net:response', { uri, socket, data: buffer });
     })
     socket.on('error', this.error.bind(this))
   } else {

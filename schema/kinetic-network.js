@@ -87,6 +87,8 @@ function request(opts) {
       socket.end()
     });
     socket.on('data', (data) => {
+      this.debug(`received data from ${uri}:`);
+      this.debug(data)
       this.send('net:response', { uri, socket, data });
     });
     socket.on('end', () => {

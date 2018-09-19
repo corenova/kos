@@ -88,8 +88,8 @@ function request(opts) {
     });
     socket.on('data', (data) => {
       this.debug(`received data from ${uri}:`);
-      this.debug(data)
-      this.send('net:response', { uri, socket, data });
+      this.debug(data.toString())
+      this.send('net:response', { uri, socket, data: data.toString() });
     });
     socket.on('end', () => {
       this.debug(`disconnected from ${uri}`);

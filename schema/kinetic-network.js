@@ -93,6 +93,7 @@ function request(opts) {
     });
     socket.on('end', () => {
       this.debug(`disconnected from ${uri}`);
+      this.debug(buffer)
       this.send('net:response', { uri, socket, data: buffer });
     })
     socket.on('error', this.error.bind(this))

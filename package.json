@@ -1,6 +1,6 @@
 {
   "name": "kos",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A swarm intelligence framework for creating distributed data pipelines and autonomic neural networks",
   "bin": {
     "kos": "./bin/kos.js"
@@ -91,7 +91,7 @@
     "delegates": "^1.0.0",
     "treeify": "^1.0.1",
     "uuid": "^3.0.1",
-    "yang-js": "^0.17.10"
+    "yang-js": "^0.17.11"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",

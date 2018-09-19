@@ -25,14 +25,17 @@ module.exports = require('./kinetic-network.yang').bind({
       const Url = this.use('kos:url')
       if (arguments.length) { // setter
         if (value) {
-          this.content = value
           let obj = Url.parse(value, true)
-          this.in('..').set(obj, { suppress: true })
+          if (!obj.slashes) {
+            let proto = this.parent.schema.locate('protocol').default.tag
+            obj = Url.parse(`${proto}://${value}`, true)
+          }
+          for (let k in obj)
+            this.container[k] = obj[k]
         }
         return undefined
       } else { // getter
-        if (this.content) return this.content
-        return Url.format(this.in('..').content)
+        return Url.format(this.container)
       }
     }
   },

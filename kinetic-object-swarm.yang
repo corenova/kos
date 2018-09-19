@@ -21,11 +21,14 @@ module kinetic-object-swarm {
   extension reaction {
     argument "function-name";
   }
+  extension topic {
+    argument "topic-name";
+  }
   extension flow {
-    argument "grouping-identifier";
+    argument "target-topic-identifier";
   }
   extension node {
-    argument "target-node";
+    argument "target-node-identifier";
   }
   extension extends {
     argument "target-interface";
@@ -78,7 +81,7 @@ module kinetic-object-swarm {
   }
   
   /*
-   * Groupings
+   * Kinetic topics
    */
   grouping process {
     

@@ -64,10 +64,6 @@ module kinetic-network {
     }
   }
   grouping endpoint {
-    leaf uri {
-      if-feature kos:url;
-      type inet:uri;
-    }
     leaf protocol {
       type identityref {
         base kos:protocol;
@@ -88,8 +84,17 @@ module kinetic-network {
     leaf path {
       type string;
     }
+    leaf slashes {
+      type boolean;
+      default true;
+    }
     container query {
       uses persist-options;
+    }
+    // below placed last for a reason...
+    leaf uri {
+      if-feature kos:url;
+      type inet:uri;
     }
   }
   grouping remote {

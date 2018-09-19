@@ -81,7 +81,7 @@ function request(opts) {
     const { uri, hostname, port, query={} } = opts;
     this.debug(`making a new connection to ${uri}...`)
     socket = net.createConnection(port, hostname, () => {
-      this.debug(`connected to ${uri}`);
+      this.debug(`connected to ${uri} and sending ${data} single ${query.single}`);
       socket.write(data + '\r\n');
       // do we need this here?
       if (query.single) socket.end()

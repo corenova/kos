@@ -73,9 +73,9 @@ function connect(remote) {
 
 function request(opts) {
   const net = this.use('net:net');
-  const { uri, socket, data, query={} } = opts;
+  let { socket, data } = opts;
   if (!socket || socket.closing) {
-    const { hostname, port } = opts;
+    const { uri, hostname, port, query={} } = opts;
     this.debug(`making a new connection to ${uri}...`)
     socket = net.createConnection(port, hostname, () => {
       this.debug(`connected to ${uri}`);

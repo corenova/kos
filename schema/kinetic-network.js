@@ -81,15 +81,13 @@ function request(opts) {
     const { uri, hostname, port, query={} } = opts;
     this.debug(`making a new connection to ${uri}...`)
     socket = net.createConnection(port, hostname, () => {
-      this.debug(`connected to ${uri} and sending ${data} single ${query.single}`);
+      this.debug(`connected to ${uri} sending:`);
+      this.debug(data)
       socket.write(data + '\r\n');
-      // do we need this here?
-      if (query.single) socket.end()
+      socket.end()
     });
     socket.on('data', (data) => {
       this.send('net:response', { uri, socket, data });
-      // or do we need it here?
-      if (query.single) socket.end()
     });
     socket.on('end', () => {
       this.debug(`disconnected from ${uri}`);

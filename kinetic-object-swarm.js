@@ -107,9 +107,9 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           throw this.error(`unable to resolve ${this.tag} grouping definition`)
       },
       transform(data) {
-        let { 'require-instance': required } = data
+        let { 'require-instance': required } = this
         let schema = this.lookup('grouping', this.tag)
-        if (required && required.tag) schema.sticky = true
+        schema.sticky = required && required.tag
         data.add(schema)
         return data
       }
@@ -133,9 +133,9 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           throw this.error(`unable to resolve ${this.tag} data node`)
       },
       transform(data) {
-        let { 'require-instance': required } = data
+        let { 'require-instance': required } = this
         let schema = this.locate(this.tag)
-        if (required && required.tag) schema.sticky = true
+        schema.sticky = required && required.tag
         data.add(schema)
         return data
       }

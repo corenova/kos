@@ -60,11 +60,7 @@
     "test": "mocha"
   },
   "yang": {
-    "search": [
-      ".",
-      "./schema",
-      "yang-js"
-    ],
+    "paths": [ ".", "./schema", "yang-js" ],
     "resolve": {
       "kinetic-object-swarm": "./kinetic-object-swarm.js",
       "kinetic-console": "./schema/kinetic-console.js",
@@ -72,10 +68,11 @@
       "kinetic-link": "./schema/kinetic-link.js",
       "kinetic-network": "./schema/kinetic-network.js",
       "kinetic-node-js": "./schema/kinetic-node-js.js",
+      "kinetic-react-js": "./schema/kinetic-react-js.js",
       "kinetic-render": "./schema/kinetic-render.js",
       "kinetic-snmp": "./schema/kinetic-snmp.js",
       "kinetic-timer": "./schema/kinetic-timer.js",
-      "kinetic-websocket": "./schema/kinetic-ws.js",
+      "kinetic-websocket": "./schema/kinetic-websocket.js",
       "ietf-inet-types": "yang-js",
       "ietf-yang-library": "yang-js",
       "ietf-yang-types": "yang-js"

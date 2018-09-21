@@ -1,0 +1,80 @@
+module kinetic-websocket {
+  prefix ws;
+
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  import kinetic-network {
+    prefix net;
+  }
+  /*
+   * Features
+   */
+  feature socket {
+    reference "npm://simple-websocket";
+  }
+  feature server {
+    refereence "npm://simple-websocket/server";
+  }
+  /*
+   * Identities
+   */
+  identity ws {
+    base net:tcp;
+  }
+  identity wss {
+    base net:tcp;
+  }
+  /*
+   * Groupings
+   */
+  grouping remote {
+    uses net:remote {
+      refine protocol {
+        default "ws";
+        must ". = 'ws' or . = 'wss'" {
+          error-message "A websocket protocol must be 'ws' or 'wss'";
+        }
+      }
+      refine port {
+        default 80;
+      }
+    }
+  }
+  grouping local {
+    uses net:local {
+      refine protocol {
+        default "ws";
+        must ". = 'ws' or . = 'wss'" {
+          error-message "A websocket protocol must be 'ws' or 'wss'";
+        }
+      }
+      refine port {
+        default 80;
+      }
+    }
+  }
+  /*
+   * Kinetic Reactions
+   */
+  kos:reaction connect {
+    if-feature ws:socket;
+    input {
+      kos:flow ws:remote;
+    }
+    output {
+      kos:flow ws:remote;
+      kos:flow net:connection;
+    }
+  }
+  kos:reaction listen {
+    if-feature ws:server;
+    input {
+      kos:flow ws:local;
+    }
+    output {
+      kof:flow ws:server;
+      kos:flow net:connection;
+    }
+  }
+}

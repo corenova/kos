@@ -15,11 +15,14 @@ module kinetic-object-swarm {
   /*
    * Custom YANG Language Extensions
    */
-  extension interface {
-    argument "interface-name";
+  extension component {
+    argument "component-name";
   }
   extension reaction {
     argument "function-name";
+  }
+  extension reduce {
+    argument "reducer-name";
   }
   extension topic {
     argument "topic-name";
@@ -31,7 +34,7 @@ module kinetic-object-swarm {
     argument "target-node-identifier";
   }
   extension extends {
-    argument "target-interface";
+    argument "target-component";
   }
   /*
    * Dependencies
@@ -154,7 +157,9 @@ module kinetic-object-swarm {
     uses link-list;
     uses flow-list;
   }
-  notification error {
+  // notification error {
+  container error {
+    leaf origin;
     leaf message;
   }
   notification log {

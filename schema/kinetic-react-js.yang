@@ -1,0 +1,105 @@
+module kinetic-react-js {
+  prefix react;
+
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  /*
+   * Features
+   */
+  feature dom {
+    reference "npm://react-dom";
+  }
+  /*
+   * Groupings
+   */
+  grouping component {
+    
+  }
+  grouping setter;
+  grouping mounting;
+  grouping mounted;
+  grouping unmounting;
+  grouping updating;
+  grouping updated;
+  grouping receive;
+  grouping event {
+    
+  }
+  grouping state {
+    
+  }
+  grouping form-action {
+    
+  }
+  grouping form-clear {
+    
+  }
+  
+  kos:component Component {
+    /*
+     * Kinetic Reactions
+     */
+    kos:reaction initialize {
+      input {
+        kos:flow react:component;
+      }
+      output {
+        kos:flow react:setter;
+        kos:flow react:mounting;
+        kos:flow react:mounted;
+        kos:flow react:unmounting;
+        kos:flow react:updating;
+        kos:flow react:updated;
+        kos:flow react:receive;
+        kos:flow react:event;
+      }
+    }
+    kos:reaction mount {
+      input {
+        kos:flow react:mounting;
+      }
+    }
+    kos:reaction unmount {
+      input {
+        kos:flow react:unmounting;
+      }
+    }
+    kos:reaction update {
+      input {
+        kos:flow react:state;
+        kos:flow react:setter {
+          require-instance true;
+        }
+        kos:flow react:mounted {
+          require-instance true;
+        }
+      }
+    }
+    kos:reaction observe {
+      input {
+        kos:flow react:event;
+      }
+      output {
+        kos:flow react:state;
+      }
+    }
+  }
+  kos:component Form {
+    kos:extends react:Component;
+
+    kos:reaction trigger {
+      input {
+        kos:flow react:updated;
+      }
+      output {
+        kos:flow react:form-action;
+      }
+    }
+    kos:reaction clear {
+      input {
+        kos:flow react:form-clear;
+      }
+    }
+  }
+}

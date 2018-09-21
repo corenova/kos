@@ -1,45 +1,74 @@
 'use strict';
 
-const { Interface, Reaction }  = require('./lib')
+const { Component, Reaction, Reducer }  = require('./lib')
+const { Property } = require('yang-js')
 
 module.exports = require('./kinetic-object-swarm.yang').bind({
   'feature(url)': () => require('url'),
   
-  'extension(interface)': function() {
+  'extension(component)': () => {
     return {
       scope: {
+        anydata:         '0..n',
+        anyxml:          '0..n',
+        choice:          '0..n',
+        container:       '0..n',
         description:     '0..1',
-        input:           '0..1',
-        output:          '0..1',
+        leaf:            '0..n',
+        'leaf-list':     '0..n',
+        list:            '0..n',
         reference:       '0..1',
         status:          '0..1',
+        uses:            '0..n',
         'kos:extends':   '0..n',
-        'kos:interface': '0..n',
-        'kos:state':     '0..1',
-        'kos:reaction':  '0..n'
+        'kos:reaction':  '0..n',
+        'kos:reduce':    '0..n'
       },
       target: {
         module: '0..n'
       },
-      resolve() {
-        if (this.input.nodes.length || this.output.nodes.length)
-          throw this.error("cannot contain data nodes in reaction input/output")
-      },
-      transform(self) {
-
+      transform(self, ctx={}) {
+        if (self instanceof Component) {
+          for (let attr of this.attrs) {
+            self = attr.eval(self, ctx)
+          }
+          self.state = {}
+          new Property('state', this).join(self)
+          for (let node of this.nodes) {
+            switch (node.kind) {
+            case 'kos:reaction':
+            case 'kos:reduce':
+              node.eval(self, ctx)
+            }
+          }
+        } else {
+          for (let node of this.nodes) {
+            switch (node.kind) {
+            case 'kos:reaction': break;
+            case 'kos:reduce':
+              node = node.clone()
+              delete node.binding
+              new Property(node.tag, node).join(self);
+              break;
+            default:
+              node.eval(self, ctx)
+            }
+          }
+        }
+        return self
       },
       construct(parent, ctx) {
-        return new Interface(this).join(parent)
+        return new Component(this).join(parent)
       }
     }
   },
-  'extension(reaction)': function() {
+  'extension(reaction)': () => {
     return {
       scope: {
         description:   '0..1',
         'if-feature':  '0..n',
         input:         '1',
-        output:        '1',
+        output:        '0..1',
         reference:     '0..1',
         status:        '0..1'
       },
@@ -47,7 +76,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         module: '0..n'
       },
       resolve() {
-        if (this.input.nodes.length || this.output.nodes.length)
+        if (this.input.nodes.length || (this.output && this.output.nodes.length))
           throw this.error("cannot contain data nodes in reaction input/output")
         let deps = this.match('if-feature','*')
         if (deps && !deps.every(d => this.lookup('feature', d.tag)))
@@ -55,14 +84,46 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       },
       transform(self) {
         const { consumes, produces } = self
-        this.input.exprs.forEach(expr => expr.apply(consumes))
-        this.output.exprs.forEach(expr => expr.apply(produces))
+        this.input  && this.input.exprs.forEach(expr => expr.apply(consumes))
+        this.output && this.output.exprs.forEach(expr => expr.apply(produces))
+        
         let features = this.match('if-feature','*') || []
         self.depends = features.map(f => this.lookup('feature', f.tag))
         return self
       },
       construct(parent, ctx) {
         return new Reaction(this).join(parent)
+      }
+    }
+  },
+  'extension(reduce)': () => {
+    return {
+      scope: {
+        description:   '0..1',
+        'if-feature':  '0..n',
+        input:         '1',
+        reference:     '0..1',
+        status:        '0..1'
+      },
+      resolve() {
+        if (this.input.nodes.length)
+          throw this.error('cannot contain data nodes in reducer input')
+        let deps = this.match('if-feature','*')
+        if (deps && !deps.every(d => this.lookup('feature', d.tag)))
+          throw this.error('unable to resolve every feature dependency')
+      },
+      transform(self) {
+        if (self instanceof Reducer) {
+          const { consumes } = self
+          this.input.exprs.forEach(expr => expr.apply(consumes))
+
+          let features = this.match('if-feature','*') || []
+          self.depends = features.map(f => this.lookup('feature', f.tag))
+        }
+        return self
+      },
+      construct(parent, ctx) {
+        return new Reducer(this).join(parent)
       }
     }
   },
@@ -144,12 +205,11 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
   'extension(extends)': function() {
     return {
       resolve() {
-        let iface = this.lookup('kos:interface', this.tag)
-        if (!iface)
-          throw this.error(`unable to resolve ${this.tag} interface`)
-        iface = iface.clone()
-        iface.tag = this.tag
-        this.parent.extends(iface)
+        let component = this.lookup('kos:component', this.tag)
+        if (!component)
+          throw this.error(`unable to resolve ${this.tag} component`)
+        component = component.clone().compile()
+        component.nodes.forEach(n => this.parent.merge(n, { replace: true }))
       }
     }
   }

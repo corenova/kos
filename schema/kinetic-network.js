@@ -55,10 +55,11 @@ function connect(remote) {
     remote = Object.assign({}, remote, { socket })
     socket.on('connect', () => {
       this.send('net:connection', { uri, socket })
+      if (retry) retry = 100
     })
     socket.on('close', () => {
       if (socket.closing || !retry) return
-      this.defer(retry, max)
+      this.after(retry, max)
         .then( timeout => {
           remote = Object.assign({}, remote, { retry: timeout })
           this.info("attempt reconnect", uri)
@@ -107,7 +108,7 @@ function listen(local) {
     server = new Server
     server.on('connection', socket => {
       const uri = `${protocol}//${socket.remoteAddress}:${socket.remotePort}`
-      this.info('accept', uri)
+      this.info(`accept connection from ${uri}`)
       this.send('net:connection', { uri, socket, server: local.uri })
     })
     server.on('listening', () => {

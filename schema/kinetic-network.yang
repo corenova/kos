@@ -139,11 +139,11 @@ module kinetic-network {
     }
     anydata socket {
       if-feature net:socket;
-      config false;
+      //config false;
     }
     anydata stream {
       if-feature kos:stream;
-      config false;
+      //config false;
     }
   }
   grouping server {
@@ -216,14 +216,6 @@ module kinetic-network {
     output {
       kos:flow net:connection;
       kos:flow net:server;
-    }
-  }
-  kos:reaction streamify {
-    input {
-      kos:flow net:connection;
-    }
-    output {
-      kos:flow kos:stream;
     }
   }
 }

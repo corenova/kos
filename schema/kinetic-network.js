@@ -37,11 +37,30 @@ module.exports = require('./kinetic-network.yang').bind({
       } else { // getter
         return Url.format(this.container)
       }
+    },
+    protocol(value) {
+      if (arguments.length) {
+        if (value) {
+          value = value.replace(':','')
+          this.content = value
+        }
+      } else {
+        return this.content
+      }
+    },
+    path(value) {
+      if (arguments.length) {
+        if (value) {
+          this.content = value
+        }
+      } else {
+        return this.content
+      }
     }
   },
 
   // Bind Reactions
-  connect, request, listen, streamify
+  connect, request, listen
 })
 
 function connect(remote) {
@@ -123,26 +142,3 @@ function listen(local) {
   server.listen(port, hostname)
 }
 
-function streamify(connection) {
-  const Stream = this.use('kos:stream')
-  const { uri, socket, server } = connection
-  //this.in('/kos:connection').add(connection)
-  let stream = new Stream(uri)
-  socket.on('active', () => {
-    let { io } = stream
-    io.link(socket)
-    socket.on('close', () => {
-      socket.destroy()
-      if (server) {
-        //link.leave()
-        stream.end()
-        //this.delete(uri)
-      } else {
-        io.unlink(socket)
-        stream.emit('inactive', io)
-      }
-    })
-    stream.resume()
-    this.send('kos:stream', stream)
-  })
-}

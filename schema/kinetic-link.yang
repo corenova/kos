@@ -1,0 +1,62 @@
+module kinetic-link {
+  prefix link;
+
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  import kinetic-network {
+    prefix net;
+  }
+  import kinetic-websocket {
+    prefix ws;
+  }
+  feature parse {
+    if-feature kos:json;
+  }
+  feature stringify {
+    if-feature kos:json;
+  }
+  /*
+   * Groupings
+   */
+  grouping remote {
+    uses net:remote;
+  }
+  grouping local {
+    uses net:local;
+  }
+  grouping peer {
+    
+  }
+  /*
+   * Kinetic Reactions
+   */
+  kos:reaction connect {
+    input {
+      kos:flow link:remote;
+    }
+    output {
+      kos:flow net:remote;
+      kos:flow ws:remote;
+    }
+  }
+  kos:reaction listen {
+    input {
+      kos:flow link:local;
+    }
+    output {
+      kos:flow net:local;
+      kos:flow ws:local;
+    }
+  }
+  kos:reaction sync {
+    if-feature kos:channel;
+    if-feature kos:interface;
+    input {
+      kos:flow net:connection;
+    }
+    output {
+      kos:flow link:peer;
+    }
+  }
+}

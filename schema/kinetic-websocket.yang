@@ -14,7 +14,7 @@ module kinetic-websocket {
     reference "npm://simple-websocket";
   }
   feature server {
-    refereence "npm://simple-websocket/server";
+    reference "npm://simple-websocket/server";
   }
   /*
    * Identities
@@ -54,6 +54,9 @@ module kinetic-websocket {
       }
     }
   }
+  grouping server {
+    
+  }
   /*
    * Kinetic Reactions
    */
@@ -73,7 +76,7 @@ module kinetic-websocket {
       kos:flow ws:local;
     }
     output {
-      kof:flow ws:server;
+      kos:flow ws:server;
       kos:flow net:connection;
     }
   }

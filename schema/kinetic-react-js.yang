@@ -10,6 +10,9 @@ module kinetic-react-js {
   feature dom {
     reference "npm://react-dom";
   }
+  feature router {
+    reference "npm://react-router";
+  }
   /*
    * Groupings
    */
@@ -35,6 +38,9 @@ module kinetic-react-js {
   grouping form-clear {
     
   }
+  grouping history {
+    
+  }
   
   kos:component Component {
     /*
@@ -55,6 +61,16 @@ module kinetic-react-js {
         kos:flow react:event;
       }
     }
+    kos:reaction observe {
+      input {
+        kos:flow react:component;
+        kos:flow react:mounted;
+      }
+      output {
+        kos:flow react:event;
+        // should be augmented further with other topics...
+      }
+    }
     kos:reaction mount {
       input {
         kos:flow react:mounting;
@@ -65,7 +81,7 @@ module kinetic-react-js {
         kos:flow react:unmounting;
       }
     }
-    kos:reaction update {
+    kos:reaction applyState {
       input {
         kos:flow react:state;
         kos:flow react:setter {
@@ -76,7 +92,7 @@ module kinetic-react-js {
         }
       }
     }
-    kos:reaction observe {
+    kos:reaction updateState {
       input {
         kos:flow react:event;
       }

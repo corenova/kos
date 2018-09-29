@@ -33,8 +33,8 @@ function listen(local) {
   const http = this.use('node:http')
   let { server, protocol, port, hostname, uri } = local
   if (!server) {
-    let server = http.createServer((request, response) => {
-      this.send('http:server-request', { req: request, res: response })
+    let server = http.createServer((req, res) => {
+      this.send('http:server-request', { req, res })
     })
     server.on('connection', socket => {
       let uri = `${protocol}//${socket.remoteAddress}:${socket.remotePort}`

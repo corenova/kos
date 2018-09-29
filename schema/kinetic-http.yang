@@ -17,6 +17,9 @@ module kinetic-http {
   /*
    * Features
    */
+  feature express {
+    reference "npm://express";
+  }
   feature superagent {
     reference "npm://superagent";
   }

@@ -1,16 +1,17 @@
 'use strict'
 
-const { kos = require('..') } = global
+require('yang-js')
 
 module.exports = require('./kinetic-react-js.yang').bind({
 
   // Bind Components
   Component: {
     initialize,
+    observe,
     mount,
     unmount,
-    update,
-    observe
+    applyState,
+    updateState
   },
 
   Form: {
@@ -50,6 +51,10 @@ function initialize(component) {
       return component
     }
   }
+  this.on('save', obj => this.send('react:state', obj))
+}
+
+function observe(component) {
   // attach a convenience function to observe and respond to synthetic events
   component.observe = (...args) => {
     const event = args.pop()
@@ -58,22 +63,15 @@ function initialize(component) {
     this.send('react:event', event)
     topic && this.send(topic, ...data)
   }
-  component.to = (topic, ...args) => {
-    this.debug(component, 'registered', topic)
-    this.out(topic) // register the 'key' as one of output topics
-    return (evt) => {
-      args.length ? this.send(topic, ...args) : this.send(topic, evt)
-    }
-  }
-  this.on('save', obj => this.send('react:state', obj))
+  component.send = this.send.bind(this)
 }
 
-function mount()   { this.join(kos) }
-function unmount() { this.leave(kos) }
+function mount()   { this.join(this.root) }
+function unmount() { this.leave(this.root) }
 
-function update(state, setter) { setter(state) }
+function applyState(state, setter) { setter(state) }
 
-function observe(event) {
+function updateState(event) {
   //const [ topic, merge ] = this.get('topic', 'module/deepmerge')
   const { target } = event
   let { type, name, value } = target

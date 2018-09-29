@@ -21,7 +21,7 @@ module kinetic-object-swarm {
   extension reaction {
     argument "function-name";
   }
-  extension reduce {
+  extension reduces {
     argument "reducer-name";
   }
   extension topic {
@@ -48,11 +48,14 @@ module kinetic-object-swarm {
   feature url {
     reference "nodejs://url";
   }
-  feature stream {
-    reference "nodejs://stream";
-  }
   feature net {
     reference "nodejs://net";
+  }
+  feature channel {
+    reference "kos://channel";
+  }
+  feature interface {
+    reference "kos://interface";
   }
   /*
    * Identities
@@ -95,11 +98,21 @@ module kinetic-object-swarm {
   grouping schema {
     
   }
+  grouping persona {
+    leaf id;
+    leaf uri;
+    list layers {
+      
+    }
+  }
   grouping model {
     
   }
   grouping stream {
     // define Stream object schema
+  }
+  grouping reduction {
+    
   }
   grouping debug {
     

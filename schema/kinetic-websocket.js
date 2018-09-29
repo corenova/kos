@@ -12,10 +12,12 @@ module.exports = require('./kinetic-websocket.yang').bind({
 
 function connect(remote) {
   const WebSocket = this.use('ws:socket')
-  const connections = this.use('connections', new Map)
   let { uri, socket, port, hostname, query } = remote
   let { retry, max } = query
+  if (typeof retry === 'boolean')
+    retry = 100
   if (!socket) {
+    this.info(`connecting to ${uri}`);
     socket = new WebSocket(uri)
     socket.on('connect', () => {
       this.info(`connected to ${uri}...`)
@@ -26,10 +28,12 @@ function connect(remote) {
       if (socket.closing || !retry) {
         return this.info(`disconnected from ${uri}`)
       }
+      //console.log(remote[Symbol.for('property')].in('query').set({ retry: true }))
+      this.info(`reconnecting to ${uri} in ${retry}ms...`, remote.query)
       this.after(retry, max)
         .then(retry => {
-          this.info(`reconnecting to ${uri}...`)
-          remote = Object.assign({}, remote, { query: { retry } })
+          remote = Object.assign({}, remote, { uri: undefined, query: { retry } })
+          this.info(`reconnecting to ${uri} after ${retry}ms...`, retry)
           this.feed('ws:remote', remote)
         })
     })
@@ -40,13 +44,14 @@ function connect(remote) {
 function listen(local) {
   const Server = this.use('ws:server')
   let { server, uri, protocol, hostname: host, port, path } = local
+  this.info(`listening on ${uri}`);
   if (server) {
     server = new Server({ server })
     this.info('using existing server instance')
     this.send('ws:server', server)
   } else {
     server = new Server({ host, port, path })
-    this.info(`listening on ${uri}`)
+    console.log(`listening on ${uri} with ${host}:${port}/${path}`)
     this.send('ws:server', server)
   }
   server.on('connection', socket => {

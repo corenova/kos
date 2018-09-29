@@ -1,10 +1,12 @@
 'use strict';
 
-const { Component, Reaction, Reducer }  = require('./lib')
+const { Interface, Component, Channel, Reaction, Reducer } = require('./lib')
 const { Property } = require('yang-js')
 
 module.exports = require('./kinetic-object-swarm.yang').bind({
   'feature(url)': () => require('url'),
+  'feature(channel)': () => Channel,
+  'feature(interface)': () => Interface,
   
   'extension(component)': () => {
     return {
@@ -22,7 +24,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         uses:            '0..n',
         'kos:extends':   '0..n',
         'kos:reaction':  '0..n',
-        'kos:reduce':    '0..n'
+        'kos:reduces':   '0..n'
       },
       target: {
         module: '0..n'
@@ -37,7 +39,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           for (let node of this.nodes) {
             switch (node.kind) {
             case 'kos:reaction':
-            case 'kos:reduce':
+            case 'kos:reduces':
               node.eval(self, ctx)
             }
           }
@@ -45,7 +47,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           for (let node of this.nodes) {
             switch (node.kind) {
             case 'kos:reaction': break;
-            case 'kos:reduce':
+            case 'kos:reduces':
               node = node.clone()
               delete node.binding
               new Property(node.tag, node).join(self);
@@ -96,7 +98,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       }
     }
   },
-  'extension(reduce)': () => {
+  'extension(reduces)': () => {
     return {
       scope: {
         description:   '0..1',

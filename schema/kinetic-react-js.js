@@ -32,7 +32,7 @@ function initialize(component) {
   const { state, setState } = component
   
   this.send('react:setter', setState.bind(component))
-  this.save(state) // update initial state
+  //this.save(state) // update initial state
 
   // override component to compute 'state' from this
   Object.defineProperty(component, 'state', {

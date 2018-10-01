@@ -99,8 +99,11 @@ function trigger() {
   this.send('react:form-action', this.state)
 }
 
-function clear(keys) {
+function clear(component, keys) {
+  const dom = this.use('react:dom')
+  const form = dom.findDOMNode(component)
   const { state } = this
+  form.reset()
   this.debug('clearing form state', keys)
   this.clear(...keys)
 }

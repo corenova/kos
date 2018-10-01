@@ -113,7 +113,11 @@ module kinetic-react-js {
       }
     }
     kos:reaction clear {
+      if-feature react:dom;
       input {
+        kos:flow react:component {
+          require-instance true;
+        }
         kos:flow react:form-clear;
       }
     }

@@ -66,8 +66,8 @@ function observe(component) {
   component.send = this.send.bind(this)
 }
 
-function mount()   { this.join(this.root) }
-function unmount() { this.leave(this.root) }
+function mount()   {  }
+function unmount() { this.send('react:mounted', null) }
 
 function applyState(state, setter) { setter(state) }
 

@@ -60,6 +60,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         return self
       },
       construct(parent, ctx) {
+        // TODO: we should skip unless parent is a kos stream
         return new Component(this).join(parent)
       }
     }

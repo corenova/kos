@@ -80,6 +80,9 @@ module kinetic-react-js {
       input {
         kos:flow react:unmounting;
       }
+      output {
+        kos:flow react:mounted;
+      }
     }
     kos:reaction applyState {
       input {

@@ -47,7 +47,12 @@ function sync(connection) {
   const Interface = this.use('kos:interface')
   const { uri, socket, server } = connection
   // create a temporary channel to exchange personas
-  let sync = new Channel(socket, this)
+  let sync = new Channel(socket, this.root)
+  this.root.pipe(sync)
+  sync.pipe(this.root)
+  return
+
+  // TODO: later...
   let mine = Yang.module.map(m => m.tag)
   let deps = new Map
   let pulse = this.create('kos:persona', this.root)

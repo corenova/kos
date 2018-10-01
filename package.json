@@ -6,7 +6,6 @@
     "kos": "./bin/kos.js"
   },
   "main": "index.js",
-  "browser": "browser.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/corenova/kos.git"
@@ -60,7 +59,11 @@
     "test": "mocha"
   },
   "yang": {
-    "paths": [ ".", "./schema", "yang-js" ],
+    "paths": [
+      ".",
+      "./schema",
+      "yang-js"
+    ],
     "resolve": {
       "kinetic-object-swarm": "./kinetic-object-swarm.js",
       "kinetic-console": "./schema/kinetic-console.js",
@@ -88,7 +91,7 @@
     "delegates": "^1.0.0",
     "treeify": "^1.0.1",
     "uuid": "^3.0.1",
-    "yang-js": "^0.17.11"
+    "yang-js": "^0.17.13"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",

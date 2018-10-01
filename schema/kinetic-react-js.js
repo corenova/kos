@@ -36,8 +36,8 @@ function initialize(component) {
 
   // override component to compute 'state' from this
   Object.defineProperty(component, 'state', {
-    get()    { return this.state },
-    set(obj) { this.state = obj }
+    get: () => { return this.state },
+    set: (obj) => { this.state = obj }
   })
   // override component setState to update this state
   component.setState = this.save.bind(this)

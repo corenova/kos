@@ -3,10 +3,6 @@
 require('yang-js')
 
 module.exports = require('./kinetic-network.yang').bind({
-  'feature(net:net)':    () => require('net'),
-  'feature(net:socket)': () => require('net').Socket,
-  'feature(net:server)': () => require('net').Server,
-
   '/net:topology/remote': {
     active() {
       const uri = this.get('../uri')

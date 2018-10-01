@@ -3,9 +3,6 @@
 require('yang-js')
 
 module.exports = require('./kinetic-websocket.yang').bind({
-  'feature(ws:socket)': () => require('simple-websocket'),
-  'feature(ws:server)': () => require('simple-websocket/server'),
-
   // Bind Reactions
   connect, listen
 })

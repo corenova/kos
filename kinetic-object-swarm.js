@@ -4,6 +4,8 @@ const Yang = require('yang-js')
 
 const { Generator, Channel, Reaction, Reducer, Neural } = require('./lib')
 
+const assert = require('assert')
+
 module.exports = require('./kinetic-object-swarm.yang').bind({
   'feature(url)': () => require('url'),
   'feature(channel)': () => Channel,
@@ -234,6 +236,58 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         from.nodes.forEach(n => this.parent.merge(n, { replace: true }))
         if (!this.parent.binding)
           this.parent.bind(from.binding)
+      }
+    }
+  },
+  'extension(array)': function() {
+    return {
+      scope: {
+        config:             '0..1',
+        description:        '0..1',
+        'if-feature':       '0..n',
+        'max-elements':     '0..1',
+        'min-elements':     '0..1',
+        must:               '0..n',
+        'ordered-by':       '0..1',
+        reference:          '0..1',
+        status:             '0..1',
+        type:               '0..1',
+        units:              '0..1',
+        when:               '0..1'
+      },
+      target: {
+        augment:   '0..n',
+        container: '0..n',
+        grouping:  '0..n',
+        input:     '0..n',
+        list:      '0..n',
+        module:    '0..n',
+        notification: '0..n',
+        output:    '0..n',
+        submodule: '0..n'
+      },
+      predicate(data=[]) {
+        assert(data instanceof Array, "data must contain an Array")
+      },
+      transform(data, ctx) {
+        if (!data) {
+          data = []
+          for (let expr of this.exprs)
+            data = expr.eval(data, ctx)
+          return undefined
+        }
+        if (!(data instanceof Array)) data = [ data ]
+        data = data.filter(Boolean)
+        for (let expr of this.exprs) {
+          if (expr.kind === 'type') continue
+          data = expr.eval(data, ctx)
+        }
+        if (this.type)
+          data = this.type.apply(data, ctx)
+        return data
+      },
+      construct(data={}, ctx={}) {
+        return new Property(this.datakey, this).join(data, ctx.state)
       }
     }
   }

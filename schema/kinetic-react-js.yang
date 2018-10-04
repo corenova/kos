@@ -35,21 +35,12 @@ module kinetic-react-js {
   grouping updating;
   grouping updated;
   grouping receive;
-  grouping event {
-    
-  }
-  grouping state {
-    
-  }
-  grouping form-action {
-    
-  }
-  grouping form-clear {
-    
-  }
-  grouping history {
-    
-  }
+  grouping event;
+  grouping state;
+  grouping action;
+  grouping form-action;
+  grouping form-clear;
+  grouping history;
 
   kos:generator Component {
     input {

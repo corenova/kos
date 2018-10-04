@@ -36,6 +36,9 @@ module kinetic-object-swarm {
   extension extends {
     argument "target-component";
   }
+  extension array {
+    argument "array-name";
+  }
   /*
    * Dependencies
    */ 

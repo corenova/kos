@@ -92,6 +92,7 @@ module kinetic-react-js {
       }
       output {
         kos:flow react:state; // FUTURE
+        kos:flow react:action;
       }
     }
   }

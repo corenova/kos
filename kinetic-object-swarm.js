@@ -97,8 +97,8 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           throw this.error('unable to resolve every feature dependency')
       },
       transform(self) {
-        const { consumes, produces } = self
-        this.input  && this.input.exprs.forEach(expr => expr.apply(consumes))
+        const { consumes, produces, persists } = self
+        this.input  && this.input.exprs.forEach(expr => expr.apply(consumes, persists))
         this.output && this.output.exprs.forEach(expr => expr.apply(produces))
         
         let features = this.match('if-feature','*') || []
@@ -183,11 +183,14 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         if (!schema)
           throw this.error(`unable to resolve ${this.tag} grouping definition`)
       },
-      transform(data) {
+      transform(data, persists) {
         let { 'require-instance': required } = this
         let schema = this.lookup('grouping', this.tag)
-        schema.sticky = required && required.tag
         if (data instanceof Set) data.add(schema)
+        if (persists instanceof Set) {
+          if (required && required.tag)
+            persists.add(schema)
+        }
         return data
       }
     }
@@ -209,12 +212,14 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         if (!schema)
           throw this.error(`unable to resolve ${this.tag} data node`)
       },
-      transform(data) {
+      transform(data, persists) {
         let { 'require-instance': required } = this
         let schema = this.locate(this.tag)
-        schema.sticky = required && required.tag
-        this.debug(`XXX - kos:node ${this.tag} is sticky? ${schema.sticky}`)
         if (data instanceof Set) data.add(schema)
+        if (persists instanceof Set) {
+          if (required && required.tag)
+            persists.add(schema)
+        }
         return data
       }
     }

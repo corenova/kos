@@ -9,7 +9,6 @@ module.exports = require('./kinetic-link.yang').bind({
 
 function connect(remote) {
   const { protocol } = remote
-
   switch (protocol) {
   case 'ws':
   case 'wss':
@@ -26,7 +25,6 @@ function connect(remote) {
 
 function listen(local) {
   const { protocol } = local
-
   switch (protocol) {
   case 'ws':
   case 'wss':

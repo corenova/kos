@@ -89,7 +89,7 @@ function updateState(input) {
     value = target.checked
   }
   this.save(objectify(name, value))
-  this.send('kos:action', { name, value })
+  this.send('react:action', { name, value })
   
   function objectify(key, val) {
     let keys = key.split('/')

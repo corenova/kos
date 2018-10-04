@@ -46,6 +46,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       event.stopPropagation()
       this.send('react:event', { topic, data, event })
     }
+    target.trigger = (topic, data) => this.send('react:event', { topic, data })
     
     this.on('save', obj => this.send('react:state', obj))
     
@@ -77,6 +78,8 @@ function applyState(state, setter) { setter(state) }
 
 function updateState(input) {
   const { topic, data, event } = input;
+  if (!event) return
+  
   const { target } = event
   let { type, name=topic, value } = target
   

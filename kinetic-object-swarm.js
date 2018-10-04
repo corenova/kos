@@ -213,6 +213,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         let { 'require-instance': required } = this
         let schema = this.locate(this.tag)
         schema.sticky = required && required.tag
+        this.debug(`XXX - kos:node ${this.tag} is sticky? ${schema.sticky}`)
         if (data instanceof Set) data.add(schema)
         return data
       }

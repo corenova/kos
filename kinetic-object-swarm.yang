@@ -15,8 +15,8 @@ module kinetic-object-swarm {
   /*
    * Custom YANG Language Extensions
    */
-  extension component {
-    argument "component-name";
+  extension generator {
+    argument "generator-name";
   }
   extension reaction {
     argument "function-name";
@@ -111,7 +111,7 @@ module kinetic-object-swarm {
   grouping stream {
     // define Stream object schema
   }
-  grouping reduction {
+  grouping state {
     
   }
   grouping debug {

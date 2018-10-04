@@ -13,11 +13,21 @@ module kinetic-react-js {
   feature router {
     reference "npm://react-router";
   }
+  extension component {
+    
+  }
   /*
    * Groupings
    */
   grouping component {
-    
+    container props;
+    container state;
+    // action setState;
+    // action componentWillMount;
+    // action componentDidMount;
+    // action componentWillUnmount;
+    // action componentDidUpdate;
+    // action componentWillReceiveProps;
   }
   grouping setter;
   grouping mounting;
@@ -41,36 +51,26 @@ module kinetic-react-js {
   grouping history {
     
   }
-  
-  kos:component Component {
+
+  kos:generator Component {
+    input {
+      kos:flow react:component;
+    }
+    output {
+      kos:flow react:component;
+      kos:flow react:setter;
+      kos:flow react:mounting;
+      kos:flow react:mounted;
+      kos:flow react:unmounting;
+      kos:flow react:updating;
+      kos:flow react:updated;
+      kos:flow react:receive;
+      kos:flow react:event;
+    }
+    
     /*
      * Kinetic Reactions
      */
-    kos:reaction initialize {
-      input {
-        kos:flow react:component;
-      }
-      output {
-        kos:flow react:setter;
-        kos:flow react:mounting;
-        kos:flow react:mounted;
-        kos:flow react:unmounting;
-        kos:flow react:updating;
-        kos:flow react:updated;
-        kos:flow react:receive;
-        kos:flow react:event;
-      }
-    }
-    kos:reaction observe {
-      input {
-        kos:flow react:component;
-        kos:flow react:mounted;
-      }
-      output {
-        kos:flow react:event;
-        // should be augmented further with other topics...
-      }
-    }
     kos:reaction mount {
       input {
         kos:flow react:mounting;
@@ -100,11 +100,11 @@ module kinetic-react-js {
         kos:flow react:event;
       }
       output {
-        kos:flow react:state;
+        kos:flow react:state; // FUTURE
       }
     }
   }
-  kos:component Form {
+  kos:generator Form {
     kos:extends react:Component;
 
     kos:reaction trigger {

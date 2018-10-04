@@ -4,10 +4,56 @@ require('yang-js')
 
 module.exports = require('./kinetic-react-js.yang').bind({
 
-  // Bind Components
+  // Bind Generator
+  Component(target) {
+    const lifecycle = {
+      componentWillMount:        "react:mounting",
+      componentDidMount:         "react:mounted",
+      componentWillUnmount:      "react:unmounting",
+      componentWillUpdate:       "react:updating",
+      componentDidUpdate:        "react:updated",
+      componentWillReceiveProps: "react:receive"
+    }
+    const { state, setState } = target
+    
+    //this.save(state) // update initial state
+
+    // override target to compute 'state' from this
+    Object.defineProperty(target, 'state', {
+      get: () => { return this.state },
+      set: (obj) => { this.state = obj }
+    })
+    // override target setState to update this state
+    target.setState = this.save.bind(this)
+
+    // allow all lifecycle events to emit an internal event
+    for (let event in lifecycle) {
+      let f = target[event], label = lifecycle[event]
+      target[event] = (...args) => {
+        this.send(label, args)
+        if (f) return f.apply(target, args)
+        return target
+      }
+    }
+
+    // attach a convenience function to observe and respond to synthetic events
+    target.observe = (...args) => {
+      const event = args.pop()
+      const [ topic, ...data ] = args
+      event.stopPropagation()
+      this.send('react:event', { topic, data, event })
+    }
+    
+    this.on('save', obj => this.send('react:state', obj))
+    
+    this.send('react:setter', setState.bind(target))
+    this.send('react:component', target)
+  }
+  
+}).bind({
+  
+  // Bind Generator reactions
   Component: {
-    initialize,
-    observe,
     mount,
     unmount,
     applyState,
@@ -18,63 +64,19 @@ module.exports = require('./kinetic-react-js.yang').bind({
     trigger,
     clear
   }
+  
 })
 
-function initialize(component) {
-  const lifecycle = {
-    componentWillMount:        "react:mounting",
-    componentDidMount:         "react:mounted",
-    componentWillUnmount:      "react:unmounting",
-    componentWillUpdate:       "react:updating",
-    componentDidUpdate:        "react:updated",
-    componentWillReceiveProps: "react:receive"
-  }
-  const { state, setState } = component
-  
-  this.send('react:setter', setState.bind(component))
-  //this.save(state) // update initial state
-
-  // override component to compute 'state' from this
-  Object.defineProperty(component, 'state', {
-    get: () => { return this.state },
-    set: (obj) => { this.state = obj }
-  })
-  // override component setState to update this state
-  component.setState = this.save.bind(this)
-
-  // allow all lifecycle events to emit an internal event
-  for (let event in lifecycle) {
-    let f = component[event], label = lifecycle[event]
-    component[event] = (...args) => {
-      this.send(label, args)
-      if (f) return f.apply(component, args)
-      return component
-    }
-  }
-  this.on('save', obj => this.send('react:state', obj))
-}
-
-function observe(component) {
-  // attach a convenience function to observe and respond to synthetic events
-  component.observe = (...args) => {
-    const event = args.pop()
-    const [ topic, ...data ] = args
-    event.stopPropagation()
-    this.send('react:event', event)
-    topic && this.send(topic, ...data)
-  }
-  component.send = this.send.bind(this)
-}
-
-function mount()   {  }
+function mount() { }
 function unmount() { this.send('react:mounted', null) }
 
 function applyState(state, setter) { setter(state) }
 
-function updateState(event) {
-  //const [ topic, merge ] = this.get('topic', 'module/deepmerge')
+function updateState(input) {
+  const { topic, data, event } = input;
   const { target } = event
-  let { type, name, value } = target
+  let { type, name=topic, value } = target
+  
   this.debug(event, target)
   if (!name) return
   if (type === 'checkbox') {

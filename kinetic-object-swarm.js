@@ -36,21 +36,21 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         this.once('compile:after', () => {
           if (this.input.nodes.length || this.output.nodes.length)
             throw this.error('cannot contain data nodes in generator input/output')
+          // create core reaction from itself...
+          const ext = this.lookup('extension', 'kos:reaction')
+          const core = new Yang('kos:reaction', 'core', ext).bind(this.binding)
+          for (let expr of this.exprs) {
+            if (expr.kind in ext.scope) {
+              core.merge(expr.clone())
+            }
+          }
+          this.merge(core, { replace: true })
         })
         let deps = this.match('if-feature','*')
         if (deps && !deps.every(d => this.lookup('feature', d.tag)))
           throw this.error('unable to resolve every feature dependency')
       },
       transform(self, ctx={}) {
-        // create core reaction from itself...
-        const ext = this.lookup('extension', 'kos:reaction')
-        const core = new Yang('kos:reaction', 'core', ext).bind(this.binding)
-        for (let expr of this.exprs) {
-          if (expr.kind in ext.scope) {
-            core.merge(expr.clone())
-          }
-        }
-        self.core = new Reaction(core)
         let state = {}
         for (let expr of this.exprs) {
           switch (expr.kind) {

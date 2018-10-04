@@ -15,14 +15,17 @@ module.exports = require('./kinetic-react-js.yang').bind({
       componentWillReceiveProps: "react:receive"
     }
     const { state, setState } = target
-    
-    //this.save(state) // update initial state
+
+    // override target setState to update this state
+    if (!Object.keys(this.state))
+      this.save(state) // update initial state
 
     // override target to compute 'state' from this
     Object.defineProperty(target, 'state', {
       get: () => { return this.state },
       set: (obj) => { this.state = obj }
     })
+    
     // override target setState to update this state
     target.setState = this.save.bind(this)
 

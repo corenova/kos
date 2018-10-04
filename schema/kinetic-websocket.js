@@ -11,8 +11,6 @@ function connect(remote) {
   const WebSocket = this.use('ws:socket')
   let { uri, socket, port, hostname, query } = remote
   let { retry, max } = query
-  if (typeof retry === 'boolean')
-    retry = 100
   if (!socket) {
     this.info(`connecting to ${uri}`);
     socket = new WebSocket(uri)
@@ -25,6 +23,7 @@ function connect(remote) {
       if (socket.closing || !retry) {
         return this.info(`disconnected from ${uri}`)
       }
+      if (typeof retry !== 'number') retry = 100
       //console.log(remote[Symbol.for('property')].in('query').set({ retry: true }))
       this.info(`reconnecting to ${uri} in ${retry}ms...`, remote.query)
       this.after(retry, max)

@@ -138,7 +138,6 @@ module kinetic-network {
       }
     }
     anydata socket {
-      if-feature net:socket;
       //config false;
     }
     anydata stream {

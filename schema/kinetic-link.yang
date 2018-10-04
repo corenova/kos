@@ -51,7 +51,7 @@ module kinetic-link {
   }
   kos:reaction sync {
     if-feature kos:channel;
-    if-feature kos:interface;
+    //if-feature kos:interface;
     input {
       kos:flow net:connection;
     }

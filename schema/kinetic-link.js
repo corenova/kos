@@ -42,7 +42,7 @@ function listen(local) {
 
 function sync(connection) {
   const Channel = this.use('kos:channel')
-  const Interface = this.use('kos:interface')
+  //const Interface = this.use('kos:interface')
   const { uri, socket, server } = connection
   // create a temporary channel to exchange personas
   let sync = new Channel(socket, this.root)

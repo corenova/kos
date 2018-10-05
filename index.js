@@ -1,13 +1,8 @@
-const { Agent, Persona, Interface, Reaction, Context, Pulse } = require('./lib')
+'use strict';
 
-const schema = require('./kinetic-object-swarm')
-const kos = new Agent(schema)
+const { Actor } = require('./lib');
 
-kos.Agent     = Agent
-kos.Persona   = Persona
-kos.Interface = Interface
-kos.Reaction  = Reaction
-kos.Context   = Context
-kos.Pulse     = Pulse
+const schema = require('./kinetic-object-swarm');
+const kos = new Actor(schema);
 
 global.kos = module.exports = kos['default'] = kos.kos = kos

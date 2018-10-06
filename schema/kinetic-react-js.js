@@ -40,6 +40,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
 
     // attach a convenience function to observe and respond to synthetic events
     target.observe = (event) => {
+      event.stopPropagation()
       this.send('react:event', event)
     }
     target.trigger = (topic, data) => {

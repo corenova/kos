@@ -36,14 +36,7 @@ module kinetic-react-js {
   grouping updated;
   grouping receive;
   grouping state;
-  grouping event {
-    container target {
-      leaf name {
-        type string;
-      }
-      anydata value;
-    }
-  }
+  grouping event;
   grouping trigger {
     leaf topic {
       type kos:topic;

@@ -67,6 +67,7 @@ module kinetic-react-js {
       kos:flow react:updated;
       kos:flow react:receive;
       kos:flow react:event;
+      kos:flow react:trigger;
       kos:flow react:state;
     }
 

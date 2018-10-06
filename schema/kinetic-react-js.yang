@@ -69,7 +69,7 @@ module kinetic-react-js {
       kos:flow react:event;
       kos:flow react:state;
     }
-    
+
     /*
      * Kinetic Reactions
      */

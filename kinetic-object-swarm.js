@@ -41,19 +41,18 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
           if ((this.input && this.input.nodes.length) || (this.output && this.output.nodes.length))
             throw this.error('cannot contain data nodes in generator input/output')
           
-          const core = this.match('kos:reaction', 'core') || new Yang('kos:reaction', 'core', reaction)
-          if (this.binding) core.bind(this.binding)
+          const core = new Yang('kos:reaction', 'core', reaction).bind(this.binding)
           core.extends(this.input, this.output, this['if-feature'])
-          delete this.input
-          delete this.output
-          this.merge(core, { replace: true })
+          this.update(core)
+          this.removes(this.input, this.output)
           
-          const state = this.match('container', 'state') || new Yang('container', 'state', container)
-          for (let kw in reaction.scope) {
-            state.extends(this[kw])
-            delete this[kw]
-          }
-          this.merge(state, { replace: true })
+          const state = new Yang('container', 'state', container)
+          const nodes = this.nodes.filter(n => {
+            return (n.kind in container.scope) && (n.tag !== 'state')
+          })
+          state.extends(nodes)
+          this.removes(nodes)
+          this.update(state)
         })
         let deps = this.match('if-feature','*')
         if (deps && !deps.every(d => this.lookup('feature', d.tag)))

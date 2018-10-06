@@ -35,10 +35,21 @@ module kinetic-react-js {
   grouping updating;
   grouping updated;
   grouping receive;
-  grouping event;
   grouping state;
-  grouping action;
-  grouping form-action;
+  grouping event {
+    container target {
+      leaf name {
+        type string;
+      }
+      anydata value;
+    }
+  }
+  grouping trigger {
+    leaf topic {
+      type kos:topic;
+    }
+    anydata data;
+  }
   grouping form-clear;
   grouping history;
 
@@ -86,28 +97,19 @@ module kinetic-react-js {
         }
       }
     }
-    kos:reaction updateState {
+  }
+  kos:generator Form {
+    kos:extends react:Component;
+
+    kos:reaction saveFormData {
       input {
         kos:flow react:event;
       }
       output {
         kos:flow react:state; // FUTURE
-        kos:flow react:action;
       }
     }
-  }
-  kos:generator Form {
-    kos:extends react:Component;
-
-    kos:reaction trigger {
-      input {
-        kos:flow react:updated;
-      }
-      output {
-        kos:flow react:form-action;
-      }
-    }
-    kos:reaction clear {
+    kos:reaction clearForm {
       if-feature react:dom;
       input {
         kos:flow react:component {

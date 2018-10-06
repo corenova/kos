@@ -81,6 +81,9 @@ module kinetic-object-swarm {
   typedef unique-identifier {
     type yang:uuid;
   }
+  typedef topic {
+    type string; // TODO: something better...
+  }
   typedef reaction-identifier {
     description
       "A reference to a reaction node in the data model.";

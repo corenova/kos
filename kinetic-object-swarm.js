@@ -36,39 +36,33 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       },
       resolve() {
         this.once('compile:after', () => {
-          if (this.input.nodes.length || this.output.nodes.length)
+          const reaction = this.lookup('extension', 'kos:reaction')
+          const container = this.lookup('extension', 'container')
+          if ((this.input && this.input.nodes.length) || (this.output && this.output.nodes.length))
             throw this.error('cannot contain data nodes in generator input/output')
-          // create core reaction from itself...
-          const ext = this.lookup('extension', 'kos:reaction')
-          const core = new Yang('kos:reaction', 'core', ext).bind(this.binding)
-          for (let expr of this.exprs) {
-            if (expr.kind in ext.scope) {
-              core.merge(expr.clone())
-            }
-          }
+          
+          const core = this.match('kos:reaction', 'core') || new Yang('kos:reaction', 'core', reaction)
+          if (this.binding) core.bind(this.binding)
+          core.extends(this.input, this.output, this['if-feature'])
+          delete this.input
+          delete this.output
           this.merge(core, { replace: true })
+          
+          const state = this.match('container', 'state') || new Yang('container', 'state', container)
+          for (let kw in reaction.scope) {
+            state.extends(this[kw])
+            delete this[kw]
+          }
+          this.merge(state, { replace: true })
         })
         let deps = this.match('if-feature','*')
         if (deps && !deps.every(d => this.lookup('feature', d.tag)))
           throw this.error('unable to resolve every feature dependency')
       },
       transform(self, ctx={}) {
-        let state = {}
         for (let expr of this.exprs) {
-          switch (expr.kind) {
-          case 'input':
-          case 'output':
-            continue;
-          case 'kos:reaction':
-            self = expr.eval(self, ctx);
-            break;
-          case 'kos:reduces':
-            self = expr.eval(self, ctx);
-          default:
-            state = expr.eval(state, ctx);
-          }
+          self = expr.eval(self, ctx);
         }
-        self.state = state
         return self
       },
       construct(parent, ctx) {

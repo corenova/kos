@@ -106,38 +106,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         return parent
       }
     }
-  },
-  'extension(reduces)': () => {
-    return {
-      scope: {
-        description:   '0..1',
-        'if-feature':  '0..n',
-        input:         '1',
-        reference:     '0..1',
-        status:        '0..1'
-      },
-      resolve() {
-        if (this.input.nodes.length)
-          throw this.error('cannot contain data nodes in reducer input')
-        let deps = this.match('if-feature','*')
-        if (deps && !deps.every(d => this.lookup('feature', d.tag)))
-          throw this.error('unable to resolve every feature dependency')
-      },
-      transform(self) {
-        if (self instanceof Reducer) {
-          const { consumes } = self
-          this.input.exprs.forEach(expr => expr.apply(consumes))
-
-          let features = this.match('if-feature','*') || []
-          self.depends = features.map(f => this.lookup('feature', f.tag))
-        }
-        return self
-      },
-      construct(parent, ctx) {
-        return new Reducer(this).join(parent)
-      }
-    }
-  },
+  }
   'extension(topic)': () => {
     return {
       scope: {

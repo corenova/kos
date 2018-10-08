@@ -21,9 +21,6 @@ module kinetic-object-swarm {
   extension reaction {
     argument "function-name";
   }
-  extension reduces {
-    argument "reducer-name";
-  }
   extension topic {
     argument "topic-name";
   }

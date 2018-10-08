@@ -106,7 +106,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         return parent
       }
     }
-  }
+  },
   'extension(topic)': () => {
     return {
       scope: {

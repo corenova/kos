@@ -4,7 +4,84 @@ module kinetic-render {
   description
     "reactions to visually render reactors";
 
-  import kinetic-object-swarm { prefix kos; }
+  feature theme{
+    
+  }
+  feature treeify {
+    reference "npm://treeify";
+  }
   
+  import kinetic-object-swarm { prefix kos; }
+
+  grouping info {
+    container source;
+    container output;
+  }
+  grouping output {
+    
+  }
+  grouping reactor {
+    
+  }
+  grouping reactor-tree {
+    
+  }
+
+  container theme {
+    grouping tree-item {
+      leaf top;
+      leaf item;
+      leaf last;
+      leaf mid1;
+      leaf mid2;
+      leaf mid3;
+      leaf one;
+      leaf dash;
+    }
+    container BOX {
+      container L {
+        uses tree-item;
+      }
+      container R {
+        uses tree-item;
+      }
+      leaf nest;
+      leaf item;
+      leaf last;
+    }
+    leaf FUNC;
+    leaf SEP;
+  }
+
+  kos:reaction renderInfo {
+    input {
+      kos:flow render:info;
+    }
+    output {
+      kos:flow render:reactor;
+      kos:flow render:output;
+    }
+  }
+  kos:reaction renderModelAsTree {
+    if-feature render:theme;
+    if-feature render:treeify;
+    input {
+      kos:flow render:reactor;
+    }
+    output {
+      kos:flow render:reactor-tree;
+    }
+  }
+  kos:reaction outputModelTree {
+    input {
+      kos:flow render:output {
+        require-instance true;
+      }
+      kos:flow render:reactor-tree;
+    }
+    output {
+      // no output...
+    }
+  }
 
 }

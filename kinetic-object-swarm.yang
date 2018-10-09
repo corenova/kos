@@ -2,12 +2,12 @@ module kinetic-object-swarm {
   namespace "urn:ietf:params:xml:ns:yang:kinetic-object-swarm";
   prefix kos;
 
-  description
-    "The origin of chaos from which order is created.";
   organization
     "Corenova Technologies, Inc.";
+
   contact
     "Peter K. Lee <peter@corenova.com>";
+
   revision 2018-03-10 {
     description
       "Initial revision.";
@@ -15,46 +15,53 @@ module kinetic-object-swarm {
   /*
    * Custom YANG Language Extensions
    */
-  extension interface {
-    argument "interface-name";
+  extension generator {
+    argument "generator-name";
   }
   extension reaction {
     argument "function-name";
   }
-  extension data {
-    argument "grouping-identifier";
+  extension topic {
+    argument "topic-name";
+  }
+  extension flow {
+    argument "target-topic-identifier";
   }
   extension node {
-    argument "target-node";
+    argument "target-node-identifier";
   }
   extension extends {
-    argument "target-interface";
+    argument "target-component";
   }
-
+  extension array {
+    argument "array-name";
+  }
   /*
    * Dependencies
-   */
-  import ietf-yang-types { prefix yang; }
-  import ietf-inet-types { prefix inet; }
-
+   */ 
+  import ietf-yang-types {
+    prefix yang;
+  }
   /*
    * Features
    */
   feature url {
     reference "nodejs://url";
   }
-  feature stream {
-    reference "nodejs://stream";
-  }
   feature net {
     reference "nodejs://net";
   }
-
+  feature channel {
+    reference "kos://channel";
+  }
+  feature interface {
+    reference "kos://interface";
+  }
   /*
    * Identities
    */
   identity protocol {
-    description "base identity for all protocols";
+    description "base identity for protocols";
   }
   identity kos {
     base protocol;
@@ -62,12 +69,17 @@ module kinetic-object-swarm {
   identity nodejs {
     base protocol;
   }
-
   /*
    * Type Definitions
    */
+  typedef identifier {
+    type yang:yang-identifier;
+  }
   typedef unique-identifier {
     type yang:uuid;
+  }
+  typedef topic {
+    type string; // TODO: something better...
   }
   typedef reaction-identifier {
     description
@@ -76,50 +88,66 @@ module kinetic-object-swarm {
       require-instance true;
     }
   }
+  
   /*
-   * Groupings
+   * Kinetic topics
    */
-  grouping reactor {
-    leaf id;
+  grouping process {
     
   }
-  grouping resource {
-    leaf uri {
-      type inet:uri;
+  grouping program {
+    
+  }
+  grouping schema {
+    
+  }
+  grouping persona {
+    leaf id;
+    leaf uri;
+    list layers {
+      
     }
-    leaf protocol {
-      type identityref {
-        base kos:protocol;
-      }
-    }
-    leaf hostname {
-      type inet:host;
-      default '0.0.0.0';
-    }
-    leaf port {
-      type inet:port-number;
-    }
-    leaf path {
-      type string;
-    }
-    container query;
+  }
+  grouping model {
+    
   }
   grouping stream {
     // define Stream object schema
   }
+  grouping state {
+    
+  }
+  grouping debug {
+    
+  }
+  grouping info {
+    
+  }
+  grouping warn {
+    
+  }
+  grouping log {
+    
+  }
+  grouping error {
+    leaf message {
+      type string;
+    }
+    anydata origin;
+  }
   grouping node-list {
     list node {
-
+      
     }
   }
   grouping link-list {
     list link {
-
+      
     }
   }
   grouping flow {
     leaf name {
-      type yang:yang-identifier;
+      type kos:identifier;
     }
     leaf-list steps {
       type kos:reaction-identifier {
@@ -137,7 +165,6 @@ module kinetic-object-swarm {
       uses kos:flow;
     }
   }
-
   /*
    * Operational state data nodes
    */
@@ -145,16 +172,15 @@ module kinetic-object-swarm {
     config false;
     description
       "Contains KOS network topology information.";
-    leaf checksum;
     uses node-list;
     uses link-list;
     uses flow-list;
   }
-
-  notification error {
+  // notification error {
+  container error {
+    leaf origin;
     leaf message;
   }
-
   notification log {
     leaf level;
     leaf message;

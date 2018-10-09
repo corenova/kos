@@ -1,0 +1,220 @@
+module kinetic-network {
+  prefix net;
+  
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  /*
+   * Features
+   */
+  feature net {
+    reference "nodejs://net";
+  }
+  feature socket {
+    reference "nodejs://net?Socket";
+  }
+  feature server {
+    reference "nodejs://net?Server";
+  }
+  /*
+   * Identities
+   */
+  identity tcp {
+    base kos:protocol;
+  }
+  identity udp {
+    base kos:protocol;
+  }
+  identity unix {
+    base kos:protocol;
+  }
+  /*
+   * Type Definitions
+   */
+  typedef uri {
+    type inet:uri;
+  }
+  typedef connection-ref {
+    type leafref {
+      path "/net:session/connection/uri";
+    }
+  }
+  /*
+   * Groupings
+   */
+  grouping persist-options {
+    leaf retry {
+      type union {
+        type boolean;
+        type uint16;
+      }
+      default false;
+    }
+    leaf max {
+      type uint16;
+      units 'ms';
+      default 5000;
+    }
+    leaf repair {
+      type boolean;
+      default false;
+    }
+  }
+  grouping endpoint {
+    leaf protocol {
+      type identityref {
+        base kos:protocol;
+      }
+      default "tcp";
+      must ". = 'tcp' or . = 'udp' or . = 'unix'" {
+        error-message "A net protocol must be 'tcp' or 'udp' or 'unix'";
+      }
+    }
+    leaf hostname {
+      type inet:host;
+      default '0.0.0.0';
+    }
+    leaf port {
+      type inet:port-number;
+      default 12345;
+    }
+    leaf path {
+      type string;
+    }
+    leaf slashes {
+      type boolean;
+      default true;
+    }
+    container query {
+      uses persist-options;
+    }
+    // below placed last for a reason...
+    leaf uri {
+      if-feature kos:url;
+      type inet:uri;
+    }
+  }
+  grouping remote {
+    uses net:endpoint;
+    anydata socket {
+      if-feature net:socket;
+    }
+  }
+  grouping local {
+    uses net:endpoint;
+    anydata server {
+      if-feature net:server;
+    }
+  }
+  grouping request {
+    uses net:remote {
+      augment "query" {
+        leaf single {
+          type boolean;
+          default true;
+          description
+            "denote that the request will end connection after a single transaction";
+        }
+      }
+    }
+    anydata data;
+  }
+  grouping response {
+    uses net:remote;
+    anydata data;
+  }
+  grouping connection {
+    leaf uri {
+      type inet:uri;
+      mandatory true;
+    }
+    leaf server {
+      if-feature net:server;
+      type leafref {
+        path "/net:topology/local/uri";
+      }
+    }
+    anydata socket {
+      //config false;
+    }
+    anydata stream {
+      if-feature kos:stream;
+      //config false;
+    }
+  }
+  grouping server {
+    
+  }
+  /*
+   * Module Configuration and State
+   */
+  container topology {
+    config false;
+    list remote {
+      key uri;
+      uses net:remote;
+      leaf active {
+        config false;
+        type boolean;
+        default false;
+      }
+      max-elements 255;
+    }
+    list local {
+      key uri;
+      uses net:local;
+      leaf active {
+        config false;
+        type boolean;
+        default false;
+      }
+      leaf-list connections {
+        config false;
+        type net:connection-ref;
+      }
+      max-elements 10;
+    }
+  }
+  container session {
+    config false;
+    list connection {
+      key uri;
+      uses net:connection;
+    }
+  }
+  /*
+   * Kinetic Reactions
+   */
+  kos:reaction connect {
+    if-feature net:socket;
+    input {
+      kos:flow net:remote;
+    }
+    output {
+      kos:flow net:connection;
+      kos:flow net:remote;
+    }
+  }
+  kos:reaction request {
+    if-feature net:net;
+    input {
+      kos:flow net:request;
+    }
+    output {
+      kos:flow net:response;
+    }
+  }
+  kos:reaction listen {
+    if-feature net:server;
+    input {
+      kos:flow net:local;
+    }
+    output {
+      kos:flow net:connection;
+      kos:flow net:server;
+    }
+  }
+}

@@ -1,27 +1,48 @@
 {
   "name": "kos",
-  "version": "1.4.1",
+  "version": "2.0.6",
   "description": "A swarm intelligence framework for creating distributed data pipelines and autonomic neural networks",
   "bin": {
     "kos": "./bin/kos.js"
   },
   "main": "index.js",
-  "browser": "browser.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/corenova/kos.git"
   },
   "keywords": [
+    "action",
+    "actor",
     "adaptive",
+    "atomic",
+    "automata",
+    "autonomic",
+    "autonomy",
     "dataflow",
-    "react",
+    "datamodel",
+    "distributed",
+    "hive",
     "kinetic",
-    "stream",
+    "flow",
+    "interface",
+    "model",
+    "network",
+    "neural",
+    "neuron",
+    "p2p",
+    "persona",
+    "petri",
     "pipeline",
     "pipe",
-    "flow",
-    "action",
-    "transform"
+    "react",
+    "reaction",
+    "reactor",
+    "schema",
+    "state",
+    "stream",
+    "swarm",
+    "transform",
+    "transition"
   ],
   "author": "Peter K. Lee <peter@corenova.com>",
   "license": "Apache-2.0",
@@ -37,6 +58,29 @@
     "build": "npm run build:min",
     "test": "mocha"
   },
+  "yang": {
+    "paths": [
+      ".",
+      "./schema",
+      "yang-js"
+    ],
+    "resolve": {
+      "kinetic-object-swarm": "./kinetic-object-swarm.js",
+      "kinetic-console": "./schema/kinetic-console.js",
+      "kinetic-http": "./schema/kinetic-http.js",
+      "kinetic-link": "./schema/kinetic-link.js",
+      "kinetic-network": "./schema/kinetic-network.js",
+      "kinetic-node-js": "./schema/kinetic-node-js.js",
+      "kinetic-react-js": "./schema/kinetic-react-js.js",
+      "kinetic-render": "./schema/kinetic-render.js",
+      "kinetic-snmp": "./schema/kinetic-snmp.js",
+      "kinetic-timer": "./schema/kinetic-timer.js",
+      "kinetic-websocket": "./schema/kinetic-websocket.js",
+      "ietf-inet-types": "yang-js",
+      "ietf-yang-library": "yang-js",
+      "ietf-yang-types": "yang-js"
+    }
+  },
   "dependencies": {
     "circular-json": "^0.3.1",
     "colors": "^1.3.0",
@@ -47,7 +91,7 @@
     "delegates": "^1.0.0",
     "treeify": "^1.0.1",
     "uuid": "^3.0.1",
-    "yang-js": "^0.17.9"
+    "yang-js": "^0.17.23"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",
@@ -60,7 +104,7 @@
     "browserify": "^14.1.0",
     "minifyify": "^7.3.5",
     "mkdirp": "^0.5.1",
-    "mocha": "^3.2.0",
+    "mocha": "^5.2.0",
     "rimraf": "^2.6.1",
     "should": "^11.2.0"
   },

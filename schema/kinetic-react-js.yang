@@ -1,0 +1,148 @@
+module kinetic-react-js {
+  prefix react;
+
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  /*
+   * Features
+   */
+  feature dom {
+    reference "npm://react-dom";
+  }
+  feature router {
+    reference "npm://react-router";
+  }
+  extension component {
+    
+  }
+  /*
+   * Groupings
+   */
+  grouping component {
+    container state;
+    // action setState;
+    // action componentWillMount;
+    // action componentDidMount;
+    // action componentWillUnmount;
+    // action componentDidUpdate;
+    // action componentWillReceiveProps;
+  }
+  grouping setter;
+  grouping mounting;
+  grouping mounted;
+  grouping unmounting;
+  grouping updating;
+  grouping updated;
+  grouping receive;
+  grouping props;
+  grouping state;
+  grouping event;
+  grouping trigger {
+    leaf topic {
+      type kos:topic;
+    }
+    anydata data;
+  }
+  grouping form-clear;
+  grouping route {
+    container location {
+      leaf pathname {
+        type string;
+      }
+      leaf search {
+        type string;
+      }
+      leaf hash {
+        type string;
+      }
+      leaf key;
+      anydata state;
+    }
+    leaf action {
+      type enumeration {
+        enum PUSH;
+        enum REPLACE;
+        enum POP;
+      }
+    }
+  }
+
+  kos:generator Component {
+    input {
+      kos:flow react:component;
+    }
+    output {
+      kos:flow react:component;
+      kos:flow react:setter;
+      kos:flow react:mounting;
+      kos:flow react:mounted;
+      kos:flow react:unmounting;
+      kos:flow react:updating;
+      kos:flow react:updated;
+      kos:flow react:receive;
+      kos:flow react:event;
+      kos:flow react:trigger;
+      kos:flow react:props;
+      kos:flow react:state;
+    }
+
+    /*
+     * Kinetic Reactions
+     */
+    kos:reaction mount {
+      input {
+        kos:flow react:mounting;
+      }
+    }
+    kos:reaction unmount {
+      input {
+        kos:flow react:unmounting;
+      }
+      output {
+        kos:flow react:mounted;
+      }
+    }
+    kos:reaction history {
+      //if-feature react:router;
+      input {
+        kos:flow react:props;
+      }
+      output {
+        kos:flow react:route;
+      }
+    }
+    kos:reaction applyState {
+      input {
+        kos:flow react:state;
+        kos:flow react:setter {
+          require-instance true;
+        }
+        kos:flow react:mounted {
+          require-instance true;
+        }
+      }
+    }
+  }
+  kos:generator Form {
+    kos:extends react:Component;
+
+    kos:reaction saveFormData {
+      input {
+        kos:flow react:event;
+      }
+      output {
+        kos:flow react:state; // FUTURE
+      }
+    }
+    kos:reaction clearForm {
+      if-feature react:dom;
+      input {
+        kos:flow react:component {
+          require-instance true;
+        }
+        kos:flow react:form-clear;
+      }
+    }
+  }
+}

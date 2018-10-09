@@ -1,25 +1,97 @@
 module kinetic-node-js {
-  namespace "urn:ietf:params:xml:ns:yang:kos:kinetic-node-js";
-  prefix node;
+  prefix nodejs;
+
   description
-    "reactions to Node.js runtime environment";
-
-  import kinetic-object-swarm { prefix kos; }
-
-  feature path {
-    reference "nodejs://path";
+    "reactions to Node.js runtime environment interactions";
+  
+  import kinetic-object-swarm {
+    prefix kos;
   }
-  grouping process;
-  grouping program;
+  /*
+   * System Features
+   */
+  feature fs;
+  feature url;
+  feature net;
+  feature path;
+  
+  /*
+   * Pulse definitions
+   */
+  grouping module {
+    
+  }
+  grouping require {
+    
+  }
+  grouping resolve {
+    
+  }
+  grouping load {
+    
+  }
+  grouping read {
+    
+  }
+  grouping log {
+    
+  }
 
-  kos:reaction loadReactor {
-    if-feature node:path;
+  container foo {
+    leaf bar;
+  }
+  
+  kos:reaction initialize {
     input {
-      kos:data node:load;
+      kos:flow kos:process;
     }
     output {
-      kos:data kos:reactor;
-      kos:data node:resolve;
+      kos:flow nodejs:resolve;
+    }
+  }
+  kos:reaction execute {
+    input {
+      kos:flow kos:program;
+    }
+    output {
+      kos:flow nodejs:load;
+      kos:flow nodejs:read;
+      kos:flow kos:log;
+    }
+  }
+  kos:reaction load {
+    if-feature nodejs:path;
+    input {
+      kos:flow nodejs:load;
+    }
+    output {
+      kos:flow kos:schema;
+      kos:flow nodejs:resolve;
+    }
+  }
+  kos:reaction resolve {
+    input {
+      kos:flow nodejs:resolve;
+    }
+    output {
+      kos:flow nodejs:require;
+    }
+  }
+  kos:reaction require {
+    input {
+      kos:flow nodejs:require;
+    }
+    output {
+      kos:flow nodejs:module;
+    }
+  }
+  kos:reaction read {
+    if-feature nodejs:fs;
+    input {
+      kos:flow nodejs:read;
+    }
+    output {
+        
     }
   }
 }

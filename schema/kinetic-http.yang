@@ -1,0 +1,146 @@
+module kinetic-http {
+  prefix http;
+  description "interfaces to HTTP client/server requests";
+
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  import kinetic-node-js {
+    prefix node;
+  }
+  import kinetic-network {
+    prefix net;
+  }
+  import ietf-inet-types {
+    prefix inet;
+  }
+  /*
+   * Features
+   */
+  feature express {
+    reference "npm://express";
+  }
+  feature superagent {
+    reference "npm://superagent";
+  }
+  feature http-server {
+    reference "nodejs://http";
+  }
+  /*
+   * Identities
+   */
+  identity http {
+    base net:tcp;
+  }
+  /*
+   * Type Definitions
+   */ 
+  typedef content-type {
+    type enumeration {
+      enum "json";
+    }
+    default "json";
+  }
+  
+  /*
+   * Groupings
+   */
+  grouping request {
+    leaf url {
+      type inet:uri;
+      mandatory true;
+    }
+    leaf method {
+      type enumeration {
+        enum 'GET';
+        enum 'POST';
+        enum 'DELETE';
+        enum 'POST';
+        enum 'PUT';
+        enum 'PATCH';
+      }
+    }
+    leaf type {
+      type http:content-type;
+    }
+    container header;
+    leaf query {
+      type string;
+    }
+    anydata data;
+  }
+  grouping request-get {
+    uses http:request {
+      refine "method" {
+        config false;
+        default "GET";
+      }
+    }
+  }
+  grouping response {
+    
+  }
+  grouping local {
+    uses net:local {
+      refine "protocol" {
+        default "http";
+      }
+      refine "port" {
+        default 80;
+      }
+    }
+  }
+  grouping server {
+    
+  }
+  grouping server-request {
+    
+  }
+  grouping route {
+    
+  }
+  /*
+   * Reactions
+   */
+  kos:reaction request {
+    if-feature superagent;
+    input {
+      kos:flow http:request;
+    }
+    output {
+      kos:flow http:response;
+    }
+  }
+  kos:reaction get {
+    input {
+      kos:flow http:request-get;
+    }
+    output {
+      kos:flow http:request;
+    }
+  }
+  kos:reaction listen {
+    if-feature node:http;
+    if-feature node:url;
+    input {
+      kos:flow http:local;
+    }
+    output {
+      kos:flow http:server;
+      kos:flow net:connection;
+      kos:flow http:server-request;
+    }
+  }
+  kos:reaction route {
+    input {
+      kos:flow http:server {
+        require-instance true;
+      }
+      kos:flow http:route;
+    }
+    output {
+      kos:flow http:server-request;
+    }
+  }
+}
+

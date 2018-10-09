@@ -1,3 +1,6 @@
-const kos = require('./lib')
+'use strict';
 
-global.kos = module.exports = kos['default'] = kos.kos = kos
+const { Actor } = require('./lib');
+
+const schema = require('./kinetic-object-swarm');
+global.kos = module.exports = new Actor(schema)

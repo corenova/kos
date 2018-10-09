@@ -1,0 +1,76 @@
+module kinetic-timer {
+  prefix timer;
+
+  description "reactions to timer alarm and interval events";
+  
+  import kinetic-object-swarm {
+    prefix kos;
+  }
+  typedef event {
+    type kos:identifier;
+  }
+
+  grouping entry {
+    leaf name {
+      type timer:event;
+    }
+    leaf ms {
+      type uint16;
+      units ms;
+    }
+  }
+  grouping once {
+    uses timer:entry;
+  }
+  grouping every {
+    uses timer:entry;
+  }
+  grouping stop {
+    uses timer:entry;
+  }
+  grouping fire {
+    uses timer:entry;
+  }
+
+  // FUTURE...
+  // list alarm {
+  //   key "name";
+  //   uses timer:entry;
+  //   container timer;
+
+  //   action once;
+  //   action start;
+  //   action stop;
+    
+  //   notification fire {
+  //     leaf name {
+  //       type timer:event;
+  //     }
+  //   }
+  // }
+
+  kos:reaction once {
+    input {
+      kos:flow timer:once;
+    }
+    output {
+      kos:flow timer:fire;
+    }
+  }
+  kos:reaction every {
+    input {
+      kos:flow timer:every;
+    }
+    output {
+      kos:flow timer:fire;
+    }
+  }
+  kos:reaction stop {
+    input {
+      kos:flow timer:stop;
+    }
+    output {
+      // no output...
+    }
+  }
+}

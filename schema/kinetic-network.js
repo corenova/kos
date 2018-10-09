@@ -23,9 +23,10 @@ module.exports = require('./kinetic-network.yang').bind({
         if (value) {
           let obj = Url.parse(value, true)
           if (!obj.slashes) {
-            let proto = this.parent.schema.locate('protocol').default.tag
+            let proto = this.schema.locate('../protocol').default.tag
             obj = Url.parse(`${proto}://${value}`, true)
           }
+          console.log(this.container)
           for (let k in obj)
             this.container[k] = obj[k]
         }

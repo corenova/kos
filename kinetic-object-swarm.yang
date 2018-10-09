@@ -130,7 +130,10 @@ module kinetic-object-swarm {
     
   }
   grouping error {
-    
+    leaf message {
+      type string;
+    }
+    anydata origin;
   }
   grouping node-list {
     list node {

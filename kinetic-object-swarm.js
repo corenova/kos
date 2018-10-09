@@ -2,6 +2,7 @@
 
 const Yang = require('yang-js')
 
+const { Property } = Yang
 const { Generator, Channel, Reaction, Reducer, Neural } = require('./lib')
 
 const assert = require('assert')

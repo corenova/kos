@@ -1,20 +1,31 @@
 'use strict'
 
 const { kos = require('..') } = global
+const schema = require('../schema/kinetic-log')
 
-module.exports = kos.create('log')
-  .desc('reactions to send logging messages to an output stream')
+module.exports = kos.create(schema)
 
-  .pre('parent')
+  .reaction
+  .pre('kos:parent')
   .pre('module/debug')
-  .in('log')
+  .in('kos:log')
+  .out('log:level')
+  .out('log:handlers')
   .bind(setup)
 
-  .in('console').bind(saveConsole)
-  .pre('log').in('error').bind(outputError)
+  .reaction
+  .in('console:prompt')
+  .bind(saveConsole)
+
+  .reaction
+  .pre('log:level')
+  .pre('log:handlers')
+  .in('error')
+  .bind(outputError)
 
 function setup(opts) {
-  const [ parent, debug ] = this.get('parent', 'module/debug')
+  const parent = this.get('kos:parent')
+  const debug = this.get('module/debug')
   const namespaces = [ 'kos:error', 'kos:warn', 'kos:info', 'kos:debug', 'kos:trace' ]
 
   const { level } = opts
@@ -25,13 +36,20 @@ function setup(opts) {
   if (!this.get('initialized')) {
     debug.enable(namespaces.join(','))
     const logger = token => {
-      const { topic, origin } = token
-      const handler = this.get('handlers').get(topic)
+      const { topic, origin, value } = token
+      const handler = handlers.get(topic)
       if (typeof handler !== 'function') return
       if (this.has('console')) {
         this.get('console').emit('reset')
       }
-      handler(origin.identity, ...token.values)
+      switch (typeof value) {
+      case 'function':
+      case 'object':
+        handler("%s\n%O\n", origin.identity, value)
+        break;
+      default:
+        handler(origin.identity, ...token.values)
+      }
     }
     const tracer = token => {
       const trace = handlers.get('trace')
@@ -48,11 +66,12 @@ function setup(opts) {
         trace('%s %o', topic, value)
       }
     }
-    this.save({ logger, tracer })
+    this.set('logger', logger)
+    this.set('tracer', tracer)
     this.set('initialized', true)
   }
 
-  this.save({ level, handlers })
+  //this.save({ level, handlers })
 
   if (level < 0) {
     this.info('logging disabled')
@@ -71,12 +90,15 @@ function setup(opts) {
 
   if (level > 2) parent.on('data', this.get('tracer'))
   else parent.removeListener('data', this.get('tracer'))
+
+  this.send('log:level', level)
+  this.send('log:handlers', handlers)
 }
 
 function saveConsole(console) { this.save({ console }) }
 
 function outputError(err) {
-  const [ level, handlers ] = this.get('level','handlers')
+  const [ level, handlers ] = this.get('log:level','log:handlers')
   const error = handlers.get('error')
   const { origin, message } = err
   if (typeof error !== 'function') return

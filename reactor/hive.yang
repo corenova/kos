@@ -1,0 +1,5 @@
+module kos-hive {
+
+  kos:passive true;
+
+}

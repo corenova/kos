@@ -7,8 +7,13 @@
 'use strict'
 
 const { kos = require('..') } = global
-const net  = require('./net')
-const ws   = require('./ws')
+const net = require('./net')
+const ws  = require('./ws')
+
+//const Schema = require('./link.yang')
+// module.exports = kos.define(Schema).bind({
+//   connect, listen, streamify
+// })
 
 module.exports = kos.create('link')
   .desc('reactions to stream dynamic client/server links')
@@ -16,56 +21,57 @@ module.exports = kos.create('link')
   .load(net)
   .load(ws)
 
-  .in('link/connect')
-  .out('net/connect','ws/connect','link/connect/url')
+  .in('link:connect')
+  .out('net:connect','ws:connect')
   .bind(connect)
 
-  .in('link/listen')
-  .out('net/listen','ws/listen','link/listen/url')
+  .in('link:listen')
+  .out('net:listen','ws:listen','link:listen-url')
   .bind(listen)
 
   .pre('module/url')
-  .in('link/connect/url')
-  .out('link/connect')
+  .in('link:connect-url')
+  .out('link:connect')
   .bind(connectByUrl)
 
   .pre('module/url')
-  .in('link/listen/url')
-  .out('link/listen')
+  .in('link:listen-url')
+  .out('link:listen')
   .bind(listenByUrl)
 
-  .in('connection').out('link').bind(stream)
+  .in('kos:connection')
+  .out('link:session')
+  .bind(streamify)
 
-function connect(opts) {
-  if (typeof opts === 'string') return this.send('link/connect/url', opts)
-
-  switch (opts.protocol) {
-  case 'ws:':
-  case 'wss:':
-    this.send('ws/connect', opts)
+function connect(input) {
+  const { protocol } = input
+  switch (protocol) {
+  case 'ws':
+  case 'wss':
+    this.send('ws:connect', input)
     break;
-  case 'tcp:':
-  case 'udp:':
+  case 'tcp':
+  case 'udp':
   case undefined:
-    this.send('net/connect', opts)
+    this.send('net:connect', input)
     break;
   default:
-    this.warn('unsupported protocol', opts.protocol)
+    this.warn('unsupported protocol', protocol)
   }
 }
 
 function listen(opts) {
-  if (typeof opts === 'string') return this.send('link/listen/url', opts)
+  if (typeof opts === 'string') return this.send('link:listen-url', opts)
 
   switch (opts.protocol) {
   case 'ws:':
   case 'wss:':
-    this.send('ws/listen', opts)
+    this.send('ws:listen', opts)
     break;
   case 'tcp:':
   case 'udp:':
   case undefined:
-    this.send('net/listen', opts)
+    this.send('net:listen', opts)
     break;
   default:
     this.warn('unsupported protocol', opts.protocol)
@@ -76,35 +82,35 @@ function connectByUrl(dest) {
   const url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.slashes) opts = url.parse('tcp://'+dest, true)
-  this.send('link/connect', Object.assign(opts, opts.query))
+  this.send('link:connect', Object.assign(opts, opts.query))
 }
 
 function listenByUrl(dest) {
   const url = this.get('module/url')
   let opts = url.parse(dest, true)
   if (!opts.slashes) opts = url.parse('tcp://'+dest, true)
-  this.send('link/listen', Object.assign(opts, opts.query))
+  this.send('link:listen', Object.assign(opts, opts.query))
 }
 
-function stream(connection) {
+function streamify(connection) {
   const { addr, socket, server, opts } = connection
-  const link = this.use(addr, kos.create('link').desc(addr).init(connection))
+  const stream = this.use(addr, kos.create('session').desc(addr).init(connection))
 
   socket.on('active', () => {
-    let { io } = link
+    let { io } = stream
     io.link(socket)
     socket.on('close', () => {
       socket.destroy()
       if (server) {
         //link.leave()
-        link.end()
+        stream.end()
         this.delete(addr)
       } else {
         io.unlink(socket)
-        link.emit('inactive', io)
+        stream.emit('inactive', io)
       }
     })
-    link.resume()
-    this.send('link', link)
+    stream.resume()
+    this.send('link:channel', { addr, stream })
   })
 }

@@ -26,7 +26,6 @@ module.exports = require('./kinetic-network.yang').bind({
             let proto = this.schema.locate('../protocol').default.tag
             obj = Url.parse(`${proto}://${value}`, true)
           }
-          console.log('XXX endpoint', this.container)
           for (let k in obj)
             this.container[k] = obj[k]
         }

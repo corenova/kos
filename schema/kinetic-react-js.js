@@ -14,7 +14,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       componentDidUpdate:        "react:updated",
       componentWillReceiveProps: "react:receive"
     }
-    const { state, setState } = target
+    const { props, state, setState } = target
 
     if (!Object.keys(this.state))
       this.state = state // update initial state
@@ -48,7 +48,8 @@ module.exports = require('./kinetic-react-js.yang').bind({
     }
     
     this.on('save', obj => this.send('react:state', obj))
-    
+
+    this.send('react:props', props)
     this.send('react:setter', setState.bind(target))
     this.send('react:component', target)
   }
@@ -62,6 +63,11 @@ module.exports = require('./kinetic-react-js.yang').bind({
     },
     unmount() {
       this.send('react:mounted', null)
+    },
+    history(props) {
+      const { history } = props
+      if (!history) return
+      history.listen((location, action) => this.send('react:route', { location, action }))
     },
     applyState(state, setter) {
       if (typeof setter === 'function')

@@ -35,6 +35,7 @@ module kinetic-react-js {
   grouping updating;
   grouping updated;
   grouping receive;
+  grouping props;
   grouping state;
   grouping event;
   grouping trigger {
@@ -44,7 +45,12 @@ module kinetic-react-js {
     anydata data;
   }
   grouping form-clear;
-  grouping history;
+  grouping route {
+    leaf location {
+      type string;
+    }
+    anydata action;
+  }
 
   kos:generator Component {
     input {
@@ -61,6 +67,7 @@ module kinetic-react-js {
       kos:flow react:receive;
       kos:flow react:event;
       kos:flow react:trigger;
+      kos:flow react:props;
       kos:flow react:state;
     }
 
@@ -78,6 +85,15 @@ module kinetic-react-js {
       }
       output {
         kos:flow react:mounted;
+      }
+    }
+    kos:reaction history {
+      if-feature react:router;
+      input {
+        kos:flow react:props;
+      }
+      output {
+        kos:flow react:route;
       }
     }
     kos:reaction applyState {

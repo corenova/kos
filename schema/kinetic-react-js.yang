@@ -88,7 +88,7 @@ module kinetic-react-js {
       }
     }
     kos:reaction history {
-      if-feature react:router;
+      //if-feature react:router;
       input {
         kos:flow react:props;
       }

@@ -46,10 +46,26 @@ module kinetic-react-js {
   }
   grouping form-clear;
   grouping route {
-    leaf location {
-      type string;
+    container location {
+      leaf pathname {
+        type string;
+      }
+      leaf search {
+        type string;
+      }
+      leaf hash {
+        type string;
+      }
+      leaf key;
+      anydata state;
     }
-    anydata action;
+    leaf action {
+      type enumeration {
+        enum PUSH;
+        enum REPLACE;
+        enum POP;
+      }
+    }
   }
 
   kos:generator Component {

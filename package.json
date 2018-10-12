@@ -91,7 +91,7 @@
     "delegates": "^1.0.0",
     "treeify": "^1.0.1",
     "uuid": "^3.0.1",
-    "yang-js": "^0.17.29"
+    "yang-js": "^0.17.30"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",

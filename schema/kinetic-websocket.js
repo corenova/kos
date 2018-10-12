@@ -40,15 +40,12 @@ function connect(remote) {
 function listen(local) {
   const Server = this.use('ws:server')
   let { server, uri, protocol, hostname: host, port, path } = local
-  this.info(`listening on ${uri}`);
   if (server) {
+    this.info(`listening on existing server instance`)
     server = new Server({ server })
-    this.info('using existing server instance')
-    this.send('ws:server', server)
   } else {
+    this.info(`listening on ${uri} with ${host}:${port}/${path}`)
     server = new Server({ host, port, path })
-    console.log(`listening on ${uri} with ${host}:${port}/${path}`)
-    this.send('ws:server', server)
   }
   server.on('connection', socket => {
     let sock = socket._ws._socket
@@ -57,4 +54,5 @@ function listen(local) {
     this.send('net:connection', { uri, socket, server: local.uri })
   })
   server.on('error', this.error.bind(this))
+  this.send('ws:server', server)
 }

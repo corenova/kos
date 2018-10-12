@@ -18,6 +18,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       choice:          '0..n',
       container:       '0..n',
       description:     '0..1',
+      grouping:        '0..n',
       'if-feature':    '0..n',
       input:           '0..1',
       leaf:            '0..n',

@@ -4,10 +4,12 @@ module kinetic-object-swarm {
 
   organization
     "Corenova Technologies, Inc.";
-
   contact
     "Peter K. Lee <peter@corenova.com>";
-
+  description
+    "The core module of KOS which provides custom language extensions for
+     modeling reactions and generators.";
+  
   revision 2018-03-10 {
     description
       "Initial revision.";
@@ -15,9 +17,6 @@ module kinetic-object-swarm {
   /*
    * Custom YANG Language Extensions
    */
-  extension generator {
-    argument "generator-name";
-  }
   extension reaction {
     argument "function-name";
   }
@@ -30,11 +29,17 @@ module kinetic-object-swarm {
   extension node {
     argument "target-node-identifier";
   }
-  extension extends {
-    argument "target-component";
+  extension filter {
+    argument "filter-rule";
   }
   extension array {
     argument "array-name";
+  }
+  extension generator {
+    argument "generator-name";
+  }
+  extension extends {
+    argument "target-generator";
   }
   /*
    * Dependencies
@@ -104,9 +109,7 @@ module kinetic-object-swarm {
   grouping persona {
     leaf id;
     leaf uri;
-    list layers {
-      
-    }
+    leaf-list links;
   }
   grouping model {
     
@@ -176,10 +179,9 @@ module kinetic-object-swarm {
     uses link-list;
     uses flow-list;
   }
-  // notification error {
-  container error {
-    leaf origin;
+  notification error {
     leaf message;
+    anydata origin;
   }
   notification log {
     leaf level;

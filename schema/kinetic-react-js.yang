@@ -1,6 +1,15 @@
 module kinetic-react-js {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-react-js";
   prefix react;
 
+  organization
+    "Corenova Technologies, Inc.";
+  contact
+    "Peter K. Lee <peter@corenova.com>";
+  description
+    "A module that encapsulates React.js related data models and provides
+     KOS generators for working with React Components.";
+  
   import kinetic-object-swarm {
     prefix kos;
   }
@@ -69,6 +78,9 @@ module kinetic-react-js {
   }
 
   kos:generator Component {
+    description
+      "A generator that consumes React.Component instances and captures
+       lifecycle events and state changes";
     input {
       kos:flow react:component;
     }
@@ -127,6 +139,11 @@ module kinetic-react-js {
   kos:generator Form {
     kos:extends react:Component;
 
+    description
+      "A generator that extends React.Component instances and handles form
+       related activity (i.e. onClick, onChange) and automates state
+       updates related to form data.";
+    
     kos:reaction saveFormData {
       input {
         kos:flow react:event;

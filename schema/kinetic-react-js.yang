@@ -77,31 +77,32 @@ module kinetic-react-js {
     }
   }
 
-  kos:generator Component {
+  kos:processor Component {
     description
-      "A generator that consumes React.Component instances and captures
+      "A reactor that consumes React.Component instances and captures
        lifecycle events and state changes";
-    input {
-      kos:flow react:component;
-    }
-    output {
-      kos:flow react:component;
-      kos:flow react:setter;
-      kos:flow react:mounting;
-      kos:flow react:mounted;
-      kos:flow react:unmounting;
-      kos:flow react:updating;
-      kos:flow react:updated;
-      kos:flow react:receive;
-      kos:flow react:event;
-      kos:flow react:trigger;
-      kos:flow react:props;
-      kos:flow react:state;
-    }
-
     /*
      * Kinetic Reactions
      */
+    kos:reaction transform {
+      input {
+        kos:flow react:component;
+      }
+      output {
+        kos:flow react:component;
+        kos:flow react:setter;
+        kos:flow react:mounting;
+        kos:flow react:mounted;
+        kos:flow react:unmounting;
+        kos:flow react:updating;
+        kos:flow react:updated;
+        kos:flow react:receive;
+        kos:flow react:event;
+        kos:flow react:trigger;
+        kos:flow react:props;
+        kos:flow react:state;
+      }
+    }
     kos:reaction mount {
       input {
         kos:flow react:mounting;
@@ -136,7 +137,7 @@ module kinetic-react-js {
       }
     }
   }
-  kos:generator Form {
+  kos:processor Form {
     kos:extends react:Component;
 
     description

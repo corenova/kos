@@ -17,6 +17,9 @@ module kinetic-object-swarm {
   /*
    * Custom YANG Language Extensions
    */
+  extension processor {
+    argument "processor-name";
+  }
   extension reaction {
     argument "function-name";
   }
@@ -35,11 +38,8 @@ module kinetic-object-swarm {
   extension array {
     argument "array-name";
   }
-  extension generator {
-    argument "generator-name";
-  }
   extension extends {
-    argument "target-generator";
+    argument "target-processor-identifier";
   }
   /*
    * Dependencies

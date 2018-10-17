@@ -3,14 +3,74 @@
 const Yang = require('yang-js')
 
 const { Property } = Yang
-const { Generator, Channel, Reaction, Reducer, Neural } = require('./lib')
+const { Channel, Processor, Reaction, Neural } = require('./lib')
 
 const assert = require('assert')
 
 module.exports = require('./kinetic-object-swarm.yang').bind({
   'feature(url)': require('url'),
   'feature(channel)': Channel,
-  
+
+  'extension(processor)': {
+    scope: {
+      anydata:         '0..n',
+      anyxml:          '0..n',
+      choice:          '0..n',
+      container:       '0..n',
+      description:     '0..1',
+      grouping:        '0..n',
+      'if-feature':    '0..n',
+      input:           '0..1',
+      leaf:            '0..n',
+      'leaf-list':     '0..n',
+      list:            '0..n',
+      output:          '0..1',
+      reference:       '0..1',
+      status:          '0..1',
+      uses:            '0..n',
+      'kos:extends':   '0..n',
+      'kos:reaction':  '0..n'
+    },
+    target: {
+      module: '0..n'
+    },
+    resolve() {
+      this.once('compile:after', () => {
+        const reaction = this.lookup('extension', 'kos:reaction')
+        const container = this.lookup('extension', 'container')
+        if ((this.input && this.input.nodes.length) || (this.output && this.output.nodes.length))
+          throw this.error('cannot contain data nodes in processor input/output')
+        
+        const state = new Yang('container', 'state', container)
+        const nodes = this.nodes.filter(n => {
+          return (n.kind in container.scope) && (n.tag !== 'state')
+        })
+        state.extends(nodes)
+        this.removes(nodes)
+        this.update(state)
+      })
+      let deps = this.match('if-feature','*')
+      if (deps && !deps.every(d => this.lookup('feature', d.tag)))
+        throw this.error('unable to resolve every feature dependency')
+    },
+    transform(self, ctx={}) {
+      const { core, consumes, produces } = self
+      for (let node of this.nodes) {
+        switch (node.kind) {
+        case 'input':  node.exprs.forEach(expr => expr.apply(consumes)); break;
+        case 'output': node.exprs.forEach(expr => expr.apply(produces)); break;
+        case 'kos:reaction': node.eval(core, ctx); break;
+        default: self = node.eval(self, ctx)
+        }
+      }
+      return self
+    },
+    construct(parent, ctx) {
+      if (parent instanceof Neural.Layer)
+        return new Processor(this).join(parent)
+      return parent
+    }
+  },
   'extension(reaction)': {
     scope: {
       description:   '0..1',
@@ -31,7 +91,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
         throw this.error('unable to resolve every feature dependency')
     },
     transform(self) {
-      const { consumes, produces, persists } = self
+      const { consumes, produces } = self
       this.input  && this.input.exprs.forEach(expr => expr.apply(consumes))
       this.output && this.output.exprs.forEach(expr => expr.apply(produces))
       
@@ -85,7 +145,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
     transform(data) {
       let { 'require-instance': required } = this
       let schema = this.lookup('grouping', this.tag)
-      let opts = { persist: required && required.tag }
+      let opts = { persist: (required && required.tag) === true }
       for (let expr of this.exprs)
         opts = expr.eval(opts)
       data.set(schema, opts)
@@ -112,7 +172,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
     transform(data, persists) {
       let { 'require-instance': required } = this
       let schema = this.locate(this.tag)
-      let opts = { persist: required && required.tag }
+      let opts = { persist: (required && required.tag) === true }
       for (let expr of this.exprs)
         opts = expr.eval(opts)
       data.set(schema, opts)
@@ -174,73 +234,13 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       return new Property(this.datakey, this).join(data, ctx.state)
     }
   },
-  'extension(generator)': {
-    scope: {
-      anydata:         '0..n',
-      anyxml:          '0..n',
-      choice:          '0..n',
-      container:       '0..n',
-      description:     '0..1',
-      grouping:        '0..n',
-      'if-feature':    '0..n',
-      input:           '0..1',
-      leaf:            '0..n',
-      'leaf-list':     '0..n',
-      list:            '0..n',
-      output:          '0..1',
-      reference:       '0..1',
-      status:          '0..1',
-      uses:            '0..n',
-      'kos:extends':   '0..n',
-      'kos:reaction':  '0..n',
-      'kos:reduces':   '0..n'
-    },
-    target: {
-      module: '0..n'
-    },
-    resolve() {
-      this.once('compile:after', () => {
-        const reaction = this.lookup('extension', 'kos:reaction')
-        const container = this.lookup('extension', 'container')
-        if ((this.input && this.input.nodes.length) || (this.output && this.output.nodes.length))
-          throw this.error('cannot contain data nodes in generator input/output')
-        
-        const core = new Yang('kos:reaction', 'core', reaction).bind(this.binding)
-        core.extends(this.input, this.output, this['if-feature'])
-        this.update(core)
-        this.removes(this.input, this.output)
-        
-        const state = new Yang('container', 'state', container)
-        const nodes = this.nodes.filter(n => {
-          return (n.kind in container.scope) && (n.tag !== 'state')
-        })
-        state.extends(nodes)
-        this.removes(nodes)
-        this.update(state)
-      })
-      let deps = this.match('if-feature','*')
-      if (deps && !deps.every(d => this.lookup('feature', d.tag)))
-        throw this.error('unable to resolve every feature dependency')
-    },
-    transform(self, ctx={}) {
-      for (let expr of this.exprs) {
-        self = expr.eval(self, ctx);
-      }
-      return self
-    },
-    construct(parent, ctx) {
-      if (parent instanceof Neural.Layer)
-        return new Generator(this).join(parent)
-      return parent
-    }
-  },
   'extension(extends)': {
     resolve() {
-      let from = this.lookup('kos:generator', this.tag)
+      let from = this.lookup('kos:processor', this.tag)
       if (!from)
-        throw this.error(`unable to resolve ${this.tag} component`)
+        throw this.error(`unable to resolve ${this.tag} processor`)
       from = from.clone().compile()
-      from.nodes.forEach(n => this.parent.merge(n, { replace: true }))
+      from.nodes.forEach(n => this.parent.update(n))
       if (!this.parent.binding)
         this.parent.bind(from.binding)
     }

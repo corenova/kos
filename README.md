@@ -1,6 +1,6 @@
 # Kinetic Object Swarm
 
-A [Swarm Intellignce](https://en.wikipedia.org/wiki/Swarm_intelligence)
+A [Swarm Intelligence](https://en.wikipedia.org/wiki/Swarm_intelligence)
 framework for creating distributed data pipelines and
 [autonomic](https://en.wikipedia.org/wiki/Autonomic_Computing) neural
 networks.

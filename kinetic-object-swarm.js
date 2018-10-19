@@ -53,7 +53,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       if (deps && !deps.every(d => this.lookup('feature', d.tag)))
         throw this.error('unable to resolve every feature dependency')
     },
-    transform(self, ctx={}) {
+    transform(self, ctx) {
       const { core, consumes, produces } = self
       for (let node of this.nodes) {
         switch (node.kind) {
@@ -67,7 +67,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
     },
     construct(parent, ctx) {
       if (parent instanceof Neural.Layer)
-        return new Processor(this).join(parent)
+        return new Processor(this).join(parent, ctx)
       return parent
     }
   },
@@ -101,7 +101,7 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
     },
     construct(parent, ctx) {
       if (parent instanceof Neural.Layer)
-        return new Reaction(this).join(parent)
+        return new Reaction(this).join(parent, ctx)
       return parent
     }
   },

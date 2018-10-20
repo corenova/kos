@@ -215,6 +215,7 @@ module kinetic-network {
     output {
       kos:flow net:connection;
       kos:flow net:server;
+      kos:node "/net:topology/local";
     }
   }
 }

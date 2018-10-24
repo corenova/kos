@@ -94,7 +94,7 @@ module kinetic-network {
     // below placed last for a reason...
     leaf uri {
       if-feature kos:url;
-      type inet:uri;
+      type net:uri;
     }
   }
   grouping remote {
@@ -128,13 +128,16 @@ module kinetic-network {
   }
   grouping connection {
     leaf uri {
-      type inet:uri;
+      type net:uri;
       mandatory true;
     }
     leaf server {
       if-feature net:server;
-      type leafref {
-        path "/net:topology/local/uri";
+      type union {
+        type leafref {
+          path "/net:topology/local/uri";
+        }
+        type net:uri;
       }
     }
     anydata socket {

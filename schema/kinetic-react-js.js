@@ -24,7 +24,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       Object.defineProperty(target, 'state', {
         configurable: true,
         get: () => { return this.state },
-        set: (obj) => { this.state = obj }
+        set: (obj) => { /* noop */ }
       })
       
       // override target setState to update this state

@@ -53,7 +53,6 @@ module.exports = require('./kinetic-react-js.yang').bind({
 
       props && this.send('react:props', props)
       setState && this.send('react:setter', setState.bind(target))
-      //this.send('react:component', target)
     },
     mount() {
       
@@ -80,7 +79,6 @@ module.exports = require('./kinetic-react-js.yang').bind({
       if (type === 'checkbox') {
         value = target.checked
       }
-      
       this.save(objectify(name, value))
       
       function objectify(key, val) {

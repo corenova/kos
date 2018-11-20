@@ -1,7 +1,7 @@
 {
   "name": "kos",
-  "version": "2.0.9",
-  "description": "A swarm intelligence framework for creating distributed data pipelines and autonomic neural networks",
+  "version": "2.0.10",
+  "description": "Stream processing framework for creating distributed data pipelines and autonomic neural networks",
   "bin": {
     "kos": "./bin/kos.js"
   },

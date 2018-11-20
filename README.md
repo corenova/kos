@@ -1,4 +1,4 @@
-# Kinetic Object Swarm
+# Kinetic Object Stream
 
 A [Swarm Intelligence](https://en.wikipedia.org/wiki/Swarm_intelligence)
 framework for creating distributed data pipelines and

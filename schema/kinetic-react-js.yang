@@ -89,7 +89,6 @@ module kinetic-react-js {
         kos:flow react:component;
       }
       output {
-        kos:flow react:component;
         kos:flow react:setter;
         kos:flow react:mounting;
         kos:flow react:mounted;

@@ -10,7 +10,7 @@ module kinetic-react-js {
     "A module that encapsulates React.js related data models and provides
      KOS generators for working with React Components.";
   
-  import kinetic-object-swarm {
+  import kinetic-object-stream {
     prefix kos;
   }
   /*

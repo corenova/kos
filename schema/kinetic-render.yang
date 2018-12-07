@@ -11,7 +11,9 @@ module kinetic-render {
     reference "npm://treeify";
   }
   
-  import kinetic-object-swarm { prefix kos; }
+  import kinetic-object-stream {
+    prefix kos;
+  }
 
   grouping info {
     container source;

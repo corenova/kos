@@ -1,7 +1,7 @@
 module kinetic-console {
   prefix console;
 
-  import kinetic-object-swarm {
+  import kinetic-object-stream {
     prefix kos;
   }
   import kinetic-render {

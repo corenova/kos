@@ -1,7 +1,7 @@
 module kinetic-network {
   prefix net;
   
-  import kinetic-object-swarm {
+  import kinetic-object-stream {
     prefix kos;
   }
   import ietf-inet-types {

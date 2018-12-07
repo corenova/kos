@@ -1,7 +1,7 @@
 module kinetic-link {
   prefix link;
 
-  import kinetic-object-swarm {
+  import kinetic-object-stream {
     prefix kos;
   }
   import kinetic-network {

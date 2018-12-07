@@ -3,7 +3,7 @@ module kinetic-timer {
 
   description "reactions to timer alarm and interval events";
   
-  import kinetic-object-swarm {
+  import kinetic-object-stream {
     prefix kos;
   }
   typedef event {

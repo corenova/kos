@@ -1,5 +1,5 @@
-module kinetic-object-swarm {
-  namespace "urn:ietf:params:xml:ns:yang:kinetic-object-swarm";
+module kinetic-object-stream {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-object-stream";
   prefix kos;
 
   organization
@@ -111,7 +111,7 @@ module kinetic-object-swarm {
     leaf uri;
     leaf-list links;
   }
-  grouping model {
+  grouping store {
     
   }
   grouping stream {

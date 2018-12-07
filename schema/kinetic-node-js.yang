@@ -4,7 +4,7 @@ module kinetic-node-js {
   description
     "reactions to Node.js runtime environment interactions";
   
-  import kinetic-object-swarm {
+  import kinetic-object-stream {
     prefix kos;
   }
   /*

@@ -7,7 +7,7 @@ const { Channel, Processor, Reaction, Neural } = require('./lib')
 
 const assert = require('assert')
 
-module.exports = require('./kinetic-object-swarm.yang').bind({
+module.exports = require('./kinetic-object-stream.yang').bind({
   'feature(url)': require('url'),
   'feature(channel)': Channel,
 
@@ -65,10 +65,10 @@ module.exports = require('./kinetic-object-swarm.yang').bind({
       }
       return self
     },
-    construct(parent, ctx) {
-      if (parent instanceof Neural.Layer)
-        return new Processor(this).join(parent, ctx)
-      return parent
+    construct(obj, ctx) {
+      if (obj instanceof Neural.Layer)
+        return new Processor(this).join(obj, ctx)
+      return obj
     }
   },
   'extension(reaction)': {

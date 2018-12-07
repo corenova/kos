@@ -2,7 +2,7 @@ module kinetic-http {
   prefix http;
   description "interfaces to HTTP client/server requests";
 
-  import kinetic-object-swarm {
+  import kinetic-object-stream {
     prefix kos;
   }
   import kinetic-node-js {

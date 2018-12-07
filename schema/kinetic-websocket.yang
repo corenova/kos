@@ -1,7 +1,7 @@
 module kinetic-websocket {
   prefix ws;
 
-  import kinetic-object-swarm {
+  import kinetic-object-stream {
     prefix kos;
   }
   import kinetic-network {

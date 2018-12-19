@@ -5,9 +5,6 @@ module kinetic-http {
   import kinetic-object-stream {
     prefix kos;
   }
-  import kinetic-node-js {
-    prefix node;
-  }
   import kinetic-network {
     prefix net;
   }
@@ -120,8 +117,7 @@ module kinetic-http {
     }
   }
   kos:reaction listen {
-    if-feature node:http;
-    if-feature node:url;
+    if-feature http-server;
     input {
       kos:flow http:local;
     }

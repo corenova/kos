@@ -77,88 +77,88 @@ module kinetic-react-js {
     }
   }
 
-  kos:processor Component {
+  kos:stream Component {
     description
-      "A reactor that consumes React.Component instances and captures
+      "A kinetic stream that consumes React.Component instances and captures
        lifecycle events and state changes";
     /*
      * Kinetic Reactions
      */
     kos:reaction transform {
       input {
-        kos:flow react:component;
+        kos:data react:component;
       }
       output {
-        kos:flow react:setter;
-        kos:flow react:mounting;
-        kos:flow react:mounted;
-        kos:flow react:unmounting;
-        kos:flow react:updating;
-        kos:flow react:updated;
-        kos:flow react:receive;
-        kos:flow react:event;
-        kos:flow react:trigger;
-        kos:flow react:props;
-        kos:flow react:state;
+        kos:data react:setter;
+        kos:data react:mounting;
+        kos:data react:mounted;
+        kos:data react:unmounting;
+        kos:data react:updating;
+        kos:data react:updated;
+        kos:data react:receive;
+        kos:data react:event;
+        kos:data react:trigger;
+        kos:data react:props;
+        kos:data react:state;
       }
     }
     kos:reaction mount {
       input {
-        kos:flow react:mounting;
+        kos:data react:mounting;
       }
     }
     kos:reaction unmount {
       input {
-        kos:flow react:unmounting;
+        kos:data react:unmounting;
       }
       output {
-        kos:flow react:mounted;
+        kos:data react:mounted;
       }
     }
     kos:reaction history {
       //if-feature react:router;
       input {
-        kos:flow react:props;
+        kos:data react:props;
       }
       output {
-        kos:flow react:route;
+        kos:data react:route;
       }
     }
     kos:reaction applyState {
       input {
-        kos:flow react:state;
-        kos:flow react:setter {
+        kos:data react:state;
+        kos:data react:setter {
           require-instance true;
         }
-        kos:flow react:mounted {
+        kos:data react:mounted {
           require-instance true;
         }
       }
     }
   }
-  kos:processor Form {
+  kos:stream Form {
     kos:extends react:Component;
 
     description
-      "A generator that extends React.Component instances and handles form
-       related activity (i.e. onClick, onChange) and automates state
-       updates related to form data.";
+      "A kinetic stream that extends React.Component instances and handles
+       form related activity (i.e. onClick, onChange) and automates
+       state updates related to form data.";
     
     kos:reaction saveFormData {
       input {
-        kos:flow react:event;
+        kos:data react:event;
       }
       output {
-        kos:flow react:state; // FUTURE
+        kos:data react:state; // FUTURE
       }
     }
     kos:reaction clearForm {
       if-feature react:dom;
       input {
-        kos:flow react:component {
+        kos:data react:component {
           require-instance true;
         }
-        kos:flow react:form-clear;
+        kos:data react:form-clear;
       }
     }
   }

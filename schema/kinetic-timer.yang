@@ -51,23 +51,23 @@ module kinetic-timer {
 
   kos:reaction once {
     input {
-      kos:flow timer:once;
+      kos:data timer:once;
     }
     output {
-      kos:flow timer:fire;
+      kos:data timer:fire;
     }
   }
   kos:reaction every {
     input {
-      kos:flow timer:every;
+      kos:data timer:every;
     }
     output {
-      kos:flow timer:fire;
+      kos:data timer:fire;
     }
   }
   kos:reaction stop {
     input {
-      kos:flow timer:stop;
+      kos:data timer:stop;
     }
     output {
       // no output...

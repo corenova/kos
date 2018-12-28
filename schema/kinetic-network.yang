@@ -194,30 +194,30 @@ module kinetic-network {
   kos:reaction connect {
     if-feature net:socket;
     input {
-      kos:flow net:remote;
+      kos:data net:remote;
     }
     output {
-      kos:flow net:connection;
-      kos:flow net:remote;
+      kos:data net:connection;
+      kos:data net:remote;
     }
   }
   kos:reaction request {
     if-feature net:net;
     input {
-      kos:flow net:request;
+      kos:data net:request;
     }
     output {
-      kos:flow net:response;
+      kos:data net:response;
     }
   }
   kos:reaction listen {
     if-feature net:server;
     input {
-      kos:flow net:local;
+      kos:data net:local;
     }
     output {
-      kos:flow net:connection;
-      kos:flow net:server;
+      kos:data net:connection;
+      kos:data net:server;
       kos:node "/net:topology/local";
     }
   }

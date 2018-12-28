@@ -17,16 +17,13 @@ module kinetic-object-stream {
   /*
    * Custom YANG Language Extensions
    */
-  extension processor {
-    argument "processor-name";
+  extension stream {
+    argument "stream-name";
   }
   extension reaction {
     argument "function-name";
   }
-  extension topic {
-    argument "topic-name";
-  }
-  extension flow {
+  extension data {
     argument "target-topic-identifier";
   }
   extension node {
@@ -39,7 +36,7 @@ module kinetic-object-stream {
     argument "array-name";
   }
   extension extends {
-    argument "target-processor-identifier";
+    argument "target-stream-identifier";
   }
   /*
    * Dependencies
@@ -93,7 +90,6 @@ module kinetic-object-stream {
       require-instance true;
     }
   }
-  
   /*
    * Kinetic topics
    */
@@ -113,9 +109,6 @@ module kinetic-object-stream {
   }
   grouping store {
     
-  }
-  grouping stream {
-    // define Stream object schema
   }
   grouping state {
     

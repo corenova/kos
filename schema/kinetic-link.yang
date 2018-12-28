@@ -33,30 +33,30 @@ module kinetic-link {
    */
   kos:reaction connect {
     input {
-      kos:flow link:remote;
+      kos:data link:remote;
     }
     output {
-      kos:flow net:remote;
-      kos:flow ws:remote;
+      kos:data net:remote;
+      kos:data ws:remote;
     }
   }
   kos:reaction listen {
     input {
-      kos:flow link:local;
+      kos:data link:local;
     }
     output {
-      kos:flow net:local;
-      kos:flow ws:local;
+      kos:data net:local;
+      kos:data ws:local;
     }
   }
   kos:reaction sync {
     if-feature kos:channel;
     //if-feature kos:interface;
     input {
-      kos:flow net:connection;
+      kos:data net:connection;
     }
     output {
-      kos:flow link:peer;
+      kos:data link:peer;
     }
   }
 }

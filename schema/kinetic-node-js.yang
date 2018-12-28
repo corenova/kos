@@ -43,52 +43,52 @@ module kinetic-node-js {
   
   kos:reaction initialize {
     input {
-      kos:flow kos:process;
+      kos:data kos:process;
     }
     output {
-      kos:flow nodejs:resolve;
+      kos:data nodejs:resolve;
     }
   }
   kos:reaction execute {
     input {
-      kos:flow kos:program;
+      kos:data kos:program;
     }
     output {
-      kos:flow nodejs:load;
-      kos:flow nodejs:read;
-      kos:flow kos:log;
+      kos:data nodejs:load;
+      kos:data nodejs:read;
+      kos:data kos:log;
     }
   }
   kos:reaction load {
     if-feature nodejs:path;
     input {
-      kos:flow nodejs:load;
+      kos:data nodejs:load;
     }
     output {
-      kos:flow kos:schema;
-      kos:flow nodejs:resolve;
+      kos:data kos:schema;
+      kos:data nodejs:resolve;
     }
   }
   kos:reaction resolve {
     input {
-      kos:flow nodejs:resolve;
+      kos:data nodejs:resolve;
     }
     output {
-      kos:flow nodejs:require;
+      kos:data nodejs:require;
     }
   }
   kos:reaction require {
     input {
-      kos:flow nodejs:require;
+      kos:data nodejs:require;
     }
     output {
-      kos:flow nodejs:module;
+      kos:data nodejs:module;
     }
   }
   kos:reaction read {
     if-feature nodejs:fs;
     input {
-      kos:flow nodejs:read;
+      kos:data nodejs:read;
     }
     output {
         

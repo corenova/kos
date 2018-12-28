@@ -3,7 +3,7 @@
 const Yang = require('yang-js')
 
 const { Property } = Yang
-const { Channel, Processor, Reaction, Neural } = require('./lib')
+const { Channel, Stream, Reaction, Neural } = require('./lib')
 
 const assert = require('assert')
 
@@ -11,7 +11,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   'feature(url)': require('url'),
   'feature(channel)': Channel,
 
-  'extension(processor)': {
+  'extension(stream)': {
     scope: {
       anydata:         '0..n',
       anyxml:          '0..n',
@@ -39,7 +39,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         const reaction = this.lookup('extension', 'kos:reaction')
         const container = this.lookup('extension', 'container')
         if ((this.input && this.input.nodes.length) || (this.output && this.output.nodes.length))
-          throw this.error('cannot contain data nodes in processor input/output')
+          throw this.error('cannot contain data nodes in stream input/output')
         
         const state = new Yang('container', 'state', container)
         const nodes = this.nodes.filter(n => {
@@ -67,7 +67,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
     construct(obj, ctx) {
       if (obj instanceof Neural.Layer)
-        return new Processor(this).join(obj, ctx)
+        return new Stream(this).join(obj, ctx)
       return obj
     }
   },
@@ -126,7 +126,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
 
     }
   },
-  'extension(flow)': {
+  'extension(data)': {
     scope: {
       description:        '0..1',
       'require-instance': '0..1',
@@ -173,6 +173,13 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       let { 'require-instance': required } = this
       let schema = this.locate(this.tag)
       let opts = { persist: (required && required.tag) === true }
+      if (schema.kind === 'list') {
+        const elems = this.tag.split('/')
+        if (elems[elems.length-1] === '.')
+          opts.filter = 'object'
+        else
+          opts.filter = 'array'
+      }
       for (let expr of this.exprs)
         opts = expr.eval(opts)
       data.set(schema, opts)
@@ -236,9 +243,9 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   },
   'extension(extends)': {
     resolve() {
-      let from = this.lookup('kos:processor', this.tag)
+      let from = this.lookup('kos:stream', this.tag)
       if (!from)
-        throw this.error(`unable to resolve ${this.tag} processor`)
+        throw this.error(`unable to resolve ${this.tag} stream`)
       from = from.clone().compile()
       from.nodes.forEach(n => this.parent.update(n))
       if (!this.parent.binding)

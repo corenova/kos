@@ -103,40 +103,40 @@ module kinetic-http {
   kos:reaction request {
     if-feature superagent;
     input {
-      kos:flow http:request;
+      kos:data http:request;
     }
     output {
-      kos:flow http:response;
+      kos:data http:response;
     }
   }
   kos:reaction get {
     input {
-      kos:flow http:request-get;
+      kos:data http:request-get;
     }
     output {
-      kos:flow http:request;
+      kos:data http:request;
     }
   }
   kos:reaction listen {
     if-feature http-server;
     input {
-      kos:flow http:local;
+      kos:data http:local;
     }
     output {
-      kos:flow http:server;
-      kos:flow net:connection;
-      kos:flow http:server-request;
+      kos:data http:server;
+      kos:data net:connection;
+      kos:data http:server-request;
     }
   }
   kos:reaction route {
     input {
-      kos:flow http:server {
+      kos:data http:server {
         require-instance true;
       }
-      kos:flow http:route;
+      kos:data http:route;
     }
     output {
-      kos:flow http:server-request;
+      kos:data http:server-request;
     }
   }
 }

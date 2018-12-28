@@ -78,7 +78,7 @@ module kinetic-network {
       type inet:port-number;
       default 12345;
     }
-    leaf path {
+    leaf pathname {
       type string;
     }
     leaf slashes {

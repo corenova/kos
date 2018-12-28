@@ -43,15 +43,6 @@ module.exports = require('./kinetic-network.yang').bind({
       } else {
         return this.content
       }
-    },
-    path(value) {
-      if (arguments.length) {
-        if (value) {
-          this.content = value
-        }
-      } else {
-        return this.content
-      }
     }
   },
 

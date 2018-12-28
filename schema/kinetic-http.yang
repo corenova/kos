@@ -17,10 +17,10 @@ module kinetic-http {
   feature express {
     reference "npm://express";
   }
-  feature superagent {
+  feature agent {
     reference "npm://superagent";
   }
-  feature http-server {
+  feature server {
     reference "nodejs://http";
   }
   /*
@@ -78,6 +78,16 @@ module kinetic-http {
   grouping response {
     
   }
+  grouping remote {
+    uses net:remote {
+      refine "protocol" {
+        default "http";
+      }
+      refine "port" {
+        default 80;
+      }
+    }
+  }
   grouping local {
     uses net:local {
       refine "protocol" {
@@ -101,7 +111,7 @@ module kinetic-http {
    * Reactions
    */
   kos:reaction request {
-    if-feature superagent;
+    if-feature agent;
     input {
       kos:data http:request;
     }
@@ -118,7 +128,7 @@ module kinetic-http {
     }
   }
   kos:reaction listen {
-    if-feature http-server;
+    if-feature server;
     input {
       kos:data http:local;
     }

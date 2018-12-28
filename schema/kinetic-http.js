@@ -5,7 +5,7 @@ module.exports = require('./kinetic-http.yang').bind({
 })
 
 function request(req) {
-  const agent = this.use('superagent')
+  const agent = this.use('http:agent')
   let { url, type='json', method, header={}, query='', data } = req
   method = method.toLowerCase()
   let request = agent[method](url).type(type).set(header).query(query)
@@ -30,7 +30,7 @@ function get(req) {
 }
 
 function listen(local) {
-  const http = this.use('node:http')
+  const http = this.use('http:server')
   let { server, protocol, port, hostname, uri } = local
   if (!server) {
     let server = http.createServer((req, res) => {

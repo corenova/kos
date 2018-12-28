@@ -69,9 +69,6 @@ module kinetic-network {
         base kos:protocol;
       }
       default "tcp";
-      must ". = 'tcp' or . = 'udp' or . = 'unix'" {
-        error-message "A net protocol must be 'tcp' or 'udp' or 'unix'";
-      }
     }
     leaf hostname {
       type inet:host;

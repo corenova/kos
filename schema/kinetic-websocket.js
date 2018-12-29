@@ -30,7 +30,6 @@ function connect(remote) {
       this.after(retry, max)
         .then(retry => {
           remote = Object.assign({}, remote, { uri: undefined, query: { retry } })
-          this.info(`reconnecting to ${uri} after ${retry}ms...`, retry)
           this.feed('ws:endpoint', remote)
         })
     })

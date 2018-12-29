@@ -78,18 +78,8 @@ module kinetic-http {
   grouping response {
     
   }
-  grouping remote {
-    uses net:remote {
-      refine "protocol" {
-        default "http";
-      }
-      refine "port" {
-        default 80;
-      }
-    }
-  }
-  grouping local {
-    uses net:local {
+  grouping endpoint {
+    uses net:endpoint {
       refine "protocol" {
         default "http";
       }
@@ -108,45 +98,49 @@ module kinetic-http {
     
   }
   /*
-   * Reactions
+   * Kinetic Personas
    */
-  kos:reaction request {
-    if-feature agent;
-    input {
-      kos:data http:request;
-    }
-    output {
-      kos:data http:response;
-    }
-  }
-  kos:reaction get {
-    input {
-      kos:data http:request-get;
-    }
-    output {
-      kos:data http:request;
-    }
-  }
-  kos:reaction listen {
-    if-feature server;
-    input {
-      kos:data http:local;
-    }
-    output {
-      kos:data http:server;
-      kos:data net:connection;
-      kos:data http:server-request;
-    }
-  }
-  kos:reaction route {
-    input {
-      kos:data http:server {
-        require-instance true;
+  kos:persona Connector {
+    kos:reaction request {
+      if-feature http:agent;
+      input {
+        kos:data http:request;
       }
-      kos:data http:route;
+      output {
+        kos:data http:response;
+      }
     }
-    output {
-      kos:data http:server-request;
+    kos:reaction get {
+      input {
+        kos:data http:request-get;
+      }
+      output {
+        kos:data http:request;
+      }
+    }
+  }
+  kos:persona Listener {
+    kos:reaction listen {
+      if-feature http:server;
+      input {
+        kos:data http:local;
+      }
+      output {
+        kos:data http:server;
+        kos:data net:connection;
+        kos:data http:server-request;
+      }
+    }
+    kos:reaction route {
+      input {
+        kos:data http:server {
+          require-instance true;
+        }
+        kos:data http:route;
+      }
+      output {
+        kos:data http:server-request;
+      }
     }
   }
 }

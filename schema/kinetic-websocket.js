@@ -3,8 +3,9 @@
 require('yang-js')
 
 module.exports = require('./kinetic-websocket.yang').bind({
-  // Bind Reactions
-  connect, listen
+  // Bind Personas
+  Connector: { connect },
+  Listener: { listen }
 })
 
 function connect(remote) {
@@ -30,7 +31,7 @@ function connect(remote) {
         .then(retry => {
           remote = Object.assign({}, remote, { uri: undefined, query: { retry } })
           this.info(`reconnecting to ${uri} after ${retry}ms...`, retry)
-          this.feed('ws:remote', remote)
+          this.feed('ws:endpoint', remote)
         })
     })
     socket.on('error', this.error.bind(this))
@@ -39,7 +40,7 @@ function connect(remote) {
 
 function listen(local) {
   const Server = this.use('ws:server')
-  let { server, uri, protocol, hostname, port, pathname } = local
+  let { socket: server, uri, protocol, hostname, port, pathname } = local
   if (server) {
     this.info(`listening on existing server instance`)
     server = new Server({ server })

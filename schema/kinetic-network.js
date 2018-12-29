@@ -15,7 +15,6 @@ module.exports = require('./kinetic-network.yang').bind({
       return [].concat(this.get(`/net:session/connection[source = '${uri}']/uri`))
     }
   },
-
   "grouping(endpoint)": {
     uri(value) {
       const Url = this.use('kos:url')
@@ -45,9 +44,10 @@ module.exports = require('./kinetic-network.yang').bind({
       }
     }
   },
+  // Bind Personas
+  Connector: { connect, request },
+  Listener: { listen }
 
-  // Bind Reactions
-  connect, request, listen
 })
 
 function connect(remote) {
@@ -70,7 +70,7 @@ function connect(remote) {
           remote = Object.assign({}, remote, { retry: timeout })
           this.info("attempt reconnect", uri)
           // should delete related 'connection'
-          this.send('net:remote', remote)
+          this.send('net:endpoint', remote)
         })
     })
     socket.on('error', this.error.bind(this))
@@ -109,7 +109,7 @@ function request(opts) {
 
 function listen(local) {
   const Server = this.use('net:server')
-  let { server, protocol, port, hostname, uri } = local
+  let { socket: server, protocol, port, hostname, uri } = local
   if (!server) {
     server = new Server
     server.on('connection', socket => {

@@ -19,44 +19,44 @@ module kinetic-link {
   /*
    * Groupings
    */
-  grouping remote {
-    uses net:remote;
-  }
-  grouping local {
-    uses net:local;
+  grouping endpoint {
+    uses net:endpoint;
   }
   grouping peer {
     
   }
   /*
-   * Kinetic Reactions
+   * Kinetic Personas
    */
-  kos:reaction connect {
-    input {
-      kos:data link:remote;
-    }
-    output {
-      kos:data net:remote;
-      kos:data ws:remote;
-    }
+  kos:persona Connector {
+    kos:extends net:Connector;
+    kos:extends ws:Connector;
+    kos:extends link:Synchronizer;
   }
-  kos:reaction listen {
-    input {
-      kos:data link:local;
-    }
-    output {
-      kos:data net:local;
-      kos:data ws:local;
-    }
+  kos:persona Listener {
+    kos:extends net:Listener;
+    kos:extends ws:Listener;
+    kos:extends link:Synchronizer;
   }
-  kos:reaction sync {
-    if-feature kos:channel;
-    //if-feature kos:interface;
-    input {
-      kos:data net:connection;
+  kos:persona Synchronizer {
+    kos:reaction select {
+      input {
+        kos:data link:endpoint;
+      }
+      output {
+        kos:data net:endpoint;
+        kos:data ws:endpoint;
+      }
     }
-    output {
-      kos:data link:peer;
+    kos:reaction sync {
+      if-feature kos:channel;
+      //if-feature kos:interface;
+      input {
+        kos:data net:connection;
+      }
+      output {
+        kos:data link:peer;
+      }
     }
   }
 }

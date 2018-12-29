@@ -17,8 +17,8 @@ module kinetic-object-stream {
   /*
    * Custom YANG Language Extensions
    */
-  extension stream {
-    argument "stream-name";
+  extension persona {
+    argument "persona-name";
   }
   extension reaction {
     argument "function-name";
@@ -29,14 +29,14 @@ module kinetic-object-stream {
   extension node {
     argument "target-node-identifier";
   }
+  extension extends {
+    argument "target-stream-identifier";
+  }
   extension filter {
     argument "filter-rule";
   }
   extension array {
     argument "array-name";
-  }
-  extension extends {
-    argument "target-stream-identifier";
   }
   /*
    * Dependencies

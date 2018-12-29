@@ -3,7 +3,7 @@
 const Yang = require('yang-js')
 
 const { Property } = Yang
-const { Channel, Stream, Reaction, Neural } = require('./lib')
+const { Persona, Reaction, Channel, Neural } = require('./lib')
 
 const assert = require('assert')
 
@@ -11,7 +11,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   'feature(url)': require('url'),
   'feature(channel)': Channel,
 
-  'extension(stream)': {
+  'extension(persona)': {
     scope: {
       anydata:         '0..n',
       anyxml:          '0..n',
@@ -67,7 +67,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
     construct(obj, ctx) {
       if (obj instanceof Neural.Layer)
-        return new Stream(this).join(obj, ctx)
+        return new Persona(this).join(obj, ctx)
       return obj
     }
   },
@@ -222,13 +222,18 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   },
   'extension(extends)': {
     resolve() {
-      let from = this.lookup('kos:stream', this.tag)
+      let from = this.lookup('kos:persona', this.tag)
       if (!from)
-        throw this.error(`unable to resolve ${this.tag} stream`)
+        throw this.error(`unable to resolve ${this.tag} persona`)
       from = from.clone().compile()
-      from.nodes.forEach(n => this.parent.update(n))
-      if (!this.parent.binding)
-        this.parent.bind(from.binding)
+      from.nodes.forEach(n => {
+        if (n.kind === 'kos:reaction' && n.root !== this.root) {
+          n.tag = `${n.root.tag}:${n.tag}`
+        }
+        this.parent.update(n)
+      })
+      // if (!this.parent.binding)
+      //   this.parent.bind(from.binding)
     }
   }
 })

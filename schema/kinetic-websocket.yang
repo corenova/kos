@@ -1,5 +1,11 @@
 module kinetic-websocket {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-websocket";
   prefix ws;
+
+  organization
+    "Corenova Technologies, Inc.";
+  contact
+    "Peter K. Lee <peter@corenova.com>";
 
   import kinetic-object-stream {
     prefix kos;
@@ -28,21 +34,8 @@ module kinetic-websocket {
   /*
    * Groupings
    */
-  grouping remote {
-    uses net:remote {
-      refine protocol {
-        default "ws";
-        must ". = 'ws' or . = 'wss'" {
-          error-message "A websocket protocol must be 'ws' or 'wss'";
-        }
-      }
-      refine port {
-        default 80;
-      }
-    }
-  }
-  grouping local {
-    uses net:local {
+  grouping endpoint {
+    uses net:endpoint {
       refine protocol {
         default "ws";
         must ". = 'ws' or . = 'wss'" {
@@ -58,26 +51,30 @@ module kinetic-websocket {
     
   }
   /*
-   * Kinetic Reactions
+   * Kinetic Personas
    */
-  kos:reaction connect {
-    if-feature ws:socket;
-    input {
-      kos:data ws:remote;
-    }
-    output {
-      kos:data ws:remote;
-      kos:data net:connection;
+  kos:persona Connector {
+    kos:reaction connect {
+      if-feature ws:socket;
+      input {
+        kos:data ws:endpoint;
+      }
+      output {
+        kos:data ws:endpoint;
+        kos:data net:connection;
+      }
     }
   }
-  kos:reaction listen {
-    if-feature ws:server;
-    input {
-      kos:data ws:local;
-    }
-    output {
-      kos:data ws:server;
-      kos:data net:connection;
+  kos:persona Listener {
+    kos:reaction listen {
+      if-feature ws:server;
+      input {
+        kos:data ws:endpoint;
+      }
+      output {
+        kos:data ws:server;
+        kos:data net:connection;
+      }
     }
   }
 }

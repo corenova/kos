@@ -1,7 +1,9 @@
 require('yang-js')
 
 module.exports = require('./kinetic-http.yang').bind({
-  request, get, listen, route
+  // Bind Personas
+  Connector: { request, get },
+  Listener: { listen, route }
 })
 
 function request(req) {

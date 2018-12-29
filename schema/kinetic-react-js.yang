@@ -77,9 +77,9 @@ module kinetic-react-js {
     }
   }
 
-  kos:stream Component {
+  kos:persona Component {
     description
-      "A kinetic stream that consumes React.Component instances and captures
+      "A persona that consumes React.Component instances and captures
        lifecycle events and state changes";
     /*
      * Kinetic Reactions
@@ -136,11 +136,11 @@ module kinetic-react-js {
       }
     }
   }
-  kos:stream Form {
+  kos:persona Form {
     kos:extends react:Component;
 
     description
-      "A kinetic stream that extends React.Component instances and handles
+      "A persona that extends React.Component instances and handles
        form related activity (i.e. onClick, onChange) and automates
        state updates related to form data.";
     

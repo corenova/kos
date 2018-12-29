@@ -88,26 +88,17 @@ module kinetic-network {
     container query {
       uses persist-options;
     }
+    anydata socket {
+      if-feature net:socket;
+    }
     // below placed last for a reason...
     leaf uri {
       if-feature kos:url;
       type net:uri;
     }
   }
-  grouping remote {
-    uses net:endpoint;
-    anydata socket {
-      if-feature net:socket;
-    }
-  }
-  grouping local {
-    uses net:endpoint;
-    anydata server {
-      if-feature net:server;
-    }
-  }
   grouping request {
-    uses net:remote {
+    uses net:endpoint {
       augment "query" {
         leaf single {
           type boolean;
@@ -120,7 +111,7 @@ module kinetic-network {
     anydata data;
   }
   grouping response {
-    uses net:remote;
+    uses net:endpoint;
     anydata data;
   }
   grouping connection {
@@ -155,7 +146,7 @@ module kinetic-network {
     config false;
     list remote {
       key uri;
-      uses net:remote;
+      uses net:endpoint;
       leaf active {
         config false;
         type boolean;
@@ -165,7 +156,7 @@ module kinetic-network {
     }
     list local {
       key uri;
-      uses net:local;
+      uses net:endpoint;
       leaf active {
         config false;
         type boolean;
@@ -186,36 +177,40 @@ module kinetic-network {
     }
   }
   /*
-   * Kinetic Reactions
+   * Kinetic Personas
    */
-  kos:reaction connect {
-    if-feature net:socket;
-    input {
-      kos:data net:remote;
+  kos:persona Connector {
+    kos:reaction connect {
+      if-feature net:socket;
+      input {
+        kos:data net:endpoint;
+      }
+      output {
+        kos:data net:connection;
+        kos:data net:endpoint;
+      }
     }
-    output {
-      kos:data net:connection;
-      kos:data net:remote;
+    kos:reaction request {
+      if-feature net:net;
+      input {
+        kos:data net:request;
+      }
+      output {
+        kos:data net:response;
+      }
     }
   }
-  kos:reaction request {
-    if-feature net:net;
-    input {
-      kos:data net:request;
-    }
-    output {
-      kos:data net:response;
-    }
-  }
-  kos:reaction listen {
-    if-feature net:server;
-    input {
-      kos:data net:local;
-    }
-    output {
-      kos:data net:connection;
-      kos:data net:server;
-      kos:node "/net:topology/local";
+  kos:persona Listener {
+    kos:reaction listen {
+      if-feature net:server;
+      input {
+        kos:data net:endpoint;
+      }
+      output {
+        kos:data net:connection;
+        kos:data net:server;
+        kos:node "/net:topology/local";
+      }
     }
   }
 }

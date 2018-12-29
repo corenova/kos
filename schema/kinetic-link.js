@@ -3,37 +3,19 @@
 const Yang = require('yang-js')
 
 module.exports = require('./kinetic-link.yang').bind({
-  // Bind Reactions
-  connect, listen, sync
+  Synchronizer: { select, sync }
 })
 
-function connect(remote) {
-  const { protocol } = remote
+function select(input) {
+  const { protocol } = input
   switch (protocol) {
   case 'ws':
   case 'wss':
-    this.send('ws:remote', remote)
+    this.send('ws:endpoint', input)
     break;
   case 'tcp':
   case 'udp':
-    this.send('net:remote', remote)
-    break;
-  default:
-    this.warn('unsupported protocol', protocol)
-  }
-}
-
-function listen(local) {
-  const { protocol } = local
-  switch (protocol) {
-  case 'ws':
-  case 'wss':
-    this.send('ws:local', local)
-    break;
-  case 'tcp':
-  case 'udp':
-  case undefined:
-    this.send('net:local', local)
+    this.send('net:endpoint', input)
     break;
   default:
     this.warn('unsupported protocol', protocol)

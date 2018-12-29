@@ -123,7 +123,7 @@ module kinetic-http {
     kos:reaction listen {
       if-feature http:server;
       input {
-        kos:data http:local;
+        kos:data http:endpoint;
       }
       output {
         kos:data http:server;

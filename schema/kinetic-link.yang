@@ -20,7 +20,11 @@ module kinetic-link {
    * Groupings
    */
   grouping endpoint {
-    uses net:endpoint;
+    uses net:endpoint {
+      refine "query/retry" {
+        default true;
+      }
+    }
   }
   grouping peer {
     

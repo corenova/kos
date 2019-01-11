@@ -28,10 +28,10 @@ expressed as a set of discrete atomic *reaction(s)* that
 observes from its incoming flow of data stimuli.
 
 Using **KOS**, you can create a new
-[Reactor](./doc/intro.md#reactor) instance with one or more
+[Persona](./doc/intro.md#persona) instance with one or more
 [Reaction](./doc/intro.md#reaction) functions and
-**feed/pipe** a stream of [Stimuli](./doc/intro.md#stimulus)
-into the Reactor.
+**feed/pipe** a stream of [Pulse](./doc/intro.md#pulse)
+into the Persona.
 
 One of the most important concept in **KOS** is that these *reactive*
 functions are **never explicitly called** by other functions as part
@@ -57,6 +57,8 @@ Once you learn how to express and leverage the power of
 [chain reactions](./doc/intro.md#chain-reactions), you can create
 [neural networks](./doc/cluster.md) that **evolve** based on its
 operating environment.
+
+NOTE: this documentation is out-of-date and will be updated shortly.
 
 ## Reference Guides
 
@@ -87,12 +89,8 @@ the **KOS** framework should provide some indirect guidance.
 ## Installation
 
 ```bash
-$ npm install -g kos
+$ npm install kos
 ```
-
-Installing this module with `-g` flag enables system-wide access to
-the `kos` command-line utility. It is the *preferred* installation
-method, but it's perfectly fine to install as a local dependency.
 
 For development and running through examples, you can grab the source
 repo from:
@@ -101,7 +99,7 @@ repo from:
 $ git clone https://github.com/corenova/kos
 ```
 
-## Available Reactors
+## Available Modules
 
 The following [Reactor](./doc/intro.md#reactor) modules are included
 inside the **KOS** repository (see [/reactor](./reactor)):

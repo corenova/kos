@@ -60,14 +60,14 @@ and learn to harness the power of elemental compositions.
 
 ### Chain Reactions
 
-When a given [Stimulus](#stimulus) triggers a [Reaction](#reaction)
-which produces additional stimuli that then triggers a subsequent
-reaction, we refer to such event as a **chain reaction**. There is no
-limit as to the sequence of reactions that may occur as a result of a
-given data token. It's also possible for a given reaction to produce
-more than one type of stimulus data which can initiate multiple flows
-of **chain reactions** to take place in parallel. Furthermore, a given
-reaction may continuously generate a stream of stimuli, which can then
+When a given [Pulse](#pulse) triggers a [Reaction](#reaction) which
+produces additional pulses that then triggers a subsequent reaction,
+we refer to such event as a **chain reaction**. There is no limit as
+to the sequence of reactions that may occur as a result of a given
+data token. It's also possible for a given reaction to produce more
+than one type of pulse data which can initiate multiple flows of
+**chain reactions** to take place in parallel. Furthermore, a given
+reaction may continuously generate a stream of pulses, which can then
 trigger additional reactions forever.
 
 Especially when **KOS** is running as a *distributed*
@@ -82,13 +82,13 @@ Before you can embrace the **KOS** framework, it is important to
 understand the core entities within **KOS** and their respective
 roles.
 
-### Stimulus
+### Pulse
 
-The **Stimulus** entity represents the primary encapsulation of data
-objects. The *Stimulus* is the main entity that flows throughout the
+The **Pulse** entity represents the primary encapsulation of data
+objects. The *Pulse* is the main entity that flows throughout the
 **KOS** data pipeline.
 
-Every *stimulus* has a **key**, which serves as the data *type* label
+Every *pulse* has a **key**, which serves as the data *type* label
 for the *actual* data object being transmitted. The token's key is the
 **sole identifier** used for fulfilling input state condition(s) for
 the *reactive* functions.
@@ -99,23 +99,23 @@ the data oject and ensures that each of the [Dataflow](#dataflow)
 instances in a given data pipeline *never* reacts to the same data
 object more than once.
 
-The *stimuli* are internally created to encapsulate the data object by
+The *Pulse* are internally created to encapsulate the data object by
 the underlying [Dataflow](#dataflow) instance.
 
-You can reference the source code [here](../lib/stimulus.js).
+You can reference the source code [here](../lib/pulse.js).
 
 ### Dataflow
 
 The **Dataflow** entity represents the underlying data pipeline
 plumbing. It extends the [Node.js](http://nodejs.org)
 [stream](http://nodejs.org/api/stream.html) interface to streamline
-the flow of [Stimuli](#stimulus).
+the flow of [Pulse](#pulse).
 
 It also provides **state management** facilities for preserving any
 necessary operational context.
 
 You can use the **Dataflow** interface to directly
-[feed](./usage.md#feeding-stimuli) additional labeled data objects
+[feed](./usage.md#feeding-pulse) additional labeled data objects
 into the stream.
 
 It also serves as the base class for the
@@ -171,7 +171,7 @@ running environment.
 It's the `kos` library module itself, so when you `require("kos")` or
 `import "kos"`, you are simply accessing the **Runtime** instance
 itself. It operates as a `passive` reactor, which means that it allows
-*passthrough* of [Stimuli](#stimulus) it observes directly to one or
+*passthrough* of [Pulse](#pulse) it observes directly to one or
 more *loaded* [Reactor](#reactor) flow modules.
 
 It's primary role is to represent the *logical root* container for a
@@ -245,7 +245,7 @@ to produce a new output labeled `a`.  In addition, we express a simple
 reactor to print its value to the console.
 
 We can then explicitly trigger the reactions by
-[feeding](./usage.md#feeding-stimuli) the reactor instance with
+[feeding](./usage.md#feeding-pulse) the reactor instance with
 input objects:
 
 ```js

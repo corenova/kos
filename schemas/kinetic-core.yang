@@ -1,0 +1,56 @@
+module kinetic-core {
+  prefix core;
+
+  description
+    "common system personas and reactions";
+  
+  import kinetic-object-stream {
+    prefix kos;
+  }
+  typedef event-name {
+    type kos:identifier;
+  }
+  grouping alarm {
+    leaf name {
+      type core:event-name;
+    }
+    leaf delay {
+      type uint16;
+      units ms;
+    }
+    leaf repeat {
+      type boolean;
+      default false;
+    }
+    leaf active {
+      type boolean;
+      default true;
+    }
+  }
+  grouping alert {
+    leaf name {
+      type core:event-name;
+    }
+  }
+  kos:persona Timer {
+    input {
+      kos:data core:alarm;
+    }
+    output {
+      kos:data core:alert;
+    }
+    list alarm {
+      key "name";
+      uses core:alarm;
+      anydata timer;
+    }
+    kos:reaction schedule {
+      input {
+        kos:data core:alarm;
+      }
+      output {
+        kos:data core:alert;
+      }
+    }
+  }
+}

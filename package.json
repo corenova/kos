@@ -51,31 +51,26 @@
   },
   "homepage": "https://github.com/corenova/kos#readme",
   "scripts": {
-    "clean": "rimraf dist/*",
-    "prebuild": "npm run clean -s && mkdirp dist",
-    "build:min": "browserify -t babelify -p [ minifyify --no-map ] . -o dist/kos.min.js",
-    "build:dev": "browserify -t babelify . -o dist/kos.dev.js",
-    "build": "npm run build:min",
+    "prepare": "webpack --mode=production --optimize-minimize",
     "test": "mocha"
   },
   "yang": {
     "paths": [
       ".",
-      "./schema",
+      "./schemas",
       "yang-js"
     ],
     "resolve": {
       "kinetic-object-stream": "./kinetic-object-stream.js",
-      "kinetic-console": "./schema/kinetic-console.js",
-      "kinetic-http": "./schema/kinetic-http.js",
-      "kinetic-link": "./schema/kinetic-link.js",
-      "kinetic-network": "./schema/kinetic-network.js",
-      "kinetic-node-js": "./schema/kinetic-node-js.js",
-      "kinetic-react-js": "./schema/kinetic-react-js.js",
-      "kinetic-render": "./schema/kinetic-render.js",
-      "kinetic-snmp": "./schema/kinetic-snmp.js",
-      "kinetic-timer": "./schema/kinetic-timer.js",
-      "kinetic-websocket": "./schema/kinetic-websocket.js",
+      "kinetic-core": "./schemas/kinetic-core.js",
+      "kinetic-filesystem": "./schemas/kinetic-filesystem.js",
+      "kinetic-http": "./schemas/kinetic-http.js",
+      "kinetic-link": "./schemas/kinetic-link.js",
+      "kinetic-network": "./schemas/kinetic-network.js",
+      "kinetic-node-js": "./schemas/kinetic-node-js.js",
+      "kinetic-react-js": "./schemas/kinetic-react-js.js",
+      "kinetic-snmp": "./schemas/kinetic-snmp.js",
+      "kinetic-websocket": "./schemas/kinetic-websocket.js",
       "ietf-inet-types": "yang-js",
       "ietf-yang-library": "yang-js",
       "ietf-yang-types": "yang-js"
@@ -93,7 +88,7 @@
     "uuid": "^3.0.1"
   },
   "peerDependencies": {
-    "yang-js": "^0.17.45"
+    "yang-js": "^0.17.48"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",
@@ -101,20 +96,18 @@
     "superagent": "^3.4.1"
   },
   "devDependencies": {
-    "babel-preset-es2015": "^6.24.0",
-    "babelify": "^7.3.0",
-    "browserify": "^14.1.0",
-    "minifyify": "^7.3.5",
-    "mkdirp": "^0.5.1",
+    "@babel/core": "^7.2.2",
+    "@babel/node": "^7.2.2",
+    "@babel/polyfill": "^7.2.5",
+    "@babel/preset-env": "^7.2.3",
+    "babel-loader": "^8.0.5",
+    "json-loader": "^0.5.7",
     "mocha": "^5.2.0",
-    "rimraf": "^2.6.1",
     "should": "^11.2.0",
-    "yang-js": "^0.17.45",
+    "webpack": "^4.28.4",
+    "webpack-cli": "^3.2.1",
+    "yaml-loader": "^0.5.0",
+    "yang-js": "^0.17.48",
     "yang-loader": "^1.0.1"
-  },
-  "babel": {
-    "presets": [
-      "es2015"
-    ]
   }
 }

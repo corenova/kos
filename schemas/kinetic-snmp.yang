@@ -1,0 +1,163 @@
+module kinetic-snmp {
+  prefix snmp;
+  yang-version "1.1";
+
+  import kinetic-object-stream {
+    prefix kos;
+  }
+  import kinetic-network {
+    prefix net;
+  }
+  import ietf-yang-types {
+    prefix yang;
+  }
+  feature net-snmp {
+    reference "npm://net-snmp";
+  }
+  /*
+   * Identities
+   */
+  identity snmp {
+    base kos:protocol;
+  }
+  /*
+   * Typedefs
+   */
+  typedef session-instance-ref {
+    type leafref {
+      path "/snmp:session/id";
+    }
+  }
+  typedef oid {
+    type yang:object-identifier-128;
+  }
+  /*
+   * Groupings
+   */
+  grouping endpoint {
+    uses net:endpoint {
+      refine protocol {
+        default "snmp";
+      }
+      refine port {
+        default 161;
+      }
+      augment query {
+        leaf community {
+          type string;
+          default 'public'
+        }
+        leaf version {
+          type enumeration {
+            enum v1 { value 0; }
+            enum v2 { value 1; }
+          }
+          default 0;
+        }
+        leaf retries {
+          type uint8;
+        }
+        leaf timeout {
+          type uint16;
+          units "ms";
+        }
+        leaf transport;
+      }
+    }
+  }
+  grouping varbind {
+    leaf oid {
+      type snmp:oid;
+    }
+    leaf type {
+      type uint8;
+    }
+    leaf value;
+  }
+  grouping varbind-list {
+    list data {
+      key oid;
+      uses snmp:varbind;
+    }
+  }
+  grouping request {
+    leaf method {
+      type enumeration {
+        enum get;
+        enum set;
+        enum walk;
+      }
+      default get;
+    }
+    leaf root {
+      type snmp:oid;
+    }
+    leaf-list oids {
+      type snmp:oid;
+      min-elements 1;
+    }
+    uses snmp:varbind-list {
+      refine data {
+        min-elements 1;
+      }
+    }
+  }
+  grouping response {
+    uses snmp:varbind-list;
+  }
+  grouping session {
+    uses snmp:endpoint;
+    leaf active {
+      config false;
+      type boolean;
+      default false;
+    }
+    anydata agent;
+    // FUTURE?
+    // action get;
+    // action set;
+    // action walk;
+  }
+  /*
+   * Kinetic Personas
+   */
+  kos:persona Connector {
+    kos:reaction connect {
+      if-feature snmp:net-snmp;
+      input {
+        kos:data snmp:endpoint;
+      }
+      output {
+        kos:data snmp:session;
+        kos:data net:connection;
+      }
+    }
+    kos:reaction request {
+      if-feature snmp:net-snmp;
+      input {
+        kos:data snmp:session;
+        kos:data snmp:request;
+      }
+      output {
+        kos:data snmp:response;
+      }
+    }
+    kos:reaction walk {
+      if-feature snmp:net-snmp;
+      input {
+        kos:data snmp:session;
+      }
+    }
+  }
+  /*
+   * Configuration data nodes
+   */ 
+  list session {
+    config false;
+    key id;
+    uses snmp:session;
+    anydata instance {
+      mandatory true;
+    }
+  }
+}

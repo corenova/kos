@@ -29,7 +29,7 @@ module.exports = require('./kinetic-core.yang').bind({
           timer = setTimeout(fire, delay)
         }
       }
-      this.save({ alarm: [{ name, timer, active }] })
+      this.save({ alarm: [{ name, delay, repeat, active, timer }] })
     }
   }
 })

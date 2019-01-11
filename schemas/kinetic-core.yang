@@ -17,6 +17,7 @@ module kinetic-core {
     leaf delay {
       type uint16;
       units ms;
+      default 0;
     }
     leaf repeat {
       type boolean;

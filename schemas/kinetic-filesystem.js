@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = require('./filesystem.yang').bind({
+module.exports = require('./kinetic-filesystem.yang').bind({
   openFileStream, readFileStream
 })
 

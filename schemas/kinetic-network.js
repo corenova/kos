@@ -27,6 +27,8 @@ module.exports = require('./kinetic-network.yang').bind({
           }
           for (let k in obj)
             this.container[k] = obj[k]
+          // XXX - below doesn't work when being set
+          //this.parent.merge(obj)
         }
         return undefined
       } else { // getter

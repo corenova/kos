@@ -41,47 +41,52 @@ module.exports = require('./kinetic-network.yang').bind({
           value = value.replace(':','')
           this.content = value
         }
-      } else {
-        return this.content
       }
+      return this.content
     }
   },
   // Bind Personas
-  Connector: { connect, request },
-  Listener: { listen }
+  Connector: {
+    async connect(remote) {
+      const { uri } = remote
+      const { socket } = await this.in('/net:connect').do(remote);
+      this.send('net:connection', { uri, socket })
+    },
+    request
+  },
+  Listener: { listen },
 
-})
-
-function connect(remote) {
-  const Socket = this.use('net:socket')
-  let { uri, socket, port, hostname, query } = remote
-  let { retry, max } = query
-  // TODO: check if pre-existing connection for the 'uri' exists.
-  if (!socket) {
+  // Bind Remote Procedure Calls
+  connect(remote) {
+    const Socket = this.use('net:socket')
+    let { uri, socket, port, hostname, query } = remote
+    let { retry, max } = query
+    const reconnect = async () => {
+      if (socket.closing || !retry) return
+      retry = await this.after(retry, max)
+      this.debug(`reconnect to ${uri} (retry: ${retry})`)
+      socket.connect(port, hostname)
+    }
     socket = new Socket
     socket.setNoDelay()
-    remote = Object.assign({}, remote, { socket })
-    socket.on('connect', () => {
-      this.send('net:connection', { uri, socket })
-      if (retry) retry = 100
+    socket.setKeepAlive(true);
+    socket.setTimeout(5000);
+    socket.on('error', err => this.error(err));
+    socket.on('timeout', reconnect);
+    socket.on('close', reconnect);
+    
+    return new Promise((resolve, reject) => {
+      socket.on('connect', () => {
+        resolve({ socket })
+        if (retry) retry = 100
+      })
+      this.debug(`attempt ${uri}`)
+      socket.connect(port, hostname)
+      // TODO: preserve this in module configuration state
+      //this.in('/net:topology/remote').add(remote)
     })
-    socket.on('close', () => {
-      if (socket.closing || !retry) return
-      this.after(retry, max)
-        .then( timeout => {
-          remote = Object.assign({}, remote, { retry: timeout })
-          this.info("attempt reconnect", uri)
-          // should delete related 'connection'
-          this.send('net:endpoint', remote)
-        })
-    })
-    socket.on('error', this.error.bind(this))
   }
-  // TODO: preserve this in module configuration state
-  //this.in('/net:topology/remote').add(remote)
-  this.debug('attempt', uri)
-  socket.connect(port, hostname)
-}
+})
 
 function request(opts) {
   const net = this.use('net:net');
@@ -89,7 +94,7 @@ function request(opts) {
   if (!socket || socket.closing) {
     const { uri, hostname, port, query={} } = opts;
     let buffer = ''
-    this.debug(`making a new connection to ${uri}...`)
+    this.info(`making a new connection to ${uri}...`)
     socket = net.createConnection(port, hostname, () => {
       this.debug(`connected to ${uri} sending request...`);
       socket.write(data + '\r\n');

@@ -176,6 +176,15 @@ module kinetic-network {
       uses net:connection;
     }
   }
+  rpc connect {
+    if-feature net:socket;
+    input {
+      uses net:endpoint;
+    }
+    output {
+      anydata socket;
+    }
+  }
   /*
    * Kinetic Personas
    */

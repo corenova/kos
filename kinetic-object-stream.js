@@ -80,9 +80,6 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       reference:     '0..1',
       status:        '0..1'
     },
-    target: {
-      module: '0..n'
-    },
     resolve() {
       if (this.input.nodes.length || (this.output && this.output.nodes.length))
         throw this.error("cannot contain data nodes in reaction input/output")

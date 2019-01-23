@@ -1,6 +1,6 @@
 {
   "name": "kos",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "Stream processing framework for creating distributed data pipelines and autonomic neural networks",
   "bin": {
     "kos": "./bin/kos.js"

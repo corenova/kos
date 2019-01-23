@@ -48,7 +48,7 @@
   },
   "homepage": "https://github.com/corenova/kos#readme",
   "scripts": {
-    "prepare": "webpack --mode=production --optimize-minimize",
+    "prepublishOnly": "webpack --mode=production --optimize-minimize",
     "test": "mocha"
   },
   "yang": {

@@ -22,8 +22,8 @@ function request(req) {
   request
     .then(res => this.send('http:response', res))
     .catch(err => {
-      this.error(err)
-      this.warn(`${err.status} on ${method} ${url} got ${err.response.text}`)
+      this.error(err);
+      this.warn(`${err.status} on ${method} ${url}`,err.response);
     })
 }
 

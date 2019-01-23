@@ -94,9 +94,9 @@ function request(opts) {
   if (!socket || socket.closing) {
     const { uri, hostname, port, query={} } = opts;
     let buffer = ''
-    this.info(`making a new connection to ${uri}...`)
+    this.debug(`making a new connection to ${uri}...`)
     socket = net.createConnection(port, hostname, () => {
-      this.debug(`connected to ${uri} sending request...`);
+      this.info(`connected to ${uri} sending request...`);
       socket.write(data + '\r\n');
       socket.end()
     });
@@ -105,7 +105,7 @@ function request(opts) {
       buffer += data.toString()
     });
     socket.on('end', () => {
-      this.debug(`disconnected from ${uri}, returning ${buffer.length} bytes`);
+      this.info(`disconnected from ${uri}, returning ${buffer.length} bytes`);
       this.send('net:response', { uri, socket, data: buffer });
     })
     socket.on('error', this.error.bind(this))

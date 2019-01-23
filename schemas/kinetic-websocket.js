@@ -26,7 +26,7 @@ function connect(remote) {
       }
       if (typeof retry !== 'number') retry = 100
       //console.log(remote[Symbol.for('property')].in('query').set({ retry: true }))
-      this.info(`reconnecting to ${uri} in ${retry}ms...`, remote.query)
+      this.debug(`reconnecting to ${uri} in ${retry}ms...`, remote.query)
       this.after(retry, max)
         .then(retry => {
           remote = Object.assign({}, remote, { uri: undefined, query: { retry } })

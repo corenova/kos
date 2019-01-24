@@ -17,8 +17,8 @@ module.exports = require('./kinetic-http.yang').bind({
     }
     return request
       .catch(err => {
-        this.error(err);
         this.warn(`${err.status} on ${method} ${url}`,err.response);
+        throw this.error(err);
       })
   },
   // Bind Personas

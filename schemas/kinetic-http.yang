@@ -37,6 +37,7 @@ module kinetic-http {
    */ 
   typedef content-type {
     type enumeration {
+      enum "form";
       enum "json";
       enum "xml";
     }

@@ -1,35 +1,37 @@
 require('yang-js')
 
 module.exports = require('./kinetic-http.yang').bind({
+  // Bind RPCs
+  request(input) {
+    const agent = this.use('http:agent');
+    let { url, type='json', method, header={}, query='', data } = input;
+    method = method.toLowerCase();
+    let request = agent[method](url).type(type).set(header).query(query);
+    this.debug(`curl -v -X ${method} ${url} -d '${JSON.stringify(data)}'`)
+    switch (method) {
+    case 'post':
+    case 'put':
+    case 'patch':
+      request = request.send(data);
+      break;
+    }
+    return request
+      .catch(err => {
+        this.error(err);
+        this.warn(`${err.status} on ${method} ${url}`,err.response);
+      })
+  },
   // Bind Personas
-  Connector: { request, get },
+  Connector: {
+    async request(input) {
+      this.send('http:response', await this.in('/http:request').do(input));
+    },
+    get(input) {
+      this.send('http:request', input);
+    },
+  },
   Listener: { listen, route }
 })
-
-function request(req) {
-  const agent = this.use('http:agent')
-  let { url, type='json', method, header={}, query='', data } = req
-  method = method.toLowerCase()
-  let request = agent[method](url).type(type).set(header).query(query)
-  this.debug(`curl -v -X ${method} ${url} -d '${JSON.stringify(data)}'`)
-  switch (method) {
-  case 'post':
-  case 'put':
-  case 'patch':
-    request = request.send(data)
-    break;
-  }
-  request
-    .then(res => this.send('http:response', res))
-    .catch(err => {
-      this.error(err);
-      this.warn(`${err.status} on ${method} ${url}`,err.response);
-    })
-}
-
-function get(req) {
-  this.send('http:request', req)
-}
 
 function listen(local) {
   const http = this.use('http:server')

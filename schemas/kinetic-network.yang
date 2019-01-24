@@ -31,6 +31,9 @@ module kinetic-network {
   identity unix {
     base kos:protocol;
   }
+  identity ssl {
+    base net:tcp;
+  }
   /*
    * Type Definitions
    */

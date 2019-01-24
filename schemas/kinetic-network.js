@@ -20,15 +20,12 @@ module.exports = require('./kinetic-network.yang').bind({
       const Url = this.use('kos:url')
       if (arguments.length) { // setter
         if (value) {
-          let obj = Url.parse(value, true)
+          let obj = Url.parse(value, true);
           if (!obj.slashes) {
-            let proto = this.locate('../protocol').default.tag
-            obj = Url.parse(`${proto}://${value}`, true)
+            let proto = this.locate('../protocol').default.tag;
+            obj = Url.parse(`${proto}://${value}`, true);
           }
-          for (let k in obj)
-            this.container[k] = obj[k]
-          // XXX - below doesn't work when being set
-          //this.parent.merge(obj)
+          this.once('attached', prop => prop.merge(obj, { suppress: true }));
         }
         return undefined
       } else { // getter

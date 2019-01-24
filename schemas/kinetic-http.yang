@@ -29,6 +29,9 @@ module kinetic-http {
   identity http {
     base net:tcp;
   }
+  identity https {
+    base net:ssl;
+  }
   /*
    * Type Definitions
    */ 
@@ -96,6 +99,18 @@ module kinetic-http {
   }
   grouping route {
     
+  }
+  /*
+   * Remote Procedure Calls
+   */ 
+  rpc request {
+    if-feature http:agent;
+    input {
+      uses http:request;
+    }
+    output {
+      uses http:response;
+    }
   }
   /*
    * Kinetic Personas

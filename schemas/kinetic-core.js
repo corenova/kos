@@ -5,7 +5,7 @@ require('yang-js')
 module.exports = require('./kinetic-core.yang').bind({
   Timer: {
     schedule(alarm) {
-      const { name, delay, repeat, active } = alarm
+      const { name, delay, repeat, active=true } = alarm
       const { alarm: alarms=[] } = this.state || {}
       const match = alarms.find(a => a.name == name)
       const fire = (event) => this.send('core:alert', { name })

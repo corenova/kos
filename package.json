@@ -73,6 +73,9 @@
       "ietf-yang-types": "yang-js"
     }
   },
+  "engines": {
+    "node": ">=8.0.0"
+  },
   "dependencies": {
     "debug": "^4.1.1",
     "delegates": "^1.0.0",

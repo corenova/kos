@@ -17,7 +17,7 @@ module.exports = require('./kinetic-network.yang').bind({
   },
   "grouping(endpoint)": {
     uri(value) {
-      const Url = this.use('kos:url')
+      const Url = this.use('kos:url');
       if (arguments.length) { // setter
         if (value) {
           let obj = Url.parse(value, true);
@@ -27,9 +27,9 @@ module.exports = require('./kinetic-network.yang').bind({
           }
           this.once('set', prop => prop.merge(obj, { suppress: true }));
         }
-        return undefined
+        return undefined;
       } else { // getter
-        return Url.format(this.container)
+        return Url.format(this.container);
       }
     },
     protocol(value) {
@@ -39,7 +39,14 @@ module.exports = require('./kinetic-network.yang').bind({
           this.content = value
         }
       }
-      return this.content
+      return this.content;
+    },
+    query(value) {
+      if (arguments.length) { // setter
+        // ensure this query container is always initialized with defaults
+        if (!value) this.content = {};
+      }
+      return this.content;
     }
   },
   // Bind Personas
@@ -57,7 +64,7 @@ module.exports = require('./kinetic-network.yang').bind({
   connect(remote) {
     const Socket = this.use('net:socket')
     let { uri, socket, port, hostname, query } = remote
-    let { timeout, retry, max } = query
+    let { timeout=0, retry, max } = query
     const reconnect = async () => {
       if (socket.closing || !retry) {
         socket.end();
@@ -71,12 +78,15 @@ module.exports = require('./kinetic-network.yang').bind({
     socket.setNoDelay()
     socket.setKeepAlive(Boolean(retry));
     socket.setTimeout(timeout);
+    
     socket.on('error', err => this.error(err));
     socket.on('timeout', reconnect);
     socket.on('close', reconnect);
     
     return new Promise((resolve, reject) => {
       socket.on('connect', () => {
+        this.info(`connected to ${uri}`);
+        socket.removeListener('timeout', reconnect);
         resolve({ socket })
         if (retry) retry = 100
       })
@@ -96,11 +106,11 @@ function request(opts) {
   const net = this.use('net:net');
   let { socket, data } = opts;
   if (!socket || socket.closing) {
-    const { uri, hostname, port, query={} } = opts;
+    const { uri, hostname: host, port, query={} } = opts;
     const { timeout } = query;
     let buffer = ''
     this.debug(`making a new connection to ${uri}...`)
-    socket = net.createConnection({ port, hostname, timeout }, () => {
+    socket = net.createConnection({ port, host, timeout }, () => {
       this.info(`connected to ${uri} sending request...`);
       socket.write(data + '\r\n');
       socket.end()

@@ -4,9 +4,11 @@ module.exports = require('./kinetic-http.yang').bind({
   // Bind RPCs
   request(input) {
     const agent = this.use('http:agent');
-    let { url, type='json', method, header={}, query='', data } = input;
+    let { url, type='json', method, header={}, query='', timeout, data } = input;
     method = method.toLowerCase();
     let request = agent[method](url).type(type).set(header).query(query);
+    if (timeout) request.timeout(timeout);
+    
     this.debug(`curl -v -X ${method} ${url} -d '${JSON.stringify(data)}'`)
     switch (method) {
     case 'post':
@@ -17,14 +19,21 @@ module.exports = require('./kinetic-http.yang').bind({
     }
     return request
       .catch(err => {
-        this.warn(`${err.status} on ${method} ${url}`,err.response);
-        throw this.error(err);
+        switch (err.code) {
+        case 'ABORTED':
+          this.error(`request exceeded ${timeout}ms to ${method} ${url}`, err);
+          break;
+        default:
+          this.warn(`${err.status} on ${method} ${url}`,err.response);
+        }
+        throw err;
       })
   },
   // Bind Personas
   Connector: {
     async request(input) {
-      this.send('http:response', await this.in('/http:request').do(input));
+      try { this.send('http:response', await this.in('/http:request').do(input)); }
+      catch (e) { this.error(`unable to process http:request`, e); }
     },
     get(input) {
       this.send('http:request', input);

@@ -69,6 +69,11 @@ module kinetic-http {
     leaf query {
       type string;
     }
+    leaf timeout {
+      type uint32;
+      default 0;
+      units ms;
+    }
     anydata data;
   }
   grouping request-get {

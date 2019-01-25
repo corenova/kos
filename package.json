@@ -83,12 +83,12 @@
     "uuid": "^3.0.1"
   },
   "peerDependencies": {
-    "yang-js": "^0.18.21"
+    "yang-js": "^0.18.23"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",
     "simple-websocket": "^5.0.0",
-    "superagent": "^3.4.1"
+    "superagent": "^4.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.2.2",
@@ -102,7 +102,7 @@
     "webpack": "^4.28.4",
     "webpack-cli": "^3.2.1",
     "yaml-loader": "^0.5.0",
-    "yang-js": "^0.18.21",
+    "yang-js": "^0.18.23",
     "yang-loader": "^1.0.1"
   }
 }

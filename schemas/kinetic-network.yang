@@ -52,6 +52,7 @@ module kinetic-network {
     leaf timeout {
       type uint16;
       default 0;
+      units 'ms';
     }
     leaf retry {
       type union {
@@ -64,10 +65,6 @@ module kinetic-network {
       type uint16;
       units 'ms';
       default 5000;
-    }
-    leaf repair {
-      type boolean;
-      default false;
     }
   }
   grouping endpoint {

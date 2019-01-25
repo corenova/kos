@@ -49,6 +49,10 @@ module kinetic-network {
    * Groupings
    */
   grouping persist-options {
+    leaf timeout {
+      type uint16;
+      default 0;
+    }
     leaf retry {
       type union {
         type boolean;

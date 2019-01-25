@@ -57,17 +57,20 @@ module.exports = require('./kinetic-network.yang').bind({
   connect(remote) {
     const Socket = this.use('net:socket')
     let { uri, socket, port, hostname, query } = remote
-    let { retry, max } = query
+    let { timeout, retry, max } = query
     const reconnect = async () => {
-      if (socket.closing || !retry) return
+      if (socket.closing || !retry) {
+        socket.end();
+        return
+      }
       retry = await this.after(retry, max)
       this.debug(`reconnect to ${uri} (retry: ${retry})`)
       socket.connect(port, hostname)
     }
     socket = new Socket
     socket.setNoDelay()
-    socket.setKeepAlive(true);
-    socket.setTimeout(5000);
+    socket.setKeepAlive(Boolean(retry));
+    socket.setTimeout(timeout);
     socket.on('error', err => this.error(err));
     socket.on('timeout', reconnect);
     socket.on('close', reconnect);
@@ -82,7 +85,11 @@ module.exports = require('./kinetic-network.yang').bind({
       // TODO: preserve this in module configuration state
       //this.in('/net:topology/remote').add(remote)
     })
-  }
+  },
+  // TODO: FUTURE
+  // async request(opts) {
+  //   const { socket } = await this.in('/net:connect').do(opts)
+  // }
 })
 
 function request(opts) {
@@ -90,9 +97,10 @@ function request(opts) {
   let { socket, data } = opts;
   if (!socket || socket.closing) {
     const { uri, hostname, port, query={} } = opts;
+    const { timeout } = query;
     let buffer = ''
     this.debug(`making a new connection to ${uri}...`)
-    socket = net.createConnection(port, hostname, () => {
+    socket = net.createConnection({ port, hostname, timeout }, () => {
       this.info(`connected to ${uri} sending request...`);
       socket.write(data + '\r\n');
       socket.end()
@@ -105,6 +113,7 @@ function request(opts) {
       this.info(`disconnected from ${uri}, returning ${buffer.length} bytes`);
       this.send('net:response', { uri, socket, data: buffer });
     })
+    socket.on('timeout', () => this.warn(`connection to ${uri} timeout`))
     socket.on('error', this.error.bind(this))
   } else {
     socket.write(data + '\r\n');

@@ -219,18 +219,16 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   },
   'extension(extends)': {
     resolve() {
-      const fulltag = /.+:.+/
-      let from = this.lookup('kos:persona', this.tag)
+      let from = this.lookup('kos:persona', this.tag);
       if (!from)
-        throw this.error(`unable to resolve ${this.tag} persona`)
-      from = from.clone().compile()
-      from.nodes.forEach(n => {
-        if (n.kind === 'kos:reaction' && n.root !== this.root) {
-          if (!fulltag.test(n.tag))
-            n.tag = `${n.root.tag}:${n.tag}`
+        throw this.error(`unable to resolve ${this.tag} persona`);
+      for (let n of from.nodes) {
+        if (n.kind === 'kos:reaction') {
+          this.parent.merge(n.clone(true));
+        } else {
+          this.parent.update(n.clone());
         }
-        this.parent.update(n)
-      })
+      }
       // if (!this.parent.binding)
       //   this.parent.bind(from.binding)
     }

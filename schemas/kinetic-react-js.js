@@ -48,7 +48,6 @@ module.exports = require('./kinetic-react-js.yang').bind({
       target.trigger = (topic, data) => {
         this.send('react:trigger', { topic, data })
       }
-      
       this.on('save', obj => this.send('react:state', obj))
 
       props && this.send('react:props', props)

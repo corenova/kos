@@ -51,7 +51,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       })
       let deps = this.match('if-feature','*')
       if (deps && !deps.every(d => this.lookup('feature', d.tag)))
-        throw this.error(`unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
+        throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
     },
     transform(self, ctx) {
       const { core, consumes, produces } = self
@@ -85,7 +85,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         throw this.error("cannot contain data nodes in reaction input/output")
       let deps = this.match('if-feature','*')
       if (deps && !deps.every(d => this.lookup('feature', d.tag)))
-        throw this.error(`unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
+        throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
     },
     transform(self) {
       const { consumes, produces } = self
@@ -224,7 +224,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         throw this.error(`unable to resolve ${this.tag} persona`);
       for (let n of from.nodes) {
         if (n.kind === 'kos:reaction') {
-          this.parent.update(n.clone(true));
+          this.parent.merge(n.clone(true), { replace: true });
         } else {
           this.parent.update(n.clone());
         }

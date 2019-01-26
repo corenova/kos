@@ -124,7 +124,7 @@ function request(opts) {
       this.info(`disconnected from ${uri}, returning ${buffer.length} bytes`);
       this.send('net:response', { uri, socket, data: buffer });
     })
-    socket.on('timeout', () => this.warn(`connection to ${uri} timeout`))
+    socket.on('timeout', () => this.error(`request exceeded ${timeout}ms to ${uri}`))
     socket.on('error', this.error.bind(this))
   } else {
     socket.write(data + '\r\n');

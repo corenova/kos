@@ -38,6 +38,11 @@ module kinetic-object-stream {
   extension array {
     argument "array-name";
   }
+  extension private {
+    argument 'value';
+    description
+      "denote any arbitrary data node as being private (non-enumerable)";
+  }
   /*
    * Dependencies
    */ 

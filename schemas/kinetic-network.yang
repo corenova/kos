@@ -94,6 +94,7 @@ module kinetic-network {
     }
     anydata socket {
       if-feature net:socket;
+      kos:private true;
     }
     // below placed last for a reason...
     leaf uri {
@@ -133,10 +134,12 @@ module kinetic-network {
       }
     }
     anydata socket {
+      kos:private true;
       //config false;
     }
     anydata stream {
       if-feature kos:stream;
+      kos:private true;
       //config false;
     }
   }
@@ -186,7 +189,9 @@ module kinetic-network {
       uses net:endpoint;
     }
     output {
-      anydata socket;
+      anydata socket {
+        kos:private true;
+      }
     }
   }
   /*

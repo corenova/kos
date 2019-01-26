@@ -29,10 +29,10 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       status:          '0..1',
       uses:            '0..n',
       'kos:extends':   '0..n',
-      'kos:reaction':  '0..n'
+      'kos:reaction':  '0..n',
     },
     target: {
-      module: '0..n'
+      module: '0..n',
     },
     resolve() {
       this.once('compile:after', () => {
@@ -78,7 +78,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       input:         '1',
       output:        '0..1',
       reference:     '0..1',
-      status:        '0..1'
+      status:        '0..1',
     },
     resolve() {
       if (this.input.nodes.length || (this.output && this.output.nodes.length))
@@ -107,11 +107,11 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       description:        '0..1',
       'require-instance': '0..1',
       reference:          '0..1',
-      status:             '0..1'
+      status:             '0..1',
     },
     target: {
       input:  '0..n',
-      output: '0..n'
+      output: '0..n',
     },
     resolve() {
       let schema = this.lookup('grouping', this.tag)
@@ -134,11 +134,11 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       'require-instance': '0..1',
       'kos:filter':       '0..n',
       reference:          '0..1',
-      status:             '0..1'
+      status:             '0..1',
     },
     target: {
       input:  '0..n',
-      output: '0..n'
+      output: '0..n',
     },
     resolve() {
       let schema = this.locate(this.tag)
@@ -162,6 +162,22 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       return data
     }
   },
+  'extension(extends)': {
+    resolve() {
+      let from = this.lookup('kos:persona', this.tag);
+      if (!from)
+        throw this.error(`unable to resolve ${this.tag} persona`);
+      for (let n of from.nodes) {
+        if (n.kind === 'kos:reaction') {
+          this.parent.merge(n.clone(true), { replace: true });
+        } else {
+          this.parent.update(n.clone());
+        }
+      }
+      // if (!this.parent.binding)
+      //   this.parent.bind(from.binding)
+    }
+  },
   'extension(filter)': {
     transform(data) {
       return data
@@ -169,18 +185,18 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   },
   'extension(array)': {
     scope: {
-      config:             '0..1',
-      description:        '0..1',
-      'if-feature':       '0..n',
-      'max-elements':     '0..1',
-      'min-elements':     '0..1',
-      must:               '0..n',
-      'ordered-by':       '0..1',
-      reference:          '0..1',
-      status:             '0..1',
-      type:               '0..1',
-      units:              '0..1',
-      when:               '0..1'
+      config:         '0..1',
+      description:    '0..1',
+      'if-feature':   '0..n',
+      'max-elements': '0..1',
+      'min-elements': '0..1',
+      must:           '0..n',
+      'ordered-by':   '0..1',
+      reference:      '0..1',
+      status:         '0..1',
+      type:           '0..1',
+      units:          '0..1',
+      when:           '0..1',
     },
     target: {
       augment:   '0..n',
@@ -191,7 +207,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       module:    '0..n',
       notification: '0..n',
       output:    '0..n',
-      submodule: '0..n'
+      submodule: '0..n',
     },
     predicate(data=[]) {
       assert(data instanceof Array, "data must contain an Array")
@@ -217,20 +233,24 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       return new Property(this.datakey, this).join(data, ctx)
     }
   },
-  'extension(extends)': {
+  'extension(private)': {
+    target: {
+      anydata:     '0..1',
+      container:   '0..1',
+      leaf:        '0..1',
+      'leaf-list': '0..1',
+      list:        '0..1',
+      refine:      '0..1',
+    },
     resolve() {
-      let from = this.lookup('kos:persona', this.tag);
-      if (!from)
-        throw this.error(`unable to resolve ${this.tag} persona`);
-      for (let n of from.nodes) {
-        if (n.kind === 'kos:reaction') {
-          this.parent.merge(n.clone(true), { replace: true });
-        } else {
-          this.parent.update(n.clone());
-        }
+      this.tag = (this.tag === 'true');
+    },
+    transform(data, ctx) {
+      if (ctx && ctx.property && this.tag) {
+        // this forces the context property to become 'hidden' non-enumerable.
+        ctx.property.state.private = this.tag;
       }
-      // if (!this.parent.binding)
-      //   this.parent.bind(from.binding)
+      return data;
     }
   }
 })

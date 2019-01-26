@@ -112,7 +112,9 @@ module kinetic-snmp {
       type boolean;
       default false;
     }
-    anydata agent;
+    anydata agent {
+      kos:private true;
+    }
     // FUTURE?
     // action get;
     // action set;
@@ -158,6 +160,7 @@ module kinetic-snmp {
     uses snmp:session;
     anydata instance {
       mandatory true;
+      kos:private true;
     }
   }
 }

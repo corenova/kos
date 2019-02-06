@@ -25,11 +25,10 @@ function select(input) {
 function sync(connection) {
   const Channel = this.use('kos:channel')
   //const Interface = this.use('kos:interface')
-  const { uri, socket, server } = connection
+  const { uri, socket } = connection
   // create a temporary channel to exchange personas
-  let sync = new Channel(socket, this.root)
-  this.root.pipe(sync)
-  sync.pipe(this.root)
+  let stream = new Channel(socket).connect(this.root);
+  this.send('link:session', { uri, stream });
   return
 
   // TODO: later...

@@ -26,8 +26,11 @@ module kinetic-link {
       }
     }
   }
-  grouping peer {
-    
+  grouping session {
+    leaf uri {
+      type net:uri;
+    }
+    anydata stream;
   }
   /*
    * Kinetic Personas
@@ -54,12 +57,11 @@ module kinetic-link {
     }
     kos:reaction sync {
       if-feature kos:channel;
-      //if-feature kos:interface;
       input {
         kos:data net:connection;
       }
       output {
-        kos:data link:peer;
+        kos:data link:session;
       }
     }
   }

@@ -86,6 +86,7 @@ module kinetic-network {
       type string;
     }
     leaf slashes {
+      kos:private true;
       type boolean;
       default true;
     }

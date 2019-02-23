@@ -88,12 +88,15 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
     },
     transform(self) {
-      const { consumes, produces } = self
+      const { consumes, produces, depends } = self
       this.input  && this.input.exprs.forEach(expr => expr.apply(consumes))
       this.output && this.output.exprs.forEach(expr => expr.apply(produces))
       
       let features = this.match('if-feature','*') || []
-      self.depends = features.map(f => this.lookup('feature', f.tag))
+      features.forEach((f) => {
+        f = this.lookup('feature', f.tag);
+        depends.set(f.tag, f.binding);
+      });
       return self
     },
     construct(parent, ctx) {

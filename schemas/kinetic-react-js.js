@@ -63,6 +63,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       const { history } = props
       if (!history) return
       history.listen((location, action) => this.send('react:route', { location, action }))
+      this.send('react:history', history);
     },
     applyState(state, setter) {
       if (typeof setter === 'function')
@@ -79,13 +80,6 @@ module.exports = require('./kinetic-react-js.yang').bind({
         value = target.checked
       }
       this.save(objectify(name, value));
-      // const prop = this.in(name)
-      // if (prop) {
-      //   prop.merge(value, { suppress: true });
-      //   if (prop.changed)
-      //     this.emit('save', this.state);
-      // } else {
-      // }
       function objectify(key, val) {
         let keys = key.split('/')
         let last, obj, root, k

@@ -54,6 +54,7 @@ module kinetic-react-js {
     anydata data;
   }
   grouping form-clear;
+  grouping history;
   grouping route {
     container location {
       leaf pathname {
@@ -116,11 +117,11 @@ module kinetic-react-js {
       }
     }
     kos:reaction history {
-      //if-feature react:router;
       input {
         kos:data react:props;
       }
       output {
+        kos:data react:history;
         kos:data react:route;
       }
     }

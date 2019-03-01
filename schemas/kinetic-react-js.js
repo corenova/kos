@@ -17,8 +17,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       }
       const { props, state, setState } = target
 
-      if (!this.state)
-        this.state = state // update initial state
+      this.save(state); // update initial state
 
       // override target to compute 'state' from this
       Object.defineProperty(target, 'state', {

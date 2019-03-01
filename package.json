@@ -1,6 +1,6 @@
 {
   "name": "kos",
-  "version": "2.3.9",
+  "version": "2.3.10",
   "description": "Stream processing framework for creating distributed data pipelines and autonomic neural networks",
   "main": "index.js",
   "repository": {
@@ -102,7 +102,7 @@
     "webpack": "^4.28.4",
     "webpack-cli": "^3.2.1",
     "yaml-loader": "^0.5.0",
-    "yang-js": "^0.20.1",
+    "yang-js": "^0.20.4",
     "yang-loader": "^1.0.1"
   }
 }

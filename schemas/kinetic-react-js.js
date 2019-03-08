@@ -53,10 +53,10 @@ module.exports = require('./kinetic-react-js.yang').bind({
       setState && this.send('react:setter', setState.bind(target))
     },
     mount() {
-      
+      this.send('react:mounted', false)
     },
     unmount() {
-      this.send('react:mounted', null)
+      this.send('react:mounted', true)
     },
     history(props) {
       const { history } = props
@@ -64,10 +64,10 @@ module.exports = require('./kinetic-react-js.yang').bind({
       history.listen((location, action) => this.send('react:route', { location, action }))
       this.send('react:history', history);
     },
-    applyState(state, setter) {
+    applyState(state, setter, mounted) {
       if (typeof setter === 'function')
-        setter(state)
-    }
+        mounted && setter(state);
+    },
   },
 
   Form: {

@@ -107,6 +107,9 @@ module kinetic-react-js {
       input {
         kos:data react:mounting;
       }
+      output {
+        kos:data react:mounted;
+      }
     }
     kos:reaction unmount {
       input {

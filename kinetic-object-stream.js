@@ -219,8 +219,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
           data = expr.eval(data, ctx)
         return undefined
       }
-      if (!(data instanceof Array)) data = [ data ]
-      data = data.filter(Boolean)
+      if (data && !Array.isArray(data)) data = [ data ]
       for (let expr of this.exprs) {
         if (expr.kind === 'type') continue
         data = expr.eval(data, ctx)

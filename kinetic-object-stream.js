@@ -67,7 +67,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
     construct(obj, ctx) {
       if (obj instanceof Neural.Layer)
-        return new Persona(this).join(obj, ctx)
+        return new Persona(this).attach(obj, ctx)
       return obj
     }
   },
@@ -98,7 +98,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
     construct(parent, ctx) {
       if (parent instanceof Neural.Layer)
-        return new Reaction(this).join(parent, ctx)
+        return new Reaction(this).attach(parent, ctx)
       return parent
     }
   },
@@ -229,7 +229,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       return data
     },
     construct(data={}, ctx={}) {
-      return new Property(this.datakey, this).join(data, ctx)
+      return new Property(this.datakey, this).attach(data, ctx)
     }
   },
   'extension(private)': {

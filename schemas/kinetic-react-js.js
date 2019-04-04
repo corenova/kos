@@ -34,8 +34,13 @@ module.exports = require('./kinetic-react-js.yang').bind({
       for (let event in lifecycle) {
         const f = target[event], state = lifecycle[event]
         target[event] = (...args) => {
-          if (state in ['mounting','mounted']) active = true;
-          else if (state === 'unmounting') active = false;
+          switch (state) {
+          case 'mounting':
+          case 'mounted':
+            active = true; break;
+          case 'unmounting':
+            active = false; break;
+          }
           this.send('react:lifecycle', { active, state, args })
           if (f) return f.apply(target, args)
           return target

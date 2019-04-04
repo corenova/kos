@@ -25,6 +25,16 @@ module kinetic-react-js {
   extension component {
     
   }
+  typedef lifecycle {
+    type enumeration {
+      enum mounting;
+      enum mounted;
+      enum unmounting;
+      enum updating;
+      enum updated;
+      enum receive;
+    }
+  }
   /*
    * Groupings
    */
@@ -38,12 +48,16 @@ module kinetic-react-js {
     // action componentWillReceiveProps;
   }
   grouping setter;
-  grouping mounting;
-  grouping mounted;
-  grouping unmounting;
-  grouping updating;
-  grouping updated;
-  grouping receive;
+  grouping lifecycle {
+    leaf active {
+      type boolean;
+      default false;
+    }
+    leaf state {
+      type react:lifecycle;
+    }
+    leaf-list args;
+  }
   grouping props;
   grouping state;
   grouping event;
@@ -90,33 +104,12 @@ module kinetic-react-js {
         kos:data react:component;
       }
       output {
+        kos:data react:lifecycle;
         kos:data react:setter;
-        kos:data react:mounting;
-        kos:data react:mounted;
-        kos:data react:unmounting;
-        kos:data react:updating;
-        kos:data react:updated;
-        kos:data react:receive;
         kos:data react:event;
         kos:data react:trigger;
         kos:data react:props;
         kos:data react:state;
-      }
-    }
-    kos:reaction mount {
-      input {
-        kos:data react:mounting;
-      }
-      output {
-        kos:data react:mounted;
-      }
-    }
-    kos:reaction unmount {
-      input {
-        kos:data react:unmounting;
-      }
-      output {
-        kos:data react:mounted;
       }
     }
     kos:reaction history {
@@ -130,13 +123,13 @@ module kinetic-react-js {
     }
     kos:reaction applyState {
       input {
-        kos:data react:state;
+        kos:data react:lifecycle {
+          require-instance true;
+        }
         kos:data react:setter {
           require-instance true;
         }
-        kos:data react:mounted {
-          require-instance true;
-        }
+        kos:data react:state;
       }
     }
   }

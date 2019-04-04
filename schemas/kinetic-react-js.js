@@ -8,12 +8,12 @@ module.exports = require('./kinetic-react-js.yang').bind({
   Component: {
     transform(target) {
       const lifecycle = {
-        componentWillMount:        "react:mounting",
-        componentDidMount:         "react:mounted",
-        componentWillUnmount:      "react:unmounting",
-        componentWillUpdate:       "react:updating",
-        componentDidUpdate:        "react:updated",
-        componentWillReceiveProps: "react:receive"
+        componentWillMount:        "mounting",
+        componentDidMount:         "mounted",
+        componentWillUnmount:      "unmounting",
+        componentWillUpdate:       "updating",
+        componentDidUpdate:        "updated",
+        componentWillReceiveProps: "receive"
       }
       const { props, state, setState } = target
 
@@ -30,10 +30,13 @@ module.exports = require('./kinetic-react-js.yang').bind({
       target.setState = this.save.bind(this)
 
       // allow all lifecycle events to emit an internal event
+      let active = false;
       for (let event in lifecycle) {
-        let f = target[event], label = lifecycle[event]
+        const f = target[event], state = lifecycle[event]
         target[event] = (...args) => {
-          this.send(label, args)
+          if (state in ['mounting','mounted']) active = true;
+          else if (state === 'unmounting') active = false;
+          this.send('react:lifecycle', { active, state, args })
           if (f) return f.apply(target, args)
           return target
         }
@@ -52,21 +55,14 @@ module.exports = require('./kinetic-react-js.yang').bind({
       props && this.send('react:props', props)
       setState && this.send('react:setter', setState.bind(target))
     },
-    mount() {
-      this.send('react:mounted', false)
-    },
-    unmount() {
-      this.send('react:mounted', true)
-    },
     history(props) {
       const { history } = props
       if (!history) return
       history.listen((location, action) => this.send('react:route', { location, action }))
       this.send('react:history', history);
     },
-    applyState(state, setter, mounted) {
-      if (typeof setter === 'function')
-        mounted && setter(state);
+    applyState(lifecycle, setter, state) {
+      if (lifecycle.active) setter(state);
     },
   },
 
@@ -95,9 +91,8 @@ module.exports = require('./kinetic-react-js.yang').bind({
       const dom = this.use('react:dom')
       const form = dom.findDOMNode(component)
       const { state } = this
-      form.reset()
       this.debug('clearing form state', keys)
-      this.clear(...keys)
+      form.reset()
     }
   }
 })

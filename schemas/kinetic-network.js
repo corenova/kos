@@ -25,7 +25,7 @@ module.exports = require('./kinetic-network.yang').bind({
             let proto = this.locate('../protocol').default.tag;
             obj = Url.parse(`${proto}://${value}`, true);
           }
-          this.once('attach', prop => prop.merge(obj, { suppress: true }));
+          this.once('set', prop => prop.merge(obj, { suppress: true }));
         }
         return value;
       } else { // getter

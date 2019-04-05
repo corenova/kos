@@ -114,7 +114,7 @@ function request(opts) {
     socket = net.createConnection({ port, host, timeout }, () => {
       this.info(`connected to ${uri} sending request...`);
       socket.write(data + '\r\n');
-      socket.end()
+      socket.end();
     });
     socket.on('data', (data) => {
       this.debug(`received ${data.length} bytes data from ${uri}`);
@@ -122,9 +122,15 @@ function request(opts) {
     });
     socket.on('end', () => {
       this.info(`disconnected from ${uri}, returning ${buffer.length} bytes`);
-      this.send('net:response', { uri, socket, data: buffer });
-    })
-    socket.on('timeout', () => this.error(`request exceeded ${timeout}ms to ${uri}`))
+      this.send('net:response', { uri, data: buffer });
+      socket.destroy();
+    });
+    socket.on('close', () => {
+      this.info(`client socket to ${uri} is closed`);
+    });
+    socket.on('timeout', () => {
+      socket.destroy(`request exceeded ${timeout}ms to ${uri}`);
+    });
     socket.on('error', this.error.bind(this))
   } else {
     socket.write(data + '\r\n');

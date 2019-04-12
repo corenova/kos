@@ -17,7 +17,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       }
       const { props, state, setState } = target
 
-      this.save(state); // update initial state
+      this.state.merge(state, { suppress: true }); // update initial state
 
       // override target to compute 'state' from this
       Object.defineProperty(target, 'state', {
@@ -27,7 +27,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       })
       
       // override target setState to update this state
-      target.setState = this.save.bind(this)
+      target.setState = obj => this.state.merge(obj, { deep: false });
 
       // allow all lifecycle events to emit an internal event
       let active = false;
@@ -55,8 +55,9 @@ module.exports = require('./kinetic-react-js.yang').bind({
       target.trigger = (topic, data) => {
         this.send('react:trigger', { topic, data })
       }
-      this.on('save', obj => this.send('react:state', obj))
-
+      this.state.on('update', prop => {
+        prop.changed && this.send('react:state', prop.change)
+      });
       props && this.send('react:props', props)
       setState && this.send('react:setter', setState.bind(target))
     },

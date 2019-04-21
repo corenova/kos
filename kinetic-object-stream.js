@@ -169,6 +169,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         throw this.error(`unable to resolve ${this.tag} persona`);
       for (let n of from.nodes) {
         if (n.kind === 'kos:reaction') {
+          // should we allow replace???
           this.parent.merge(n.clone(true), { replace: true });
         } else {
           this.parent.update(n.clone());

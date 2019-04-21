@@ -41,14 +41,14 @@ module.exports = require('./kinetic-network.yang').bind({
       }
       return this.content;
     },
-    // XXX - this breaks stuff?
-    // query(value) {
-    //   if (arguments.length) { // setter
-    //     // ensure this query container is always initialized with defaults
-    //     if (!value) this.content = {};
-    //   }
-    //   return this.content;
-    // }
+    query(value) {
+      if (arguments.length) { // setter
+        // ensure this query container is always initialized with defaults
+        if (!value) return {};
+        return value;
+      }
+      return this.content;
+    }
   },
   // Bind Personas
   Connector: {

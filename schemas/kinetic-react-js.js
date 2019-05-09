@@ -65,6 +65,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       const { history } = props
       if (!history) return
       history.listen((location, action) => this.send('react:route', { location, action }))
+      this.send('react:route', { location: history.location, action: history.action });
       this.send('react:history', history);
     },
     applyState(lifecycle, setter, state) {

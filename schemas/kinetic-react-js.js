@@ -81,7 +81,11 @@ module.exports = require('./kinetic-react-js.yang').bind({
       if (type === 'checkbox') {
         value = target.checked
       }
-      this.state.merge(objectify(name, value));
+      try {
+        this.state.merge(objectify(name, value));
+      } catch (e) {
+        this.state.merge(objectify(name, value), { bypass: true });
+      }
       function objectify(key, val) {
         let keys = key.split('/')
         let last, obj, root, k

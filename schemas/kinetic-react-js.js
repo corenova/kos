@@ -83,8 +83,14 @@ module.exports = require('./kinetic-react-js.yang').bind({
       }
       try {
         this.state.merge(objectify(name, value));
+        target.classList.remove('is-invalid');
+        target.classList.add('is-valid');
+        target.setCustomValidity('');
       } catch (e) {
         this.state.merge(objectify(name, value), { bypass: true });
+        target.classList.remove('is-valid');
+        target.classList.add('is-invalid');
+        target.setCustomValidity(e.message);
       }
       function objectify(key, val) {
         let keys = key.split('/')

@@ -79,8 +79,10 @@ module.exports = require('./kinetic-react-js.yang').bind({
       let { type, name, value } = target
       if (!name) return
       if (type === 'checkbox') {
-        value = target.checked
+        value = target.checked;
       }
+      // filter out '' empty string
+      value = !!value ? value : undefined;
       try {
         this.state.merge(objectify(name, value));
         target.classList.remove('is-invalid');

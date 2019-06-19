@@ -18,6 +18,7 @@ module.exports = require('./kinetic-react-js.yang').bind({
       const { props, state, setState } = target
 
       this.state.merge(state, { suppress: true }); // update initial state
+      this.state.clean(); // mark initial state to be unchanged
 
       // override target to compute 'state' from this
       Object.defineProperty(target, 'state', {
@@ -81,16 +82,18 @@ module.exports = require('./kinetic-react-js.yang').bind({
       if (type === 'checkbox') {
         value = target.checked;
       }
+      target.classList.remove('is-valid');
+      target.classList.remove('is-invalid');
+      
       // filter out '' empty string
       value = !!value ? value : undefined;
       try {
         this.state.merge(objectify(name, value));
-        target.classList.remove('is-invalid');
-        target.classList.add('is-valid');
+        if (value !== undefined)
+          target.classList.add('is-valid');
         target.setCustomValidity('');
       } catch (e) {
         this.state.merge(objectify(name, value), { bypass: true });
-        target.classList.remove('is-valid');
         target.classList.add('is-invalid');
         target.setCustomValidity(e.message);
       }

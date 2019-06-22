@@ -7,9 +7,8 @@ module.exports = require('./kinetic-http.yang').bind({
     let { url, type='json', method, header={}, query='', timeout, data } = input;
     method = method.toLowerCase();
     let request = agent[method](url).type(type).set(header).query(query);
+    if (type !== 'none') request.type(type);
     if (timeout) request.timeout(timeout);
-    
-    this.debug(`curl -v -X ${method} ${url} -d '${JSON.stringify(data)}'`)
     switch (method) {
     case 'post':
     case 'put':

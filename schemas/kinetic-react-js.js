@@ -85,8 +85,10 @@ module.exports = require('./kinetic-react-js.yang').bind({
       target.classList.remove('is-valid');
       target.classList.remove('is-invalid');
       
-      // filter out '' empty string
-      value = !!value ? value : undefined;
+      if (typeof value === 'string') {
+        // filter out '' empty string
+        value = !!value ? value : undefined;
+      }
       try {
         this.state.merge(objectify(name, value));
         if (value !== undefined)

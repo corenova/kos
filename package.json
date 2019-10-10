@@ -83,7 +83,7 @@
     "uuid": "^3.0.1"
   },
   "peerDependencies": {
-    "yang-js": "^0.22.0"
+    "yang-js": ">=0.22.45"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",

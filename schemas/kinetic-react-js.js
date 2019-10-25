@@ -95,10 +95,11 @@ module.exports = require('./kinetic-react-js.yang').bind({
           target.classList.add('is-valid');
         target.setCustomValidity('');
       } catch (e) {
-        this.state.merge(objectify(name, value), { bypass: true });
         target.classList.add('is-invalid');
         target.setCustomValidity(e.message);
       }
+      target.reportValidity();
+      
       function objectify(key, val) {
         let keys = key.split('/')
         let last, obj, root, k

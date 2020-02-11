@@ -17,8 +17,8 @@ module kinetic-object-stream {
   /*
    * Custom YANG Language Extensions
    */
-  extension persona {
-    argument "persona-name";
+  extension interface {
+    argument "interface-name";
   }
   extension reaction {
     argument "function-name";
@@ -107,11 +107,6 @@ module kinetic-object-stream {
   grouping schema {
     
   }
-  grouping persona {
-    leaf id;
-    leaf uri;
-    leaf-list links;
-  }
   grouping store {
     
   }
@@ -170,7 +165,6 @@ module kinetic-object-stream {
    * Operational state data nodes
    */
   container topology {
-    config false;
     description
       "Contains KOS network topology information.";
     uses node-list;

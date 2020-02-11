@@ -1,6 +1,6 @@
-'use strict'
+'use strict';
 
-require('yang-js')
+require('yang-js');
 
 module.exports = require('./kinetic-react-js.yang').bind({
 
@@ -15,7 +15,10 @@ module.exports = require('./kinetic-react-js.yang').bind({
         componentDidUpdate:        "updated",
         componentWillReceiveProps: "receive"
       }
-      const { props, state, setState } = target
+      const { props, state, setState } = target;
+      const propagate = prop => {
+        prop.changed && this.send('react:state', prop.change)
+      };
 
       this.state.merge(state, { suppress: true }); // update initial state
       this.state.clean(); // mark initial state to be unchanged
@@ -37,9 +40,11 @@ module.exports = require('./kinetic-react-js.yang').bind({
         target[event] = (...args) => {
           switch (state) {
           case 'mounting':
+            this.state.on('update', propagate);
           case 'mounted':
             active = true; break;
           case 'unmounting':
+            this.state.off('update', propagate);
             active = false; break;
           }
           this.send('react:lifecycle', { active, state, args })
@@ -56,18 +61,13 @@ module.exports = require('./kinetic-react-js.yang').bind({
       target.trigger = (topic, data) => {
         this.send('react:trigger', { topic, data })
       }
-      this.state.on('update', prop => {
-        prop.changed && this.send('react:state', prop.change)
-      });
       props && this.send('react:props', props)
       setState && this.send('react:setter', setState.bind(target))
     },
-    history(props) {
-      const { history } = props
-      if (!history) return
-      history.listen((location, action) => this.send('react:route', { location, action }))
-      this.send('react:route', { location: history.location, action: history.action });
-      this.send('react:history', history);
+    route(props, route) {
+      const { history } = props;
+      if (!history) return;
+      history.push(route.to);
     },
     applyState(lifecycle, setter, state) {
       if (lifecycle.active) setter(state);

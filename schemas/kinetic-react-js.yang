@@ -22,9 +22,6 @@ module kinetic-react-js {
   feature router {
     reference "npm://react-router";
   }
-  extension component {
-    
-  }
   typedef lifecycle {
     type enumeration {
       enum mounting;
@@ -68,33 +65,15 @@ module kinetic-react-js {
     anydata data;
   }
   grouping form-clear;
-  grouping history;
   grouping route {
-    container location {
-      leaf pathname {
-        type string;
-      }
-      leaf search {
-        type string;
-      }
-      leaf hash {
-        type string;
-      }
-      leaf key;
-      anydata state;
-    }
-    leaf action {
-      type enumeration {
-        enum PUSH;
-        enum REPLACE;
-        enum POP;
-      }
+    leaf to {
+      type string;
     }
   }
 
-  kos:persona Component {
+  kos:interface Component {
     description
-      "A persona that consumes React.Component instances and captures
+      "An interface that consumes React.Component instances and captures
        lifecycle events and state changes";
     /*
      * Kinetic Reactions
@@ -112,13 +91,12 @@ module kinetic-react-js {
         kos:data react:state;
       }
     }
-    kos:reaction history {
+    kos:reaction route {
       input {
-        kos:data react:props;
-      }
-      output {
-        kos:data react:history;
-        kos:data react:route;
+        kos:data react:props {
+	  require-instance true;
+	}
+	kos:data react:route;
       }
     }
     kos:reaction applyState {
@@ -133,11 +111,11 @@ module kinetic-react-js {
       }
     }
   }
-  kos:persona Form {
+  kos:interface Form {
     kos:extends react:Component;
 
     description
-      "A persona that extends React.Component instances and handles
+      "An interface that extends React.Component instances and handles
        form related activity (i.e. onClick, onChange) and automates
        state updates related to form data.";
     

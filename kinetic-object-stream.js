@@ -3,7 +3,7 @@
 const Yang = require('yang-js')
 
 const { Property } = Yang
-const { Persona, Reaction, Channel, Neural } = require('./lib')
+const { Interface, Reaction, Channel, Neural } = require('./lib')
 
 const assert = require('assert')
 
@@ -11,7 +11,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   'feature(url)': require('url'),
   'feature(channel)': Channel,
 
-  'extension(persona)': {
+  'extension(interface)': {
     scope: {
       anydata:         '0..n',
       anyxml:          '0..n',
@@ -54,12 +54,12 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
     },
     transform(self, ctx) {
-      const { flow, consumes, produces } = self
+      const { reactor, consumes, produces } = self
       for (let node of this.nodes) {
         switch (node.kind) {
         case 'input':  node.exprs.forEach(expr => expr.apply(consumes)); break;
         case 'output': node.exprs.forEach(expr => expr.apply(produces)); break;
-        case 'kos:reaction': node.eval(flow, ctx); break;
+        case 'kos:reaction': node.eval(reactor, ctx); break;
         default: self = node.eval(self, ctx)
         }
       }
@@ -67,7 +67,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
     construct(obj, ctx) {
       if (obj instanceof Neural.Layer)
-        return new Persona(this).attach(obj, ctx)
+        return new Interface({ schema: this }).attach(obj, ctx)
       return obj
     }
   },
@@ -98,7 +98,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
     construct(parent, ctx) {
       if (parent instanceof Neural.Layer)
-        return new Reaction(this).attach(parent, ctx)
+        return new Reaction({ schema: this }).attach(parent, ctx)
       return parent
     }
   },
@@ -164,9 +164,9 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   },
   'extension(extends)': {
     resolve() {
-      let from = this.lookup('kos:persona', this.tag);
+      let from = this.lookup('kos:interface', this.tag);
       if (!from)
-        throw this.error(`unable to resolve ${this.tag} persona`);
+        throw this.error(`unable to resolve ${this.tag} interface`);
       for (const n of from.nodes) {
         if (n.kind === 'kos:reaction') {
           this.parent.merge(n.clone({ relative: false }), { replace: true });

@@ -1,12 +1,8 @@
-'use strict'
+'use strict';
 
-const Yang = require('yang-js')
+const Yang = require('yang-js');
 
-module.exports = require('./kinetic-node-js.yang').bind({
-  'feature(fs)':  () => require('fs'),
-  'feature(url)': () => require('url'),
-  'feature(net)': () => require('net'),
-
+const Runtime = {
   // self-initialize when part of kos layers (usually kos directly)
   initialize(process) { 
     //this.send('node:resolve', ...this.root.depends)
@@ -75,6 +71,15 @@ module.exports = require('./kinetic-node-js.yang').bind({
     kson.on('error', this.error.bind(this))
     kson.pipe(this.io, { end: false })
   }
+}
+
+
+module.exports = require('./kinetic-node-js.yang').bind({
+  'feature(fs)':  () => require('fs'),
+  'feature(url)': () => require('url'),
+  'feature(net)': () => require('net'),
+
+  Runtime
 })
 
 

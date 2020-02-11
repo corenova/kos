@@ -51,9 +51,9 @@ module kinetic-websocket {
     
   }
   /*
-   * Kinetic Personas
+   * Kinetic Interfaces
    */
-  kos:persona Connector {
+  kos:interface Connector {
     kos:reaction connect {
       if-feature ws:socket;
       input {
@@ -65,7 +65,7 @@ module kinetic-websocket {
       }
     }
   }
-  kos:persona Listener {
+  kos:interface Listener {
     kos:reaction listen {
       if-feature ws:server;
       input {

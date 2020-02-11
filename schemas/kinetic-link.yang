@@ -33,19 +33,19 @@ module kinetic-link {
     anydata stream;
   }
   /*
-   * Kinetic Personas
+   * Kinetic Interfaces
    */
-  kos:persona Connector {
+  kos:interface Connector {
     kos:extends net:Connector;
     kos:extends ws:Connector;
     kos:extends link:Synchronizer;
   }
-  kos:persona Listener {
+  kos:interface Listener {
     kos:extends net:Listener;
     kos:extends ws:Listener;
     kos:extends link:Synchronizer;
   }
-  kos:persona Synchronizer {
+  kos:interface Synchronizer {
     kos:reaction select {
       input {
         kos:data link:endpoint;

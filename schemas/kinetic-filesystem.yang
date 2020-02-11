@@ -39,9 +39,9 @@ module kos-filesystem {
 
   }
   /*
-   * Personas
+   * Interfaces
    */
-  kos:persona getter {
+  kos:interface Reader {
     kos:reaction openFileStream {
       if-feature node:fs;
       input {

@@ -120,9 +120,9 @@ module kinetic-http {
     }
   }
   /*
-   * Kinetic Personas
+   * Kinetic Interfaces
    */
-  kos:persona Connector {
+  kos:interface Connector {
     kos:reaction request {
       if-feature http:agent;
       input {
@@ -141,7 +141,7 @@ module kinetic-http {
       }
     }
   }
-  kos:persona Listener {
+  kos:interface Listener {
     kos:reaction listen {
       if-feature http:server;
       input {

@@ -121,9 +121,9 @@ module kinetic-snmp {
     // action walk;
   }
   /*
-   * Kinetic Personas
+   * Kinetic Interfaces
    */
-  kos:persona Connector {
+  kos:interface Connector {
     kos:reaction connect {
       if-feature snmp:net-snmp;
       input {

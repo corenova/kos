@@ -2,7 +2,7 @@ module kinetic-core {
   prefix core;
 
   description
-    "common system personas and reactions";
+    "common system interfaces and reactions";
   
   import kinetic-object-stream {
     prefix kos;
@@ -37,7 +37,7 @@ module kinetic-core {
       type core:event-name;
     }
   }
-  kos:persona Timer {
+  kos:interface Timer {
     input {
       kos:data core:alarm;
     }

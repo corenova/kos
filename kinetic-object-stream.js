@@ -54,12 +54,12 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
     },
     transform(self, ctx) {
-      const { reactor, consumes, produces } = self
+      const { consumes, produces } = self
       for (let node of this.nodes) {
         switch (node.kind) {
         case 'input':  node.exprs.forEach(expr => expr.apply(consumes)); break;
         case 'output': node.exprs.forEach(expr => expr.apply(produces)); break;
-        case 'kos:reaction': node.eval(reactor, ctx); break;
+        case 'kos:reaction': node.eval(self, ctx); break;
         default: self = node.eval(self, ctx)
         }
       }

@@ -93,7 +93,10 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       this.output && this.output.exprs.forEach(expr => expr.apply(produces))
       
       let features = this.match('if-feature','*') || []
-      self.depends = features.map(f => this.lookup('feature', f.tag))
+      self.depends = features.map(f => {
+	const schema = this.lookup('feature', f.tag);
+	return [ schema, schema.binding ];
+      })
       return self
     },
     construct(parent, ctx) {
@@ -152,9 +155,9 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       if (schema.kind === 'list') {
         const elems = this.tag.split('/')
         if (elems[elems.length-1] === '.')
-          opts.filter = 'object'
+          opts.filter = (x) => !Array.isArray(x);
         else
-          opts.filter = 'array'
+          opts.filter = (x) => Array.isArray(x);
       }
       for (let expr of this.exprs)
         opts = expr.eval(opts)

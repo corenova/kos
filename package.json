@@ -1,6 +1,6 @@
 {
   "name": "kos",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Stream processing framework for creating distributed data pipelines and autonomic neural networks",
   "main": "index.js",
   "repository": {
@@ -98,6 +98,7 @@
     "babel-loader": "^8.0.5",
     "json-loader": "^0.5.7",
     "mocha": "^5.2.0",
+    "npm-pack-all": "^1.11.1",
     "should": "^11.2.0",
     "webpack": "^4.28.4",
     "webpack-cli": "^3.2.1",

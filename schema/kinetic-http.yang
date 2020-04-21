@@ -66,7 +66,9 @@ module kinetic-http {
     leaf type {
       type http:content-type;
     }
-    container header;
+    container header {
+      // arbitrary key, value object
+    }
     leaf query {
       type string;
     }
@@ -76,14 +78,6 @@ module kinetic-http {
       units ms;
     }
     anydata data;
-  }
-  grouping request-get {
-    uses http:request {
-      refine "method" {
-        config false;
-        default "GET";
-      }
-    }
   }
   grouping response {
     
@@ -101,9 +95,6 @@ module kinetic-http {
   grouping server {
     
   }
-  grouping server-request {
-    
-  }
   grouping route {
     
   }
@@ -119,49 +110,44 @@ module kinetic-http {
       uses http:response;
     }
   }
+  rpc listen {
+    if-feature http:server;
+    input {
+      uses http:endpoint;
+    }
+    output {
+      anydata server;
+    }
+  }
   /*
-   * Kinetic Interfaces
+   * Kinetic Transforms
    */
-  kos:interface Connector {
-    kos:reaction request {
-      if-feature http:agent;
-      input {
-        kos:data http:request;
-      }
-      output {
-        kos:data http:response;
+  kos:transform requesting {
+    kos:invokes http:request;
+    input {
+      kos:flow request {
+	uses http:request;
       }
     }
-    kos:reaction get {
-      input {
-        kos:data http:request-get;
-      }
-      output {
-        kos:data http:request;
+    output {
+      kos:flow response {
+	uses http:response;
       }
     }
   }
-  kos:interface Listener {
-    kos:reaction listen {
-      if-feature http:server;
-      input {
-        kos:data http:endpoint;
-      }
-      output {
-        kos:data http:server;
-        kos:data net:connection;
-        kos:data http:server-request;
+  kos:transform listening {
+    kos:invokes http:listen;
+    input {
+      kos:flow local {
+	uses http:endpoint;
       }
     }
-    kos:reaction route {
-      input {
-        kos:data http:server {
-          require-instance true;
-        }
-        kos:data http:route;
+    output {
+      kos:flow server {
+	uses http:server;
       }
-      output {
-        kos:data http:server-request;
+      kos:flow connection {
+	uses net:connection;
       }
     }
   }

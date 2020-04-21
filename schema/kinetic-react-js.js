@@ -4,9 +4,9 @@ require('yang-js');
 
 module.exports = require('./kinetic-react-js.yang').bind({
 
-  // Bind Processor reactions
-  Component: {
-    transform(target) {
+  // Bind Kinetic Transforms
+  'kos:transform(observing)': {
+    activate(input, output) {
       const lifecycle = {
         componentWillMount:        "mounting",
         componentDidMount:         "mounted",
@@ -15,55 +15,58 @@ module.exports = require('./kinetic-react-js.yang').bind({
         componentDidUpdate:        "updated",
         componentWillReceiveProps: "receive"
       }
+      const { subject, store } = input;
       const { props, state, setState } = target;
-      const propagate = prop => {
-        prop.changed && this.send('react:state', prop.change)
-      };
 
-      this.state.merge(state, { suppress: true }); // update initial state
-      this.state.clean(); // mark initial state to be unchanged
+      store.merge(state, { suppress: true }); // update initial state
+      store.clean(); // mark initial state to be unchanged
 
-      // override target to compute 'state' from this
-      Object.defineProperty(target, 'state', {
+      // override subject to compute 'state' from store
+      Object.defineProperty(subject, 'state', {
         configurable: true,
-        get: () => { return this.state },
+        get: () => { return store },
         set: (obj) => { /* noop */ }
       })
       
-      // override target setState to update this state
-      target.setState = obj => this.state.merge(obj, { deep: false });
+      // override subject setState to update the store
+      subject.setState = obj => store.merge(obj, { deep: false });
 
       // allow all lifecycle events to emit an internal event
       let active = false;
+      const propagate = prop => {
+        prop.changed && output.state.push(prop.change);
+      };
       for (let event in lifecycle) {
-        const f = target[event], state = lifecycle[event]
-        target[event] = (...args) => {
+        const f = subject[event], state = lifecycle[event]
+        subject[event] = (...args) => {
           switch (state) {
           case 'mounting':
-            this.state.on('update', propagate);
+            store.on('update', propagate);
           case 'mounted':
             active = true; break;
           case 'unmounting':
-            this.state.off('update', propagate);
+            store.off('update', propagate);
             active = false; break;
           }
-          this.send('react:lifecycle', { active, state, args })
-          if (f) return f.apply(target, args)
-          return target
+          output.lifecycle.push({ active, state, args })
+          if (f) return f.apply(subject, args)
+          return subject
         }
       }
 
       // attach a convenience function to observe and respond to synthetic events
-      target.observe = (event) => {
-        event.stopPropagation()
-        this.send('react:event', event)
+      subject.observe = (event) => {
+        event.stopPropagation();
+	output.event.push(event);
       }
-      target.trigger = (topic, data) => {
-        this.send('react:trigger', { topic, data })
+      subject.trigger = (topic, data) => {
+	output.trigger.push({ topic, data });
       }
-      props && this.send('react:props', props)
-      setState && this.send('react:setter', setState.bind(target))
-    },
+      props && output.props.push(props);
+      setState && output.setter.push(setState.bind(subject));
+    }
+  },
+  
     route(props, route) {
       const { history } = props;
       if (!history) return;

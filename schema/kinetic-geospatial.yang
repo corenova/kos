@@ -1,0 +1,156 @@
+module kinetic-geospatial {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-geospatial";
+  prefix geo;
+
+  organization
+    "Corenova Technologies, Inc.";
+  contact
+    "Peter K. Lee <peter@corenova.com>";
+  description
+    "The types and interfaces for geospatial applications.";
+  revision 2019-03-10 {
+    description
+      "Initial revision.";
+  }
+  import kinetic-object-stream {
+    prefix kos;
+  }
+  feature haversine {
+    reference "npm:haversine-position";
+  }
+  /*
+   * Type Definitions
+   */
+  typedef degree {
+    type decimal64 {
+      range 0..360;
+    }
+    units degree;
+  }
+  typedef duration {
+    type decimal64 {
+      range 0..max;
+    }
+    units second;
+  }
+  /*
+   * Groupings
+   */ 
+  grouping vector {
+    leaf x {
+      type decimal64;
+      default 0;
+    }
+    leaf y {
+      type decimal64;
+      default 0;
+    }
+    leaf z {
+      type decimal64;
+      default 0;
+    }
+  }
+  grouping quaternion {
+    uses vector;
+    leaf w {
+      type decimal64;
+    }
+  }
+  grouping ned-coordinates {
+    uses vector;
+  }
+  grouping gps-coordinates {
+    leaf latitude {
+      type degree;
+    }
+    leaf longitude {
+      type degree;
+    }
+    leaf altitude {
+      type decimal64;
+      units meter;
+    }
+  }
+  grouping orientation {
+    leaf pitch {
+      type decimal64;
+    }
+    leaf roll {
+      type decimal64;
+    }
+    leaf yaw {
+      type decimal64;
+    }
+  }
+  grouping motion {
+    container linear {
+      uses vector;
+    }
+    container angular {
+      uses vector;
+    }
+  }
+  grouping tracking {
+    leaf azimuth {
+      type degree;
+    }
+    leaf range {
+      type decimal64 {
+        range 0..max;
+      }
+    }
+  }
+  grouping kinematics {
+    container position {
+      uses ned-coordinates;
+    }
+    container orientation {
+      uses quaternion;
+    }
+    container velocity {
+      uses motion;
+    }
+    container aceleration {
+      uses motion;
+    }
+  }
+  /*
+   * Interfaces
+   */
+  kos:interface MovementTracker {
+    container origin {
+      container ned {
+        uses ned-coordinates;
+      }
+      container gps {
+        uses gps-coordinates;
+      }
+    }
+    container status {
+
+    }
+    kos:reaction localize {
+      if-feature haversine;
+      input {
+        kos:data gps-coordinates;
+      }
+      output {
+        kos:data ned-coordinates;
+      }
+    }
+    kos:reaction compute {
+      input {
+        kos:data gps-coordinates {
+          require-instance true;
+        }
+        kos:data chrono:timestamp;
+      }
+      output {
+        kos:data gps-coordinates;
+        kos:data kinematics;
+      }
+    }
+  }
+}
+  
+

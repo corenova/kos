@@ -1,6 +1,6 @@
 {
   "name": "kos",
-  "version": "2.5.1",
+  "version": "3.0.0",
   "description": "Stream processing framework for creating distributed data pipelines and autonomic neural networks",
   "main": "index.js",
   "repository": {
@@ -52,26 +52,11 @@
     "test": "mocha"
   },
   "yang": {
-    "paths": [
+    "search": [
       ".",
-      "./schemas",
+      "./schema",
       "yang-js"
-    ],
-    "resolve": {
-      "kinetic-object-stream": "./kinetic-object-stream.js",
-      "kinetic-core": "./schemas/kinetic-core.js",
-      "kinetic-filesystem": "./schemas/kinetic-filesystem.js",
-      "kinetic-http": "./schemas/kinetic-http.js",
-      "kinetic-link": "./schemas/kinetic-link.js",
-      "kinetic-network": "./schemas/kinetic-network.js",
-      "kinetic-node-js": "./schemas/kinetic-node-js.js",
-      "kinetic-react-js": "./schemas/kinetic-react-js.js",
-      "kinetic-snmp": "./schemas/kinetic-snmp.js",
-      "kinetic-websocket": "./schemas/kinetic-websocket.js",
-      "ietf-inet-types": "yang-js",
-      "ietf-yang-library": "yang-js",
-      "ietf-yang-types": "yang-js"
-    }
+    ]
   },
   "engines": {
     "node": ">=8.0.0"
@@ -83,7 +68,7 @@
     "uuid": "^3.0.1"
   },
   "peerDependencies": {
-    "yang-js": ">=0.22.45"
+    "yang-js": ">=0.23.0"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",
@@ -100,10 +85,10 @@
     "mocha": "^5.2.0",
     "npm-pack-all": "^1.11.1",
     "should": "^11.2.0",
-    "webpack": "^4.28.4",
+    "webpack": "^4.42.1",
     "webpack-cli": "^3.2.1",
     "yaml-loader": "^0.5.0",
-    "yang-js": "^0.22.51",
+    "yang-js": "file:../yang-js",
     "yang-loader": "^1.0.1"
   }
 }

@@ -36,6 +36,7 @@ module kinetic-react-js {
    * Groupings
    */
   grouping component {
+    container props;
     container state;
     // action setState;
     // action componentWillMount;
@@ -44,7 +45,6 @@ module kinetic-react-js {
     // action componentDidUpdate;
     // action componentWillReceiveProps;
   }
-  grouping setter;
   grouping lifecycle {
     leaf active {
       type boolean;
@@ -55,22 +55,91 @@ module kinetic-react-js {
     }
     leaf-list args;
   }
-  grouping props;
-  grouping state;
-  grouping event;
+  grouping event {
+    anydata target;
+  }
   grouping trigger {
     leaf topic {
       type kos:topic;
     }
     anydata data;
   }
-  grouping form-clear;
   grouping route {
     leaf to {
       type string;
     }
   }
+  /*
+   * Kinetic Transforms
+   */
+  kos:transform observing {
+    input {
+      container subject {
+	uses react:component;
+      }
+      container state {
+	// any additional nodes
+      }
+    }
+    output {
+      container lifecycle {
+	uses react:lifecycle;
+      }
+      container event {
+	uses react:event;
+      }
+      container trigger {
+	uses react:trigger;
+      }
+      container context {
+	container props {
+	  uses react:props;
+	}
+	action setter;
+      }
+      container change;
+    }
+  }
+  kos:transform routing {
+    input {
+      kos:flow props {
+	uses react:props;
+	presence true;
+      }
+      kos:flow to {
+	uses react:route;
+      }
+    }
+    output {
 
+    }
+  }
+  kos:transform updating {
+    input {
+      container lifecycle {
+	uses react:lifecycle;
+      }
+    }
+  }
+  kos:blueprint component-connector {
+    description
+      "A blueprint for connecting React.Component instances and
+       handling lifecycle events and state changes";
+    kos:node observer {
+      kos:is react:observing;
+    }
+    kos:node router {
+      kos:is react:routing;
+    }
+    kos:node updater {
+      kos:is react:updating;
+    }
+    kos:edge props-to-router {
+      path "observer/props router/props";
+    }
+  }
+  kos:blueprint 
+  
   kos:interface Component {
     description
       "An interface that consumes React.Component instances and captures
@@ -111,8 +180,8 @@ module kinetic-react-js {
       }
     }
   }
-  kos:interface Form {
-    kos:extends react:Component;
+  kos:blueprint FormHandler {
+    kos:extends react:ComponentHandler;
 
     description
       "An interface that extends React.Component instances and handles

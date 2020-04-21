@@ -1,5 +1,5 @@
-module kinetic-object-stream {
-  namespace "urn:ietf:params:xml:ns:yang:kinetic-object-stream";
+module kinetic-object-spec {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-object-spec";
   prefix kos;
 
   organization
@@ -7,9 +7,14 @@ module kinetic-object-stream {
   contact
     "Peter K. Lee <peter@corenova.com>";
   description
-    "The core module of KOS which provides custom language extensions for
-     modeling reactions and generators.";
-  
+    "The core module of KOS which provides custom language extensions
+     for defining interfaces and transforms as well as modeling
+     blueprints of nodes and edges.";
+
+  revision 2020-04-17 {
+    description
+      "Updated to support additional extensions.";
+  }
   revision 2018-03-10 {
     description
       "Initial revision.";
@@ -19,18 +24,44 @@ module kinetic-object-stream {
    */
   extension interface {
     argument "interface-name";
+    description
+      "defines a set of action methods that can be implemented by a transform node";
   }
-  extension reaction {
-    argument "function-name";
+  extension transform {
+    argument "transform-name";
+    description
+      "defines the input/output data models";
   }
-  extension data {
-    argument "target-topic-identifier";
+  extension blueprint {
+    argument "blueprint-name";
   }
   extension node {
+    argument "transform-node-name";
+    description
+      "primary data processing actor within kos";
+  }
+  extension flow {
+    argument "dataflow-name";
+  }
+  extension source {
     argument "target-node-identifier";
+    description
+      "source stream to read";
+  }
+  extension target {
+    argument "target-node-identifier";
+    description
+      "target stream to write";
   }
   extension extends {
-    argument "target-stream-identifier";
+    argument "target-transform-identifier";
+    description
+      "used by node to extend a transform definition";
+  }
+  extension implements {
+    argument "target-interface-identifier";
+    description
+      "used by node to implement one or more interface definitions";
   }
   extension filter {
     argument "filter-rule";
@@ -61,9 +92,6 @@ module kinetic-object-stream {
   feature channel {
     reference "kos://channel";
   }
-  feature interface {
-    reference "kos://interface";
-  }
   /*
    * Identities
    */
@@ -85,18 +113,8 @@ module kinetic-object-stream {
   typedef unique-identifier {
     type yang:uuid;
   }
-  typedef topic {
-    type string; // TODO: something better...
-  }
-  typedef reaction-identifier {
-    description
-      "A reference to a reaction node in the data model.";
-    type instance-identifier {
-      require-instance true;
-    }
-  }
   /*
-   * Kinetic topics
+   * Grouping Structure Definitions
    */
   grouping process {
     
@@ -111,18 +129,6 @@ module kinetic-object-stream {
     
   }
   grouping state {
-    
-  }
-  grouping debug {
-    
-  }
-  grouping info {
-    
-  }
-  grouping warn {
-    
-  }
-  grouping log {
     
   }
   grouping error {
@@ -146,9 +152,7 @@ module kinetic-object-stream {
       type kos:identifier;
     }
     leaf-list steps {
-      type kos:reaction-identifier {
-        require-instance true;
-      }
+      type kos:reactionref;
     }
   }
   grouping flow-list {

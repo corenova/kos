@@ -1,191 +1,201 @@
 'use strict';
 
-const Yang = require('yang-js')
+const assert = require('assert'); // do we really need this?
+const Yang = require('yang-js');
 
-const { Property } = Yang
-const { Interface, Reaction, Channel, Neural } = require('./lib')
-
-const assert = require('assert')
+const { Property } = Yang;
+const { Reactor, Dataflow, Connector, Filter } = require('./lib');
 
 module.exports = require('./kinetic-object-stream.yang').bind({
+
   'feature(url)': require('url'),
-  'feature(channel)': Channel,
 
   'extension(interface)': {
     scope: {
-      anydata:         '0..n',
-      anyxml:          '0..n',
-      choice:          '0..n',
-      container:       '0..n',
+      action:          '1..n', // must have at least one action defined
       description:     '0..1',
-      grouping:        '0..n',
-      'if-feature':    '0..n',
-      input:           '0..1',
-      leaf:            '0..n',
-      'leaf-list':     '0..n',
-      list:            '0..n',
-      output:          '0..1',
       reference:       '0..1',
       status:          '0..1',
       uses:            '0..n',
-      'kos:extends':   '0..n',
-      'kos:reaction':  '0..n',
+    },
+    target: {
+      module: '0..n',
+    },
+  },
+
+  'extension(transform)': {
+    scope: {
+      description:   '0..1',
+      input:         '1',
+      output:        '1',
+      reference:     '0..1',
+      status:        '0..1',
     },
     target: {
       module: '0..n',
     },
     resolve() {
-      this.once('compile:after', () => {
-        const reaction = this.lookup('extension', 'kos:reaction')
-        const container = this.lookup('extension', 'container')
-        if ((this.input && this.input.nodes.length) || (this.output && this.output.nodes.length))
-          throw this.error('cannot contain data nodes in stream input/output')
-        
-        const state = new Yang('container', 'state', container)
-        const nodes = this.nodes.filter(n => {
-          return (n.kind in container.scope) && (n.tag !== 'state')
-        })
-        state.extends(nodes)
-        this.removes(nodes)
-        this.update(state)
-      })
-      let deps = this.match('if-feature','*')
-      if (deps && !deps.every(d => this.lookup('feature', d.tag)))
-        throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
+      if (!this.input.nodes.length || !this.output.nodes.length)
+	throw this.error("transform must have both input and output nodes");
+      
+      // let deps = this.match('if-feature','*')
+      // if (deps && !deps.every(d => this.lookup('feature', d.tag)))
+      //   throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
     },
-    transform(self, ctx) {
-      const { consumes, produces } = self
-      for (let node of this.nodes) {
-        switch (node.kind) {
-        case 'input':  node.exprs.forEach(expr => expr.apply(consumes)); break;
-        case 'output': node.exprs.forEach(expr => expr.apply(produces)); break;
-        case 'kos:reaction': node.eval(self, ctx); break;
-        default: self = node.eval(self, ctx)
-        }
+  },
+
+  'extension(blueprint)': {
+    scope: {
+      description:  '0..1',
+      reference:    '0..1',
+      status:       '0..1',
+      'kos:edge':   '0..n',
+      'kos:flow':   '0..n',
+      'kos:node':   '0..n',
+    },
+    target: {
+      module: '0..n',
+    },
+  },
+  
+  'extension(node)': {
+    scope: {
+      action:           '0..n',
+      anydata:          '0..n',
+      anyxml:           '0..n',
+      choice:           '0..n',
+      container:        '0..n',
+      description:      '0..1',
+      grouping:         '0..n',
+      'if-feature':     '0..n',
+      input:            '0..1',
+      leaf:             '0..n',
+      'leaf-list':      '0..n',
+      list:             '0..n',
+      output:           '0..1',
+      reference:        '0..1',
+      status:           '0..1',
+      uses:             '0..n',
+      'kos:extends':    '0..1', // can extend only one transform
+      'kos:implements': '0..n', // can implement multiple interfaces
+    },
+    resolve() {
+      const overrides = {
+	transform(data={}, ...args) {
+	  for (const expr of this.exprs)
+	    data = expr.eval(data, ...args);
+	  return data;
+	},
+	construct() {
+	  return new Dataflow(this).attach(...arguments);
+	},
+      };
+
+      if (this.input)  this.input.source = overrides;
+      if (this.output) this.output.source = overrides;
+      
+      // let deps = this.match('if-feature','*')
+      // if (deps && !deps.every(d => this.lookup('feature', d.tag)))
+      //   throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
+    },
+    transform(data={}, ...args) { // always initialize
+      for (const expr of this.exprs)
+	data = expr.eval(data, ...args);
+      return data;
+    },
+    construct() {
+      let actor;
+      if (this.input && this.output) {
+	actor = new Reactor(this);
+      } else if (this.output) {
+	actor = new Generator(this);
+      } else if (this.input) {
+	actor = new Terminator(this);
+      } else {
+	actor = new Controller(this);
       }
-      return self
-    },
-    construct(obj, ctx) {
-      if (obj instanceof Neural.Layer)
-        return new Interface({ schema: this }).attach(obj, ctx)
-      return obj
+      return actor.attach(...arguments);
     }
   },
-  'extension(reaction)': {
+  
+  'extension(flow)': {
     scope: {
       description:   '0..1',
       'if-feature':  '0..n',
-      input:         '1',
-      output:        '0..1',
       reference:     '0..1',
       status:        '0..1',
+      'kos:filter':  '0..n',
+      'kos:source':  '1',
+      'kos:target':  '1',
     },
-    resolve() {
-      if (this.input.nodes.length || (this.output && this.output.nodes.length))
-        throw this.error("cannot contain data nodes in reaction input/output")
-      let deps = this.match('if-feature','*')
-      if (deps && !deps.every(d => this.lookup('feature', d.tag)))
-        throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
-    },
-    transform(self) {
-      const { consumes, produces } = self
-      this.input  && this.input.exprs.forEach(expr => expr.apply(consumes))
-      this.output && this.output.exprs.forEach(expr => expr.apply(produces))
-      
-      let features = this.match('if-feature','*') || []
-      self.depends = features.map(f => {
-	const schema = this.lookup('feature', f.tag);
-	return [ schema, schema.binding ];
-      })
-      return self
-    },
-    construct(parent, ctx) {
-      if (parent instanceof Neural.Layer)
-        return new Reaction({ schema: this }).attach(parent, ctx)
-      return parent
+    construct() {
+      return new Connector(this).attach(...arguments);
     }
   },
-  'extension(data)': {
+  
+  'extension(source)': {
     scope: {
       description:        '0..1',
-      'require-instance': '0..1',
       reference:          '0..1',
       status:             '0..1',
     },
-    target: {
-      input:  '0..n',
-      output: '0..n',
-    },
     resolve() {
-      let schema = this.lookup('grouping', this.tag)
-      if (!schema)
-        throw this.error(`unable to resolve ${this.tag} grouping definition`)
+      if (!this.locate(`../../${this.tag}`))
+        throw this.error(`unable to resolve ${this.tag} ${this.argument}`)
+      // TODO: should we this.normalizePath(this.tag) here?
+      // TODO: should confirm the source node is streamable
     },
-    transform(data) {
-      let { 'require-instance': required } = this
-      let schema = this.lookup('grouping', this.tag)
-      let opts = { persist: (required && required.tag) === true }
-      for (let expr of this.exprs)
-        opts = expr.eval(opts)
-      data.set(schema, opts)
-      return data
+    transform(flow) { // only applies to flow extension
+      flow.source = flow.parent.in(this.tag);
+      return flow;
     }
   },
-  'extension(node)': {
+  
+  'extension(target)': {
     scope: {
       description:        '0..1',
-      'require-instance': '0..1',
-      'kos:filter':       '0..n',
       reference:          '0..1',
       status:             '0..1',
     },
-    target: {
-      input:  '0..n',
-      output: '0..n',
-    },
     resolve() {
-      let schema = this.locate(this.tag)
-      if (!schema)
-        throw this.error(`unable to resolve ${this.tag} data node`)
+      if (!this.locate(`../../${this.tag}`))
+        throw this.error(`unable to resolve ${this.tag} ${this.argument}`)
+      // TODO: should we this.normalizePath(this.tag) here?
+      // TODO: should confirm the target node is streamable
     },
-    transform(data, persists) {
-      let { 'require-instance': required } = this
-      let schema = this.locate(this.tag)
-      let opts = { persist: (required && required.tag) === true }
-      if (schema.kind === 'list') {
-        const elems = this.tag.split('/')
-        if (elems[elems.length-1] === '.')
-          opts.filter = (x) => !Array.isArray(x);
-        else
-          opts.filter = (x) => Array.isArray(x);
-      }
-      for (let expr of this.exprs)
-        opts = expr.eval(opts)
-      data.set(schema, opts)
-      return data
+    transform(flow) { // only applies to flow extension
+      flow.target = flow.parent.in(this.tag);
+      return flow;
     }
   },
+
+  'extension(filter)': {
+
+  },
+  
   'extension(extends)': {
+    resolve() {
+      let from = this.lookup('kos:transform', this.tag);
+      if (!from)
+        throw this.error(`unable to resolve ${this.tag} transform`);
+      for (const n of from.nodes) {
+	this.parent.merge(n.clone({ relative: false }), { replace: true });
+      }
+      if (!this.parent.binding)
+	this.parent.bind(from.binding)
+    }
+  },
+  
+  'extension(implements)': {
     resolve() {
       let from = this.lookup('kos:interface', this.tag);
       if (!from)
         throw this.error(`unable to resolve ${this.tag} interface`);
-      for (const n of from.nodes) {
-        if (n.kind === 'kos:reaction') {
-          this.parent.merge(n.clone({ relative: false }), { replace: true });
-        } else {
-          this.parent.update(n.clone());
-        }
-      }
-      // if (!this.parent.binding)
-      //   this.parent.bind(from.binding)
+      from = from.clone().compile();
+      this.parent.extends(from.nodes);
     }
   },
-  'extension(filter)': {
-    transform(data) {
-      return data
-    }
-  },
+
   'extension(array)': {
     scope: {
       config:         '0..1',
@@ -231,10 +241,11 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         data = this.type.apply(data, ctx)
       return data
     },
-    construct(data={}, ctx={}) {
-      return new Property(this.datakey, this).attach(data, ctx)
+    construct(data={}, ...args) {
+      return new Property(this).attach(data, ...args);
     }
   },
+  
   'extension(private)': {
     target: {
       anydata:     '0..1',
@@ -254,5 +265,6 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       }
       return data;
     }
-  }
+  },
+  
 })

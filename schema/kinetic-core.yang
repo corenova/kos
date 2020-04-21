@@ -37,6 +37,9 @@ module kinetic-core {
       type core:event-name;
     }
   }
+  kos:interface Store {
+
+  }
   kos:interface Timer {
     input {
       kos:data core:alarm;

@@ -41,3 +41,4 @@ package-lock.json
 dist/*
 *.tgz
 .DS_Store
+.out

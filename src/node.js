@@ -35,6 +35,7 @@ class Node extends Container {
       objectMode: true,
       transform: (data, enc, done) => this.activate(data, done),
     });
+    
   }
 
   activate(pulse, done) {

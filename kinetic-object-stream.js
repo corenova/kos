@@ -1,42 +1,63 @@
-'use strict';
-
 const assert = require('assert'); // do we really need this?
-const Yang = require('yang-js');
-
-const { Property } = Yang;
-const { Reactor, Dataflow, Connector, Filter } = require('./lib');
+const { Container, Property } = require('yang-js');
+const { Connector, Controller, Dataflow, Generator, Processor, Terminator } = require('./src');
 
 module.exports = require('./kinetic-object-stream.yang').bind({
-
-  'feature(url)': require('url'),
-
+  //
+  // Kinetic Object Stream YANG Extensions
+  //
+  'extension(persona)': {
+    scope: {
+      action:           '0..n',
+      anydata:          '0..n',
+      container:        '0..n',
+      description:      '0..1',
+      grouping:         '0..n',
+      input:            '0..1',
+      leaf:             '0..n',
+      'leaf-list':      '0..n',
+      list:             '0..n',
+      output:           '0..1',
+      reference:        '0..1',
+      status:           '0..1',
+      uses:             '0..n',
+    },
+    target: {
+      module: '0..n',
+    },
+  },
+  
   'extension(interface)': {
     scope: {
       action:          '1..n', // must have at least one action defined
       description:     '0..1',
       reference:       '0..1',
       status:          '0..1',
-      uses:            '0..n',
     },
     target: {
       module: '0..n',
     },
   },
 
-  'extension(transform)': {
+  'extension(component)': {
     scope: {
-      description:   '0..1',
-      input:         '1',
-      output:        '1',
-      reference:     '0..1',
-      status:        '0..1',
+      action:           '0..n',
+      description:      '0..1',
+      input:            '0..1',
+      output:           '0..1',
+      reference:        '0..1',
+      status:           '0..1',
+      'kos:instanceof': '1',    // must be an instanceof a persona
+      'kos:implements': '0..n', // can implement multiple interfaces
     },
     target: {
       module: '0..n',
     },
     resolve() {
-      if (!this.input.nodes.length || !this.output.nodes.length)
-	throw this.error("transform must have both input and output nodes");
+      const hasInput  = this.input && this.input.nodes.length;
+      const hasOutput = this.output && this.output.nodes.length;
+      if (!hasInput || !hasOutput)
+	throw this.error("component must have input or output nodes");
       
       // let deps = this.match('if-feature','*')
       // if (deps && !deps.every(d => this.lookup('feature', d.tag)))
@@ -49,12 +70,14 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       description:  '0..1',
       reference:    '0..1',
       status:       '0..1',
-      'kos:edge':   '0..n',
-      'kos:flow':   '0..n',
+      'kos:link':   '0..n',
       'kos:node':   '0..n',
     },
     target: {
       module: '0..n',
+    },
+    construct() {
+      return new Container(this).attach(...arguments);
     },
   },
   
@@ -76,11 +99,12 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       reference:        '0..1',
       status:           '0..1',
       uses:             '0..n',
-      'kos:extends':    '0..1', // can extend only one transform
+      'kos:instanceof': '1',    // must be an instanceof a persona
+      'kos:extends':    '0..1', // can extend only one component (for now...)
       'kos:implements': '0..n', // can implement multiple interfaces
     },
     resolve() {
-      const overrides = {
+      const overrides = (source) => ({
 	transform(data={}, ...args) {
 	  for (const expr of this.exprs)
 	    data = expr.eval(data, ...args);
@@ -89,10 +113,10 @@ module.exports = require('./kinetic-object-stream.yang').bind({
 	construct() {
 	  return new Dataflow(this).attach(...arguments);
 	},
-      };
+      });
 
-      if (this.input)  this.input.source = overrides;
-      if (this.output) this.output.source = overrides;
+      if (this.input)  this.input.override(overrides);
+      if (this.output) this.output.override(overrides);
       
       // let deps = this.match('if-feature','*')
       // if (deps && !deps.every(d => this.lookup('feature', d.tag)))
@@ -104,20 +128,70 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       return data;
     },
     construct() {
-      let actor;
-      if (this.input && this.output) {
-	actor = new Reactor(this);
-      } else if (this.output) {
+      let actor, instantiate = this['kos:instanceof'].binding;
+
+      if (typeof instantiate === 'function') {
+	actor = instantiate(this);
+      }
+      else if (this.input && this.output) {
+	actor = new Processor(this);
+      }
+      else if (this.output) {
 	actor = new Generator(this);
-      } else if (this.input) {
+      }
+      else if (this.input) {
 	actor = new Terminator(this);
-      } else {
+      }
+      else {
 	actor = new Controller(this);
       }
       return actor.attach(...arguments);
     }
   },
+
+  'extension(instanceof)': {
+    resolve() {
+      const from = this.lookup('persona', this.tag);
+      if (!from)
+        throw this.error(`unable to resolve ${this.tag} persona`);
+      for (const n of from.nodes) {
+	// this.parent.merge(n.clone({ relative: false }), { replace: true });
+	this.parent.update(n.clone({ relative: false }));
+      }
+      const overrides = (source) => ({
+	construct() { return from.binding(this).attach(...arguments); }
+      });
+      if (from.binding) {
+	this.parent.override(overrides);
+      } else {
+	from.once('bound', () => this.parent.override(overrides));
+      }
+    },
+  },
   
+  'extension(extends)': {
+    resolve() {
+      let from = this.lookup('component', this.tag);
+      if (!from)
+        throw this.error(`unable to resolve ${this.tag} transform`);
+      for (const n of from.nodes) {
+	this.parent.merge(n.clone({ relative: false }), { replace: true });
+      }
+      if (!this.parent.binding)
+	this.parent.bind(from.binding)
+    }
+  },
+  
+  'extension(implements)': {
+    resolve() {
+      let from = this.lookup('kos:interface', this.tag);
+      if (!from)
+        throw this.error(`unable to resolve ${this.tag} interface`);
+      from = from.clone().compile();
+      this.parent.extends(from.nodes);
+    }
+  },
+
   'extension(flow)': {
     scope: {
       description:   '0..1',
@@ -166,33 +240,6 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     transform(flow) { // only applies to flow extension
       flow.target = flow.parent.in(this.tag);
       return flow;
-    }
-  },
-
-  'extension(filter)': {
-
-  },
-  
-  'extension(extends)': {
-    resolve() {
-      let from = this.lookup('kos:transform', this.tag);
-      if (!from)
-        throw this.error(`unable to resolve ${this.tag} transform`);
-      for (const n of from.nodes) {
-	this.parent.merge(n.clone({ relative: false }), { replace: true });
-      }
-      if (!this.parent.binding)
-	this.parent.bind(from.binding)
-    }
-  },
-  
-  'extension(implements)': {
-    resolve() {
-      let from = this.lookup('kos:interface', this.tag);
-      if (!from)
-        throw this.error(`unable to resolve ${this.tag} interface`);
-      from = from.clone().compile();
-      this.parent.extends(from.nodes);
     }
   },
 
@@ -267,4 +314,12 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     }
   },
   
-})
+  //
+  // Kinetic Object Stream (built-in) Personas
+  //
+  // 'kos:persona(Reactor)':    (schema) => new Reactor(schema),
+  // 'kos:persona(Generator)':  (schema) => new Generator(schema),
+  // 'kos:persona(Terminator)': (schema) => new Terminator(schema),
+  // 'kos:persona(Controller)': (schema) => new Controller(schema),
+  // 'kos:persona(Connector)':  (schema) => new Connector(schema),
+});

@@ -48,7 +48,10 @@
   },
   "homepage": "https://github.com/corenova/kos#readme",
   "scripts": {
+    "build:storybook": "build-storybook -c .storybook -o .out",
+    "publish:storybook": "storybook-to-ghpages --existing-output-dir .out",
     "prepublishOnly": "webpack --mode=production --optimize-minimize",
+    "story": "start-storybook",
     "test": "mocha"
   },
   "yang": {
@@ -68,7 +71,8 @@
     "uuid": "^3.0.1"
   },
   "peerDependencies": {
-    "yang-js": ">=0.23.0"
+    "react": "16.*",
+    "yang-js": ">=0.24.0"
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",
@@ -78,17 +82,45 @@
   "devDependencies": {
     "@babel/core": "^7.2.2",
     "@babel/node": "^7.2.2",
-    "@babel/polyfill": "^7.2.5",
     "@babel/preset-env": "^7.2.3",
+    "@babel/preset-react": "^7.0.0",
+    "@emotion/core": "^10.0.28",
+    "@emotion/styled": "^10.0.27",
+    "@projectstorm/react-diagrams": "^6.0.1-beta.7",
+    "@storybook/addon-actions": "^5.1.9",
+    "@storybook/addon-options": "^5.1.9",
+    "@storybook/addons": "^5.1.9",
+    "@storybook/react": "^5.1.9",
+    "@storybook/storybook-deployer": "^2.8.1",
+    "@storybook/theming": "^5.1.9",
+    "@types/mathjs": "^6.0.5",
+    "@types/promise": "^7.1.30",
+    "@types/puppeteer": "^2.0.1",
+    "@types/react": "^16.9.34",
     "babel-loader": "^8.0.5",
+    "closest": "0.0.1",
+    "dagre": "^0.8.5",
+    "gsap": "^3.2.6",
+    "json-beautify": "^1.1.1",
     "json-loader": "^0.5.7",
+    "lodash": "^4.17.15",
+    "mathjs": "^6.6.4",
     "mocha": "^5.2.0",
     "npm-pack-all": "^1.11.1",
+    "pathfinding": "^0.4.18",
+    "paths-js": "^0.4.10",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "regenerator-runtime": "^0.13.5",
+    "resize-observer-polyfill": "^1.5.1",
     "should": "^11.2.0",
+    "source-map-loader": "^0.2.4",
+    "ts-loader": "^7.0.1",
+    "typescript": "^3.8.3",
     "webpack": "^4.42.1",
     "webpack-cli": "^3.2.1",
     "yaml-loader": "^0.5.0",
-    "yang-js": "file:../yang-js",
-    "yang-loader": "^1.0.1"
+    "yang-js": "../yang-js",
+    "yang-loader": "../yang-loader"
   }
 }

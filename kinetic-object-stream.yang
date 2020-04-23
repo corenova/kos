@@ -1,5 +1,5 @@
-module kinetic-object-spec {
-  namespace "urn:ietf:params:xml:ns:yang:kinetic-object-spec";
+module kinetic-object-stream {
+  namespace "urn:ietf:params:xml:ns:yang:kinetic-object-stream";
   prefix kos;
 
   organization
@@ -7,9 +7,9 @@ module kinetic-object-spec {
   contact
     "Peter K. Lee <peter@corenova.com>";
   description
-    "The core module of KOS which provides custom language extensions
-     for defining interfaces and transforms as well as modeling
-     blueprints of nodes and edges.";
+    "The core module of KOS which provides custom language extensions for
+     defining personas, interfaces and components as well as modeling blueprints of nodes
+     and flows.";
 
   revision 2020-04-17 {
     description
@@ -22,26 +22,52 @@ module kinetic-object-spec {
   /*
    * Custom YANG Language Extensions
    */
+  extension persona {
+    argument "persona-name";
+    description
+      "defines a processing behavior that can be instantiated by an actor node";
+  }
   extension interface {
     argument "interface-name";
     description
-      "defines a set of action methods that can be implemented by a transform node";
+      "defines a set of action methods that can be implemented by an actor node";
   }
-  extension transform {
-    argument "transform-name";
+  extension component {
+    argument "component-name";
     description
-      "defines the input/output data models";
+      "defines the input/output data models that can be extended by an actor node";
   }
   extension blueprint {
     argument "blueprint-name";
+    description
+      "defines a collection of kinetic actor nodes and the flows between them";
   }
   extension node {
-    argument "transform-node-name";
+    argument "persona-node-name";
     description
-      "primary data processing actor within kos";
+      "primary data processing actor that instantiates a persona, extends a
+      component, and implements interfaces";
+  }
+  extension instanceof {
+    argument "target-persona-identifier";
+    description
+      "used by node to specify a persona definition";
+  }
+  extension implements {
+    argument "target-interface-identifier";
+    description
+      "used by node to implement one or more interface definitions";
+  }
+  extension extends {
+    argument "target-transform-identifier";
+    description
+      "used by node to extend a transform definition";
   }
   extension flow {
     argument "dataflow-name";
+    description
+      "describes the data connection relationship between input/output ports of
+      kinetic actor nodes";
   }
   extension source {
     argument "target-node-identifier";
@@ -52,19 +78,6 @@ module kinetic-object-spec {
     argument "target-node-identifier";
     description
       "target stream to write";
-  }
-  extension extends {
-    argument "target-transform-identifier";
-    description
-      "used by node to extend a transform definition";
-  }
-  extension implements {
-    argument "target-interface-identifier";
-    description
-      "used by node to implement one or more interface definitions";
-  }
-  extension filter {
-    argument "filter-rule";
   }
   extension array {
     argument "array-name";
@@ -83,14 +96,11 @@ module kinetic-object-spec {
   /*
    * Features
    */
-  feature url {
-    reference "nodejs://url";
+  feature viz {
+    reference "visualization subsystem available.";
   }
-  feature net {
-    reference "nodejs://net";
-  }
-  feature channel {
-    reference "kos://channel";
+  feature sim {
+    reference "sumulation subsystem available.";
   }
   /*
    * Identities
@@ -113,23 +123,56 @@ module kinetic-object-spec {
   typedef unique-identifier {
     type yang:uuid;
   }
+  typedef flow-identifier {
+    type instance-identifier {
+      require-instance true;
+    }
+  }
   /*
    * Grouping Structure Definitions
    */
-  grouping process {
-    
+  grouping dataflow {
+    leaf name {
+      type kos:identifier;
+    }
+    leaf source {
+      type kos:flow-identifier;
+    }
+    leaf target {
+      type kos:flow-identifier;
+    }
   }
-  grouping program {
-    
+  grouping reaction {
+    leaf name {
+      type kos:identifier;
+    }
+    leaf-list consumes {
+      type kos:flow-identifier;
+    }
+    leaf-list produces {
+      type kos:flow-identifier;
+    }
+    action activate;
   }
-  grouping schema {
-    
+  grouping reaction-list {
+    list reaction {
+      uses kos:reaction;
+    }
   }
-  grouping store {
-    
+  grouping datanode-list {
+    list node {
+      
+    }
   }
-  grouping state {
-    
+  grouping dataflow-list {
+    list flow {
+      key id;
+      leaf id {
+        type kos:unique-identifier;
+        mandatory true;
+      }
+      uses kos:dataflow;
+    }
   }
   grouping error {
     leaf message {
@@ -137,33 +180,34 @@ module kinetic-object-spec {
     }
     anydata origin;
   }
-  grouping node-list {
-    list node {
-      
+  /*
+   * Kinetic Personas
+   */
+  persona connector {
+    uses dataflow-list;
+  }
+  persona generator {
+    action start;
+    action stop;
+    output {
+      // must be implemented with data nodes
     }
   }
-  grouping link-list {
-    list link {
-      
+  persona processor {
+    input {
+      // must be implemented with data nodes
+    }
+    output {
+      // must be implemented with data nodes
     }
   }
-  grouping flow {
-    leaf name {
-      type kos:identifier;
-    }
-    leaf-list steps {
-      type kos:reactionref;
+  persona terminator {
+    input {
+      // must be implemented with data nodes
     }
   }
-  grouping flow-list {
-    list flow {
-      key id;
-      leaf id {
-        type kos:unique-identifier;
-        mandatory true;
-      }
-      uses kos:flow;
-    }
+  persona transformer {
+    uses reaction-list;
   }
   /*
    * Operational state data nodes
@@ -171,9 +215,8 @@ module kinetic-object-spec {
   container topology {
     description
       "Contains KOS network topology information.";
-    uses node-list;
-    uses link-list;
-    uses flow-list;
+    uses datanode-list;
+    uses dataflow-list;
   }
   notification error {
     leaf message;

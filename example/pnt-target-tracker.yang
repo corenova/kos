@@ -1,0 +1,189 @@
+module pnt-target-tracker {
+  prefix pnt;
+
+  import kinetic-object-stream {
+    prefix kos;
+  }
+  import kinetic-chrono {
+    prefix chrono;
+  }
+  import kinetic-geospatial {
+    prefix geo;
+  }
+  import darpa-gaps-types {
+    prefix gaps;
+  }
+  /*
+   * Object Structure Definitions
+   */
+  grouping gps-sensor-output {
+    container time {
+      uses chrono:timestamp;
+    }
+    container gps {
+      uses geo:gps-coordinates;
+    }
+  }
+  grouping rf-detector-output {
+    uses geo:rf-target;
+  }
+  /*
+   * Kinetic Interfaces
+   */
+  kos:interface GpsSensor {
+    kos:extends gaps:Sensor {
+      augment "read/output" {
+	uses pnt:sensor-output;
+      }
+    }
+  }
+  kos:interface TargetDetector {
+    kos:extends gaps:Sensor {
+      augment "read/output" {
+	uses pnt:detector-output;
+      }
+    }
+  }
+  /*
+   * Kinetic Transforms
+   */
+  kos:transform positioning {
+    input {
+      uses geo:gps-coordinates;
+    }
+    output {
+      uses geo:gps-coordinates;
+    }
+  }
+  kos:transform timing {
+    input {
+      uses chrono:timestamp;
+    }
+    output {
+      uses chrono:timestamp;
+      leaf tick {
+	type chrono:timetick;
+      }
+    }
+  }
+  kos:transform orienting {
+    input {
+      container fix {
+	uses geo:gps-coordinates;
+      }
+    }
+    output {
+      container global-fix {
+	uses geo:gps-coordinates;
+      }
+    }
+  }
+  kos:transform targeting {
+    input {
+      container subject {
+	uses geo:rf-target;
+      }
+      container observer {
+	uses geo:gps-coordinates;
+      }
+      leaf tick {
+	type chrono:timetick;
+      }
+    }
+    output {
+      uses geo:gps-coordinates;
+    }
+  }
+  /*
+   * Kinetic Blueprints
+   */
+  container target-locator {
+    description
+      "PNT target location processing data model";
+    /*
+      processing nodes
+     */
+    container sensor {
+      description
+	"The sensor node implements GpsSensor interface and supports
+	read() action triggered by an external actor.";
+      kos:instanceof kos:Generator {
+	kos:implements pnt:GpsSensor;
+	output {
+	  uses pnt:gps-sensor-output;
+	}
+      }
+    }
+    container radar {
+      description
+	"The radar node is an instance of the Generator persona which
+	implements TargetDetector interface and supports read() action
+	triggered by an external actor.";
+      kos:instanceof kos:Generator {
+	kos:implements pnt:TargetDetector {
+	  refine "read/output" {
+	    gaps:sensitivity high;
+	  }
+	}
+	output {
+	  uses pnt:rf-detector-output;
+	  gaps:sensitivity high;
+	}
+      }
+    }
+    container nav {
+      kos:instanceof kos:Reactor {
+	kos:extends pnt:positioning;
+      }
+    }
+    container timer {
+      kos:instanceof kos:Reactor {
+	kos:extends pnt:timing;
+      }
+    }
+    container ownship {
+      kos:instanceof kos:Reactor {
+	kos:extends pnt:orienting {
+	  refine "output" {
+	    gaps:sensitivity high;
+	  }
+	}
+      }
+    }
+    container target {
+      kos:instanceof kos:Reactor;
+      kos:extends pnt:targeting;
+    }
+    container router {
+      kos:instanceof kos:Connector;
+      kos:extends pnt:forwarding;
+    }
+    /*
+      dataflow associations between nodes
+     */
+    kos:flow sensor-to-nav {
+      kos:source "sensor/output/gps";
+      kos:target "nav/input";
+    }
+    kos:flow sensor-to-timer {
+      kos:source "sensor/output/time";
+      kos:target "timer/input";
+    }
+    kos:flow nav-to-ownship {
+      kos:source "nav/output";
+      kos:target "ownship/input/fix";
+    }
+    kos:flow radar-to-target {
+      kos:source "radar/input";
+      kos:target "target/input/subject";
+    }
+    kos:flow ownship-to-target {
+      kos:source "ownship/output/global-fix";
+      kos:target "target/input/observer";
+    }
+    kos:flow timer-to-target {
+      kos:source "timer/output/tick";
+      kos:target "target/input/tick";
+    }
+  }
+}

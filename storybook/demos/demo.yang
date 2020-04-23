@@ -1,0 +1,106 @@
+module demo-blueprints {
+  prefix demo;
+
+  import kinetic-object-stream {
+    prefix kos;
+  }
+
+  grouping coordinates {
+    leaf lat {
+      type decimal64 {
+	fraction-digits 9;
+      }
+    }
+    leaf lon {
+      type decimal64 {
+	fraction-digits 9;
+      }
+    }
+    leaf alt {
+      type decimal64 {
+	fraction-digits 9;
+      }
+    }
+  }
+  grouping target-detection {
+    leaf azimuth;
+    leaf range;
+  }
+
+  kos:blueprint simple {
+    kos:node pnt-sensor {
+      kos:instanceof kos:generator;
+      output {
+	leaf lat {
+	  type decimal64 {
+	    fraction-digits 9;
+	  }
+	}
+	leaf lon {
+	  type decimal64 {
+	    fraction-digits 9;
+	  }
+	}
+	leaf alt {
+	  type decimal64 {
+	    fraction-digits 9;
+	  }
+	}
+	leaf time;
+      }
+    }
+    kos:node position-processor {
+      kos:instanceof kos:processor;
+      input {
+	uses coordinates;
+      }
+      output {
+	uses coordinates;
+      }
+    }
+    kos:node ownship {
+      kos:instanceof kos:processor;
+      input {
+	uses coordinates;
+      }
+      output {
+	container global-fix {
+	  uses coordinates;
+	}
+      }
+    }
+    kos:node rf-radar {
+      kos:instanceof kos:generator;
+      output {
+	uses target-detection;
+      }
+    }
+    kos:node time-processor {
+      kos:instanceof kos:processor;
+      input {
+	leaf time;
+      }
+      output {
+	leaf timestamp;
+	leaf timetick;
+      }
+    }
+    kos:node targeting {
+      kos:instanceof kos:processor;
+      input {
+	container uav {
+	  uses coordinates;
+	}
+	leaf timetick;
+	container rf {
+	  uses target-detection;
+	}
+      }
+      output {
+	container target-loc {
+	  uses coordinates;
+	}
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "suppressExcessPropertyErrors": true,
+    "declaration": false,
+    "strictNullChecks": false,
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "jsx": "react",
+    "target": "ES6",
+    "module": "commonjs",
+    "strict": false,
+    "lib": [
+      "DOM",
+      "ES6"
+    ]
+  },
+  "include": [
+    "./src", "./storybook"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts",
+    "./dist"
+  ]
+}

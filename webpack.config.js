@@ -1,6 +1,6 @@
 const path = require('path');
 
-module.exports = {
+module.exports = (dir) => ({
   mode: process.env.NODE_ENV,
   entry: {
     kos: [
@@ -8,36 +8,38 @@ module.exports = {
     ]
   },
   output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: '[name].js'
+    filename: '[name].js',
+    path: path.resolve(dir, "dist"),
   },
   node: {
     fs: 'empty'
   },
   resolve: {
-    extensions: ['.js', '.jsx', '.json'],
+    extensions: ['.tsx', '.ts', '.js'],
     modules: [ 'app', 'node_modules' ],
     alias: {
-      config:  path.resolve(__dirname, 'config'),
-      schemas: path.resolve(__dirname, 'schemas')
-    }
+      config: path.resolve(__dirname, 'config'),
+      schema: path.resolve(__dirname, 'schema'),
+    },
   },
   module: {
     rules: [
-      { test: /\.jsx?$/, 
-        include: [
-          path.resolve(__dirname, 'lib'),
-        ],
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env']
-          }
-        }
+      { test: /\.js$/,
+	enforce: 'pre',
+	loader: 'source-map-loader',
       },
-      { test: /\.json$/, use: 'json-loader' },
-      { test: /\.ya?ml$/, use: ['json-loader', 'yaml-loader'] },
-      { test: /\.yang$/, use: 'yang-loader' }
+      { test: /\.tsx?$/,
+	loader: 'ts-loader',
+      },
+      { test: /\.json$/,
+	loader: 'json-loader',
+      },
+      { test: /\.ya?ml$/,
+	loaders: ['json-loader', 'yaml-loader'],
+      },
+      { test: /\.yang$/,
+	loader: 'yang-loader',
+      },
     ]
   }
-};
+});

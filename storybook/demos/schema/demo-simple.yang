@@ -1,0 +1,12 @@
+module demo-simple {
+  prefix simple;
+
+  import kinetic-object-stream {
+    prefix kos;
+  }
+
+  container demo {
+
+  }
+
+}

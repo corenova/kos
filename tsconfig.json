@@ -16,7 +16,7 @@
     ]
   },
   "include": [
-    "./src", "./storybook"
+    "./src", "./demos"
   ],
   "exclude": [
     "node_modules",

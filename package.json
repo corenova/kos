@@ -101,6 +101,7 @@
     "closest": "0.0.1",
     "dagre": "^0.8.5",
     "gsap": "^3.2.6",
+    "image-webpack-loader": "^6.0.0",
     "json-beautify": "^1.1.1",
     "json-loader": "^0.5.7",
     "lodash": "^4.17.15",

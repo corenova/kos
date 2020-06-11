@@ -1,6 +1,6 @@
 const assert = require('assert'); // do we really need this?
 const { Container, Property } = require('yang-js');
-const { Connector, Controller, Dataflow, Generator, Processor, Terminator } = require('./src');
+const { Connector, Controller, Dataflow, Generator, Processor, Terminator } = require('./lib');
 
 module.exports = require('./kinetic-object-stream.yang').bind({
   //
@@ -184,7 +184,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   
   'extension(implements)': {
     resolve() {
-      let from = this.lookup('kos:interface', this.tag);
+      let from = this.lookup('interface', this.tag);
       if (!from)
         throw this.error(`unable to resolve ${this.tag} interface`);
       from = from.clone().compile();

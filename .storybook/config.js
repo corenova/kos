@@ -4,7 +4,7 @@ import './index.css';
 
 addParameters({
   options: {
-    name: 'Kinetic Object Stream',
+    name: 'Kinetic Object Stream Demo',
     url: 'https://github.com/corenova/kos',
     theme: create({
       base: 'dark',

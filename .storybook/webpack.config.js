@@ -9,7 +9,7 @@ const imageQuery = {
 
 module.exports = ({ config, mode }) => {
   config.resolve.extensions = ['.tsx', '.ts', '.js'];
-  config.module.rules.push(
+  config.module.rules.unshift(
     //{ test: /\.css$/,  use: ['style-loader', 'css-loader' ] },
     { test: /\.scss$/,
       use: [
@@ -26,11 +26,24 @@ module.exports = ({ config, mode }) => {
       enforce: 'pre',
       exclude: /node_modules/,
     },
+    { test: /\.(stories|story)\.tsx?$/,
+      include: [path.resolve(__dirname, '../demos'), path.resolve(__dirname, '../viz')],
+      loaders: [
+	{ loader: require.resolve('@storybook/source-loader'),
+	  options: {
+	    parser: 'typescript',
+	    inspectLocalDependencies: true,
+	  },
+	}	  
+      ],
+      enforce: 'pre',
+    },
     { test: /\.tsx?$/,
       loader: 'ts-loader',
+      include: [path.resolve(__dirname, '../demos'), path.resolve(__dirname, '../viz')],
       exclude: /node_modules/,
       options: {
-	transpileOnly: true
+    	transpileOnly: true
       }
     },
     { test: /\.ya?ml$/, use: ['json-loader', 'yaml-loader'] },

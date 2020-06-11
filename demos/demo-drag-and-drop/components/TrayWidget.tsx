@@ -1,7 +1,7 @@
 import * as React from 'react';
 import styled from '@emotion/styled';
 
-namespace S {
+declare namespace S {
 	export const Tray = styled.div`
 		min-width: 200px;
 		background: rgb(20, 20, 20);

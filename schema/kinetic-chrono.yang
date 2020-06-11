@@ -43,20 +43,18 @@ module kinetic-chrono {
       type kos:identifier;
     }
   }
-  kos:transform scheduling {
+  kos:component timer {
+    kos:instanceof kos:generator;
+    list alarm {
+      key "name";
+      uses chrono:alarm;
+      anydata timer;
+    }
     input {
       kos:data chrono:alarm;
     }
     output {
       kos:data chrono:alert;
-    }
-  }
-  kos:persona Timer {
-    kos:extends kos:Reactor;
-    list alarm {
-      key "name";
-      uses chrono:alarm;
-      anydata timer;
     }
   }
 }

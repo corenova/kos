@@ -12,7 +12,7 @@ export interface BodyWidgetProps {
 	app: Application;
 }
 
-namespace S {
+declare namespace S {
 	export const Body = styled.div`
 		flex-grow: 1;
 		display: flex;

@@ -264,7 +264,9 @@ module demo-blueprints {
 	    fraction-digits 9;
 	  }
 	}
-	leaf time;
+	leaf time {
+	  type yang:date-and-time;
+	}
       }
     }
     kos:node position-processor {
@@ -300,7 +302,11 @@ module demo-blueprints {
       }
       output {
 	leaf timestamp;
-	leaf timetick;
+	leaf timetick {
+	  type uint32 {
+	    range "10..max";
+	  }
+	}
       }
     }
     kos:node targeting {

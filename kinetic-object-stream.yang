@@ -129,11 +129,22 @@ module kinetic-object-stream {
     }
   }
   /*
-   * Grouping Structure Definitions
+   * Structure Definitions
    */
+  grouping datalink {
+    leaf source {
+      type kos:node-identifier;
+    }
+    leaf target {
+      type kos:node-identifier;
+    }
+  }
   grouping dataflow {
     leaf name {
       type kos:identifier;
+    }
+    leaf-list links {
+      type kos:link-identifier;
     }
     leaf source {
       type kos:flow-identifier;
@@ -181,33 +192,61 @@ module kinetic-object-stream {
     anydata origin;
   }
   /*
-   * Kinetic Personas
+   * Persona Definitions (KOS type system for blueprint nodes)
    */
   persona connector {
     uses dataflow-list;
+  }
+  persona reflector {
+    description
+      "A kinetic persona that enables a blueprint node to mimic the
+      behavior of a target data model configuration node. A reflector
+      node always shows current state of the target data model node,
+      however the operations performed directly on the reflector node
+      does NOT alter the true state of the target data model node.
+
+      The use case for reflector is to validate/observe effects of
+      applying a change to target data node without actually altering
+      the true state of the target node. This allows the blueprint
+      using the reflector node to actuate preparatory workflows prior
+      to committing to the data store.
+
+      When using a reflector, you *must* specify the `path` of the
+      target data model node as a sub-statement.";
+  }
+  persona controller {
+    
   }
   persona generator {
     action start;
     action stop;
     output {
-      // must be implemented with data nodes
+      // must contain data nodes
     }
+    // cannot contain input nodes
   }
   persona processor {
     input {
-      // must be implemented with data nodes
+      // must contain data nodes
     }
     output {
-      // must be implemented with data nodes
+      // must contain data nodes
     }
   }
   persona terminator {
     input {
-      // must be implemented with data nodes
+      // must contain data nodes
     }
+    // cannot contain output nodes
   }
   persona transformer {
     uses reaction-list;
+    input {
+      // must contain data nodes
+    }
+    output {
+      // must contain data nodes
+    }
   }
   /*
    * Operational state data nodes

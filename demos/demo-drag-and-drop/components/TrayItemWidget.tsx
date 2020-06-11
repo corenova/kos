@@ -7,7 +7,7 @@ export interface TrayItemWidgetProps {
 	name: string;
 }
 
-namespace S {
+declare namespace S {
 	export const Tray = styled.div<{ color: string }>`
 		color: white;
 		font-family: Helvetica, Arial;

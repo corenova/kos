@@ -99,6 +99,18 @@ module kinetic-http {
     
   }
   /*
+   * Kinetic Components
+   */
+  kos:component agent {
+    kos:instanceof kos:processor;
+    input {
+      uses http:request;
+    }
+    output {
+      uses http:response;
+    }
+  }
+  /*
    * Remote Procedure Calls
    */ 
   rpc request {

@@ -16,7 +16,8 @@
     ]
   },
   "include": [
-    "./src", "./demos"
+    "viz",
+    "demos",
   ],
   "exclude": [
     "node_modules",

@@ -45,13 +45,12 @@ module kinetic-chrono {
   }
   kos:component timer {
     kos:instanceof kos:generator;
-    list alarm {
-      key "name";
-      uses chrono:alarm;
-      anydata timer;
-    }
     input {
-      kos:data chrono:alarm;
+      list alarm {
+	key "name";
+	uses chrono:alarm;
+	anydata timer;
+      }
     }
     output {
       kos:data chrono:alert;

@@ -1,8 +1,8 @@
-module kinetic-core {
-  prefix core;
+module kinetic-chrono {
+  prefix chrono;
 
   description
-    "common system interfaces and reactions";
+    "system time reactors and reactions";
   
   import kinetic-object-stream {
     prefix kos;
@@ -12,7 +12,7 @@ module kinetic-core {
   }
   grouping alarm {
     leaf name {
-      type core:event-name;
+      type chrono:event-name;
     }
     leaf delay {
       type uint16;
@@ -34,27 +34,27 @@ module kinetic-core {
   }
   grouping alert {
     leaf name {
-      type core:event-name;
+      type chrono:event-name;
     }
   }
-  kos:interface Timer {
+  kos:reactor Timer {
     input {
-      kos:data core:alarm;
+      kos:data chrono:alarm;
     }
     output {
-      kos:data core:alert;
+      kos:data chrono:alert;
     }
     list alarm {
       key "name";
-      uses core:alarm;
+      uses chrono:alarm;
       anydata timer;
     }
     kos:reaction schedule {
       input {
-        kos:data core:alarm;
+        kos:data chrono:alarm;
       }
       output {
-        kos:data core:alert;
+        kos:data chrono:alert;
       }
     }
   }

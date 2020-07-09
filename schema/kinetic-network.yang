@@ -196,9 +196,9 @@ module kinetic-network {
     }
   }
   /*
-   * Kinetic Interfaces
+   * Kinetic Reactors
    */
-  kos:interface Connector {
+  kos:reactor Connector {
     kos:reaction connect {
       if-feature net:socket;
       input {
@@ -219,7 +219,7 @@ module kinetic-network {
       }
     }
   }
-  kos:interface Listener {
+  kos:reactor Listener {
     kos:reaction listen {
       if-feature net:server;
       input {

@@ -1,9 +1,12 @@
-module kos-filesystem {
+module kinetic-filesystem {
   prefix fs;
 
-  import kinetic-object-swarm { prefix kos; }
-  import kos-node-js { prefix node; }
-
+  import kinetic-object-stream {
+    prefix kos;
+  }
+  import kinetic-node-js {
+    prefix node;
+  }
   list file {
     notification end;
     notification line;
@@ -39,9 +42,9 @@ module kos-filesystem {
 
   }
   /*
-   * Interfaces
+   * Kinetic Reactors
    */
-  kos:interface Reader {
+  kos:reactor Reader {
     kos:reaction openFileStream {
       if-feature node:fs;
       input {

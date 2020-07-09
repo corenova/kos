@@ -1,27 +1,39 @@
 'use strict'
 
-const Yang = require('yang-js')
+const Yang = require('yang-js');
+const Schema = require('./kinetic-link.yang');
 
-module.exports = require('./kinetic-link.yang').bind({
-  Synchronizer: { select, sync }
-})
+Schema.at('Synchronizer').bind({
 
-function select(input) {
-  const { protocol } = input
-  switch (protocol) {
-  case 'ws':
-  case 'wss':
-    this.send('ws:endpoint', input)
-    break;
-  case 'tcp':
-  case 'udp':
-    this.send('net:endpoint', input)
-    break;
-  default:
-    this.warn('unsupported protocol', protocol)
-  }
-}
+  select: async (ctx, input) => {
+    const { protocol } = input;
+    switch (protocol) {
+    case 'ws':
+    case 'wss':
+      ctx.send('ws:endpoint', input);
+      break;
+    case 'tcp':
+    case 'udp':
+      ctx.send('net:endpoint', input);
+      break;
+    default:
+      ctx.logWarn('unsupported protocol', protocol);
+    }
+  },
 
+  sync: async (ctx, connection) => {
+    const Channel = ctx.use('kos:channel');
+    const { uri, socket } = connection;
+    // create a temporary channel to exchange personas
+    let stream = new Channel(socket).connect(ctx.root);
+    ctx.send('link:session', { uri, stream });
+  },
+
+});
+
+module.exports = Schema;
+
+// TBD...
 function sync(connection) {
   const Channel = this.use('kos:channel')
   //const Interface = this.use('kos:interface')

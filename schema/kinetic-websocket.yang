@@ -51,9 +51,9 @@ module kinetic-websocket {
     
   }
   /*
-   * Kinetic Interfaces
+   * Kinetic Reactors
    */
-  kos:interface Connector {
+  kos:reactor Connector {
     kos:reaction connect {
       if-feature ws:socket;
       input {
@@ -65,7 +65,7 @@ module kinetic-websocket {
       }
     }
   }
-  kos:interface Listener {
+  kos:reactor Listener {
     kos:reaction listen {
       if-feature ws:server;
       input {

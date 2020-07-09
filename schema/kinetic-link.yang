@@ -33,19 +33,19 @@ module kinetic-link {
     anydata stream;
   }
   /*
-   * Kinetic Interfaces
+   * Kinetic Reactors
    */
-  kos:interface Connector {
+  kos:reactor Connector {
     kos:extends net:Connector;
     kos:extends ws:Connector;
     kos:extends link:Synchronizer;
   }
-  kos:interface Listener {
+  kos:reactor Listener {
     kos:extends net:Listener;
     kos:extends ws:Listener;
     kos:extends link:Synchronizer;
   }
-  kos:interface Synchronizer {
+  kos:reactor Synchronizer {
     kos:reaction select {
       input {
         kos:data link:endpoint;

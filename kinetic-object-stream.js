@@ -3,7 +3,7 @@
 const Yang = require('yang-js')
 
 const { Property } = Yang
-const { Interface, Reaction, Channel, Neural } = require('./lib')
+const { Reactor, Reaction, Channel, Neural } = require('./lib')
 
 const assert = require('assert')
 
@@ -11,7 +11,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   'feature(url)': require('url'),
   'feature(channel)': Channel,
 
-  'extension(interface)': {
+  'extension(reactor)': {
     scope: {
       anydata:         '0..n',
       anyxml:          '0..n',
@@ -35,7 +35,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       module: '0..n',
     },
     resolve() {
-      this.once('compile:after', () => {
+      this.once('compiled', () => {
         const reaction = this.lookup('extension', 'kos:reaction')
         const container = this.lookup('extension', 'container')
         if ((this.input && this.input.nodes.length) || (this.output && this.output.nodes.length))
@@ -67,7 +67,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
     construct(obj, ctx) {
       if (obj instanceof Neural.Layer)
-        return new Interface({ schema: this }).attach(obj, ctx)
+        return new Reactor({ schema: this }).attach(obj, ctx)
       return obj
     }
   },
@@ -167,9 +167,9 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   },
   'extension(extends)': {
     resolve() {
-      let from = this.lookup('kos:interface', this.tag);
+      let from = this.lookup('kos:reactor', this.tag);
       if (!from)
-        throw this.error(`unable to resolve ${this.tag} interface`);
+        throw this.error(`unable to resolve ${this.tag} reactor`);
       for (const n of from.nodes) {
         if (n.kind === 'kos:reaction') {
           this.parent.merge(n.clone({ relative: false }), { replace: true });

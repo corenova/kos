@@ -77,14 +77,6 @@ module kinetic-http {
     }
     anydata data;
   }
-  grouping request-get {
-    uses http:request {
-      refine "method" {
-        config false;
-        default "GET";
-      }
-    }
-  }
   grouping response {
     
   }
@@ -120,9 +112,9 @@ module kinetic-http {
     }
   }
   /*
-   * Kinetic Interfaces
+   * Kinetic Reactors
    */
-  kos:interface Connector {
+  kos:reactor Connector {
     kos:reaction request {
       if-feature http:agent;
       input {
@@ -132,16 +124,8 @@ module kinetic-http {
         kos:data http:response;
       }
     }
-    kos:reaction get {
-      input {
-        kos:data http:request-get;
-      }
-      output {
-        kos:data http:request;
-      }
-    }
   }
-  kos:interface Listener {
+  kos:reactor Listener {
     kos:reaction listen {
       if-feature http:server;
       input {

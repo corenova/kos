@@ -17,8 +17,8 @@ module kinetic-object-stream {
   /*
    * Custom YANG Language Extensions
    */
-  extension interface {
-    argument "interface-name";
+  extension reactor {
+    argument "reactor-name";
   }
   extension reaction {
     argument "function-name";
@@ -60,9 +60,6 @@ module kinetic-object-stream {
   }
   feature channel {
     reference "kos://channel";
-  }
-  feature interface {
-    reference "kos://interface";
   }
   /*
    * Identities
@@ -107,23 +104,8 @@ module kinetic-object-stream {
   grouping schema {
     
   }
-  grouping store {
-    
-  }
-  grouping state {
-    
-  }
-  grouping debug {
-    
-  }
-  grouping info {
-    
-  }
-  grouping warn {
-    
-  }
-  grouping log {
-    
+  grouping runtime {
+    anydata store;
   }
   grouping error {
     leaf message {

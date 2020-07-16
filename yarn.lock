@@ -4421,8 +4421,10 @@ yaml-loader@^0.5.0:
   dependencies:
     js-yaml "^3.5.2"
 
-yang-js@../yang-js:
-  version "0.24.0"
+yang-js@^0.24.3:
+  version "0.24.3"
+  resolved "https://registry.yarnpkg.com/yang-js/-/yang-js-0.24.3.tgz#8239d35ea8bfaad65b6b62914c2ce7017c39b6d9"
+  integrity sha512-ynQm5LEGDvZu7Sp0drPrJI2hvyoNR313BsMJWRsRa2a1qvriCc1+Jk3sUVZ+o83Y6gemxprLgNo+ghu2X/Z3hQ==
   dependencies:
     co "^4.6.0"
     debug "^4.1.1"

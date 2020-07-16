@@ -70,8 +70,10 @@ module kinetic-react-js {
       type string;
     }
   }
-
-  kos:interface Component {
+  /*
+   * Kinetic Reactors
+   */
+  kos:reactor Component {
     description
       "An interface that consumes React.Component instances and captures
        lifecycle events and state changes";
@@ -111,7 +113,7 @@ module kinetic-react-js {
       }
     }
   }
-  kos:interface Form {
+  kos:reactor Form {
     kos:extends react:Component;
 
     description

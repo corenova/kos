@@ -71,7 +71,7 @@ Schema.bind({
       ctx.logDebug(`attempt ${uri}`)
       socket.connect(port, hostname)
       // TODO: preserve this in module configuration state
-      //this.in('/net:topology/remote').add(remote)
+      //ctx.at('/net:topology/remote').with({ createOnly: true }).push(remote)
     });
   },
   

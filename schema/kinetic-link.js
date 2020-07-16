@@ -33,7 +33,7 @@ Schema.at('Synchronizer').bind({
 
 module.exports = Schema;
 
-// TBD...
+// FUTURE...
 function sync(connection) {
   const Channel = this.use('kos:channel')
   //const Interface = this.use('kos:interface')

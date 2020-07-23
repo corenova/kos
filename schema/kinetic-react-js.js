@@ -14,12 +14,12 @@ Schema.at('Component').bind({
       componentDidUpdate:        "updated",
       componentWillReceiveProps: "receive"
     }
-    const { props, state, setState } = target;
+    const { props, state = {}, setState } = target;
     const propagate = prop => {
       prop.changed && ctx.send('react:state', prop.change);
     };
 
-    ctx.with({ suppress: true }).push(state); // update initial state
+    ctx.merge(state, { suppress: true }); // update initial state
 
     // override target to compute 'state' from ctx
     Object.defineProperty(target, 'state', {
@@ -29,7 +29,7 @@ Schema.at('Component').bind({
     })
     
     // override target setState to update ctx
-    target.setState = state => ctx.push(state);
+    target.setState = state => ctx.merge(state);
 
     // allow all lifecycle events to emit an internal event
     let active = false;
@@ -69,8 +69,11 @@ Schema.at('Component').bind({
     history.push(route.to);
   },
   
-  applyState: (ctx, lifecycle, setter, state) => {
-    if (lifecycle.active) setter(state);
+  applyState: async (ctx, lifecycle, setter, state) => {
+    if (lifecycle.active) {
+      await ctx.commit();
+      setter(state);
+    }
   },
 
 });

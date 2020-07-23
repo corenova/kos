@@ -36,32 +36,39 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
     resolve() {
       this.once('compiled', () => {
-        const reaction = this.lookup('extension', 'kos:reaction')
-        const container = this.lookup('extension', 'container')
+        //const container = this.lookup('extension', 'container')
         if ((this.input && this.input.nodes.length) || (this.output && this.output.nodes.length))
           throw this.error('cannot contain data nodes in stream input/output')
-        
-        const state = new Yang('container', 'state', container)
-        const nodes = this.nodes.filter(n => {
-          return (n.kind in container.scope) && (n.tag !== 'state')
-        })
-        state.extends(nodes)
-        this.removes(nodes)
-        this.update(state)
+        // const state = new Yang('container', 'state', container)
+        // const nodes = this.nodes.filter(n => {
+        //   return (n.kind in container.scope) && (n.tag !== 'state')
+        // })
+	// console.warn('reactor.resolve', nodes);
+        // state.extends(nodes)
+        // this.removes(nodes)
+        // this.update(state)
       })
       let deps = this.match('if-feature','*')
       if (deps && !deps.every(d => this.lookup('feature', d.tag)))
         throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
     },
     transform(self, ctx) {
-      const { consumes, produces } = self
-      for (let node of this.nodes) {
-        switch (node.kind) {
-        case 'input':  node.exprs.forEach(expr => expr.apply(consumes)); break;
-        case 'output': node.exprs.forEach(expr => expr.apply(produces)); break;
-        case 'kos:reaction': node.eval(self, ctx); break;
-        default: self = node.eval(self, ctx)
-        }
+      if (self instanceof Reactor) {
+	const { consumes, produces } = self
+	for (let node of this.nodes) {
+          switch (node.kind) {
+          case 'input':  node.exprs.forEach(expr => expr.apply(consumes)); break;
+          case 'output': node.exprs.forEach(expr => expr.apply(produces)); break;
+          case 'kos:reaction': node.eval(self, ctx); break;
+          default: self = node.eval(self, ctx)
+          }
+	}
+      } else {
+	const container = this.lookup('extension', 'container');
+	const nodes = this.nodes.filter(n => (n.kind in container.scope))
+	for (let node of nodes) {
+	  self = node.eval(self, ctx);
+	}
       }
       return self
     },
@@ -170,13 +177,16 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       let from = this.lookup('kos:reactor', this.tag);
       if (!from)
         throw this.error(`unable to resolve ${this.tag} reactor`);
-      for (const n of from.nodes) {
-        if (n.kind === 'kos:reaction') {
-          this.parent.merge(n.clone({ relative: false }), { replace: true });
-        } else {
-          this.parent.update(n.clone());
-        }
-      }
+      this.parent.once('compiled', () => {
+	this.debug(`extending ${this.tag}`);
+	for (const n of from.nodes) {
+          if (n.kind === 'kos:reaction') {
+            this.parent.merge(n.clone({ relative: false }), { replace: true });
+          } else {
+            this.parent.update(n.clone());
+          }
+	}
+      });
       // if (!this.parent.binding)
       //   this.parent.bind(from.binding)
     }

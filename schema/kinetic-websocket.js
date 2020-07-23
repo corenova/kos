@@ -39,7 +39,7 @@ Schema.at('Connector').bind({
 Schema.at('Listener').bind({
 
   listen: async (ctx, local) => {
-    const Server = ctx.use('ws:server')
+    const Server = ctx.use('ws:server');
     let { socket: server, uri, protocol, hostname, port, pathname } = local
     if (server) {
       ctx.logInfo(`listening on existing server instance`)

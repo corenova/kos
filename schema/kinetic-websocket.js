@@ -19,7 +19,7 @@ Schema.at('Connector').bind({
 	if (retry) retry = 100;
       })
       socket.on('close', async () => {
-	if (socket.closing || !retry) {
+	if (!retry) {
 	  ctx.logInfo(`disconnected from ${uri}`);
           return;
 	}
@@ -30,7 +30,10 @@ Schema.at('Connector').bind({
 	remote = Object.assign({}, remote, { uri: undefined, query: { retry } })
 	ctx.feed('ws:endpoint', remote)
       });
-      socket.on('error', err => ctx.logError(err))
+      socket.on('error', err => {
+	if (err === 'close') retry = 0;
+	ctx.logError(err);
+      });
     }
   },
 

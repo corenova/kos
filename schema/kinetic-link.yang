@@ -26,7 +26,7 @@ module kinetic-link {
       }
     }
   }
-  grouping session {
+  grouping channel {
     leaf uri {
       type net:uri;
     }
@@ -61,7 +61,7 @@ module kinetic-link {
         kos:data net:connection;
       }
       output {
-        kos:data link:session;
+        kos:data link:channel;
       }
     }
   }

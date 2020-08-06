@@ -71,7 +71,8 @@ Schema.at('Component').bind({
   
   applyState: async (ctx, lifecycle, setter, state) => {
     if (lifecycle.active) {
-      await ctx.commit();
+      //await ctx.commit(); // XXX - doesn't work for some reason for some reactors!
+      ctx.commit();
       setter(state);
     }
   },

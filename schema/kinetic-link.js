@@ -26,7 +26,7 @@ Schema.at('Synchronizer').bind({
     const { uri, socket } = connection;
     // create a temporary channel to exchange personas
     let stream = new Channel(socket).connect(ctx.actor.root);
-    ctx.send('link:session', { uri, stream });
+    ctx.send('link:channel', { uri, stream });
   },
 
 });

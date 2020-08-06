@@ -7,7 +7,7 @@ const Schema = require('./kinetic-websocket.yang');
 Schema.at('Connector').bind({
 
   connect: async (ctx, remote) => {
-    const WebSocket = ctx.use('ws:socket');
+    const WebSocket = ctx.use('kinetic-websocket:socket');
     let { uri, socket, port, hostname, query } = remote;
     let { retry, max } = query;
     if (!socket) {
@@ -39,7 +39,7 @@ Schema.at('Connector').bind({
 Schema.at('Listener').bind({
 
   listen: async (ctx, local) => {
-    const Server = ctx.use('ws:server');
+    const Server = ctx.use('kinetic-websocket:server');
     let { socket: server, uri, protocol, hostname, port, pathname } = local
     if (server) {
       ctx.logInfo(`listening on existing server instance`)

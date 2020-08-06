@@ -15,9 +15,7 @@ Schema.bind({
           let proto = ctx.at('../protocol').schema.default.tag;
           obj = Url.parse(`${proto}://${value}`, true);
         }
-	// XXX - do we need this?
-	// ctx.parent.once('update', prop => prop.merge(obj, { suppress: true }));
-	ctx.at('..').push(obj);
+	ctx.parent.once('update', () => ctx.at('..').with({ suppress: true }).push(obj));
       }
       return value;
     },

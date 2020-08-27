@@ -242,7 +242,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       return data
     },
     construct(data={}, ctx={}) {
-      return new Property(this.datakey, this).attach(data, ctx)
+      return new Property(this).attach(data, ctx)
     }
   },
   'extension(private)': {

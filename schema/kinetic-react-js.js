@@ -5,7 +5,7 @@ const Schema = require('./kinetic-react-js.yang');
 
 Schema.at('Component').bind({
   
-  transform: async (ctx, target) => {
+  transform: (ctx, target) => {
     const lifecycle = {
       componentWillMount:        "mounting",
       componentDidMount:         "mounted",
@@ -29,7 +29,7 @@ Schema.at('Component').bind({
     })
     
     // override target setState to update ctx
-    target.setState = state => ctx.merge(state);
+    target.setState = state => ctx.with({ deep: false }).merge(state);
 
     // allow all lifecycle events to emit an internal event
     let active = false;
@@ -81,7 +81,7 @@ Schema.at('Component').bind({
 
 Schema.at('Form').bind({
   
-  saveFormData: (ctx, event) => {
+  saveFormData: async (ctx, event) => {
     const { target={} } = event
     let { type, name, value } = target
     if (!name) return
@@ -96,7 +96,7 @@ Schema.at('Form').bind({
       value = !!value ? value : undefined;
     }
     try {
-      ctx.with({ deep: true }).push(objectify(name, value));
+      await ctx.push(objectify(name, value));
       if (value !== undefined)
         target.classList.add('is-valid');
       target.setCustomValidity('');

@@ -71,8 +71,6 @@ Schema.at('Component').bind({
   
   applyState: async (ctx, lifecycle, setter, state) => {
     if (lifecycle.active) {
-      //await ctx.commit(); // XXX - doesn't work for some reason for some reactors!
-      ctx.commit();
       setter(state);
     }
   },
@@ -96,7 +94,7 @@ Schema.at('Form').bind({
       value = !!value ? value : undefined;
     }
     try {
-      await ctx.push(objectify(name, value));
+      ctx.merge(objectify(name, value));
       if (value !== undefined)
         target.classList.add('is-valid');
       target.setCustomValidity('');

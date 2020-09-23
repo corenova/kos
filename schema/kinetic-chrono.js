@@ -6,7 +6,7 @@ module.exports = require('./kinetic-chrono.yang').bind({
   
   'Timer/schedule': async (ctx, alarm) => {
     const { name, delay, repeat, immediate, active } = alarm
-    const { alarm: alarms=[] } = ctx.state || {}
+    const { alarm: alarms=[] } = ctx.data || {}
     const match = alarms.find(a => a.name == name)
     const fire = (event) => ctx.send('chrono:alert', { name })
     let timer, scheduler;

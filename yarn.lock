@@ -4421,10 +4421,10 @@ yaml-loader@^0.5.0:
   dependencies:
     js-yaml "^3.5.2"
 
-yang-js@^0.24.22:
-  version "0.24.22"
-  resolved "https://registry.yarnpkg.com/yang-js/-/yang-js-0.24.22.tgz#11785d0522eee5cb2cc4c666bdefa8639b72ecec"
-  integrity sha512-iCKXC7fzimmQ/V1ULPHVs+K8+sfNKtAeUZSs+HopNUPG3q3JJUGhYTY4pWuccWQF9d4tePPgTBxsoXjvZgu8yA==
+yang-js@^0.24.25:
+  version "0.24.25"
+  resolved "https://registry.yarnpkg.com/yang-js/-/yang-js-0.24.25.tgz#8e1de5aea9b06c1c63841ee72feac79afa0d6dd6"
+  integrity sha512-cu5rbCKYog3j3XASJ507gGg/VRnB61W1HAH+Ykt0DXg0INNXClPQ8k7/rd9WT1rUYM4W7RLbRUi0NS/ujzEJjg==
   dependencies:
     co "^4.6.0"
     debug "^4.1.1"

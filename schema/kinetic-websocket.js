@@ -24,7 +24,6 @@ Schema.at('Connector').bind({
           return;
 	}
 	if (typeof retry !== 'number') retry = 100
-	//console.log(remote[Symbol.for('property')].in('query').set({ retry: true }))
 	ctx.logDebug(`reconnecting to ${uri} in ${retry}ms...`, remote.query);
 	retry = await ctx.after(retry, max);
 	remote = Object.assign({}, remote, { uri: undefined, query: { retry } })

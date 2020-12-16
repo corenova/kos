@@ -95,15 +95,17 @@ module.exports = require('./kinetic-object-stream.yang').bind({
         throw this.error(`${this.uri} unable to resolve every feature dependency: ${deps.map(d => d.datakey)}`)
     },
     transform(self) {
-      const { consumes, produces } = self
-      this.input  && this.input.exprs.forEach(expr => expr.apply(consumes))
-      this.output && this.output.exprs.forEach(expr => expr.apply(produces))
-      
-      let features = this.match('if-feature','*') || []
-      self.depends = features.map(f => {
-	const schema = this.lookup('feature', f.tag);
-	return [ schema, schema.binding ];
-      })
+      if (self instanceof Reaction) {
+	const { consumes, produces } = self
+	this.input  && this.input.exprs.forEach(expr => expr.apply(consumes))
+	this.output && this.output.exprs.forEach(expr => expr.apply(produces))
+	
+	let features = this.match('if-feature','*') || []
+	self.depends = features.map(f => {
+	  const schema = this.lookup('feature', f.tag);
+	  return [ schema, schema.binding ];
+	})
+      }
       return self
     },
     construct(parent, ctx) {

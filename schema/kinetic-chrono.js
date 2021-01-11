@@ -29,7 +29,7 @@ module.exports = require('./kinetic-chrono.yang').bind({
         timer = setTimeout(fire, delay)
       }
     }
-    ctx.push({ alarm: [{ name, delay, repeat, active, timer }] });
+    await ctx.push({ alarm: [{ name, delay, repeat, active, timer }] });
     if (immediate) fire(name);
   }
   

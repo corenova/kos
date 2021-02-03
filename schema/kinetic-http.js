@@ -8,15 +8,22 @@ Schema.bind({
     const agent = ctx.use('http:agent');
     let { url, type='json', method, header={}, query='', timeout, data } = input;
     method = method.toLowerCase();
-    let request = agent[method](url).type(type).set(header).query(query);
-    if (type !== 'none') request.type(type);
+    let request = agent[method](url).set(header).query(query);
     if (timeout) request.timeout(timeout);
-    switch (method) {
-    case 'post':
-    case 'put':
-    case 'patch':
-      request = request.send(data);
-      break;
+    if (type === 'file' && typeof data === 'object') {
+      for (const name in data) {
+	ctx.logDebug(`attach ${name} at ${data[name]}`);
+	request = request.attach(name, data[name]);
+      }
+    } else {
+      request.type(type);
+      switch (method) {
+      case 'post':
+      case 'put':
+      case 'patch':
+	request = request.send(data);
+	break;
+      }
     }
     return request
       .catch(err => {

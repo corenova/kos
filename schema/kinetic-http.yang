@@ -41,6 +41,7 @@ module kinetic-http {
       enum "form";
       enum "json";
       enum "xml";
+      enum "file";
     }
     default "json";
   }

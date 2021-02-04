@@ -9,21 +9,14 @@ Schema.bind({
     let { url, type='json', method, header={}, query='', timeout, data } = input;
     method = method.toLowerCase();
     let request = agent[method](url).set(header).query(query);
+    if (type !== 'file') request.type(type);
     if (timeout) request.timeout(timeout);
-    if (type === 'file' && typeof data === 'object') {
-      for (const name in data) {
-	ctx.logDebug(`attach ${name} at ${data[name]}`);
-	request = request.attach(name, data[name]);
-      }
-    } else {
-      request.type(type);
-      switch (method) {
-      case 'post':
-      case 'put':
-      case 'patch':
-	request = request.send(data);
-	break;
-      }
+    switch (method) {
+    case 'post':
+    case 'put':
+    case 'patch':
+      request = request.send(data);
+      break;
     }
     return request
       .catch(err => {

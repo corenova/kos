@@ -7,6 +7,7 @@ export interface KineticNodeModelOptions extends BasePositionModelOptions {
     name?: string;
     color?: string;
     title?: string;
+    instance?: any;
 }
 
 export interface KineticNodeModelGenerics extends NodeModelGenerics {
@@ -21,6 +22,7 @@ export class KineticNodeModel extends NodeModel<KineticNodeModelGenerics> {
     public get name():  string { return this.options.name; }
     public get title(): string { return this.options.title || this.options.name; }
     public get color(): string { return this.options.color; }
+    public get instance(): any { return this.options.instance; }
     
     public get portsIn(): KineticPortModel[] {
 	return Object.values(this.ports).filter(p => p.role === 'input');
@@ -58,12 +60,12 @@ export class KineticNodeModel extends NodeModel<KineticNodeModelGenerics> {
     }
 
     addPorts(schema: any): void {
-	this.addPort(new KineticPortModel(schema, schema.kind));
+	//this.addPort(new KineticPortModel(schema, 'main'));
 	schema.nodes.forEach(ns => this.addPort(new KineticPortModel(ns, schema.kind)));
     }
 
     addPort<T extends KineticPortModel>(port: T): T {
-	console.warn(this.ports, port);
+	//console.warn(this.ports, port);
 	super.addPort(port);
 	return port;
     }

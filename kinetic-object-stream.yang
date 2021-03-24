@@ -27,57 +27,27 @@ module kinetic-object-stream {
     description
       "defines a processing behavior that can be instantiated by an actor node";
   }
-  extension interface {
-    argument "interface-name";
+  extension reactor {
+    argument "reactor-name";
     description
-      "defines a set of action methods that can be implemented by an actor node";
+      "primary data processing model that instantiates a persona, extends a
+      component, and implements other interfaces";
   }
-  extension component {
-    argument "component-name";
+  extension reaction {
+    argument "reaction-function-name";
     description
-      "defines the input/output data models that can be extended by an actor node";
-  }
-  extension blueprint {
-    argument "blueprint-name";
-    description
-      "defines a collection of kinetic actor nodes and the flows between them";
-  }
-  extension node {
-    argument "persona-node-name";
-    description
-      "primary data processing actor that instantiates a persona, extends a
-      component, and implements interfaces";
-  }
-  extension instanceof {
-    argument "target-persona-identifier";
-    description
-      "used by node to specify a persona definition";
+      "A reactive function within a reactor that triggers based on one or more
+      inputs and produces one or more outputs.";
   }
   extension implements {
-    argument "target-interface-identifier";
+    argument "target-reactor-identifier";
     description
-      "used by node to implement one or more interface definitions";
+      "used by persona to implement one or more reactor definitions";
   }
   extension extends {
-    argument "target-transform-identifier";
+    argument "target-reactor-identifier";
     description
-      "used by node to extend a transform definition";
-  }
-  extension flow {
-    argument "dataflow-name";
-    description
-      "describes the data connection relationship between input/output ports of
-      kinetic actor nodes";
-  }
-  extension source {
-    argument "target-node-identifier";
-    description
-      "source stream to read";
-  }
-  extension target {
-    argument "target-node-identifier";
-    description
-      "target stream to write";
+      "used by reactor to extend another reactor definition";
   }
   extension array {
     argument "array-name";
@@ -105,14 +75,14 @@ module kinetic-object-stream {
   /*
    * Identities
    */
-  identity protocol {
-    description "base identity for protocols";
+  identity transport {
+    description "base identity for transport frames";
   }
-  identity kos {
-    base protocol;
+  identity kson {
+    base transport;
   }
-  identity nodejs {
-    base protocol;
+  identity component {
+    description "base identity for kinetic components";
   }
   /*
    * Type Definitions
@@ -123,66 +93,81 @@ module kinetic-object-stream {
   typedef unique-identifier {
     type yang:uuid;
   }
-  typedef flow-identifier {
-    type instance-identifier {
-      require-instance true;
+  typedef schema-identifier {
+    type string; // need to qualify better
+  }
+  typedef node-identifier {
+    type union {
+      type uint32;
+      type yang:uuid;
     }
+  }
+  typedef flow-identifier {
+    type union {
+      type uint32;
+      type yang:uuid;
+    }
+  }
+  typedef flow-mode {
+    type enumeration {
+      enum mesh;
+      enum duplex;
+      enum unicast;
+    }
+    default unicast;
   }
   /*
    * Structure Definitions
    */
-  grouping datalink {
-    leaf source {
+  grouping element {
+    leaf id {
       type kos:node-identifier;
+      mandatory true;
     }
-    leaf target {
+    anydata schema {
+      mandatory true;
+    }
+    leaf name {
+      type string;
+    }
+    anydata instance {
+      config false;
+    }
+  }
+  grouping node {
+    uses kos:element;
+    leaf title {
+      type string;
+    }
+    leaf color {
+      type string;
+    }
+    leaf x {
+      type uint16;
+    }
+    leaf y {
+      type uint16;
+    }
+  }
+  grouping flow {
+    uses kos:element;
+    leaf mode {
+      type kos:flow-mode;
+    }
+    leaf-list nodes {
       type kos:node-identifier;
+      min-elements 2;
     }
-  }
-  grouping dataflow {
-    leaf name {
-      type kos:identifier;
-    }
-    leaf-list links {
-      type kos:link-identifier;
-    }
-    leaf source {
-      type kos:flow-identifier;
-    }
-    leaf target {
-      type kos:flow-identifier;
-    }
-  }
-  grouping reaction {
-    leaf name {
-      type kos:identifier;
-    }
-    leaf-list consumes {
-      type kos:flow-identifier;
-    }
-    leaf-list produces {
-      type kos:flow-identifier;
-    }
-    action activate;
-  }
-  grouping reaction-list {
-    list reaction {
-      uses kos:reaction;
-    }
-  }
-  grouping datanode-list {
-    list node {
-      
-    }
-  }
-  grouping dataflow-list {
-    list flow {
-      key id;
-      leaf id {
-        type kos:unique-identifier;
-        mandatory true;
+    leaf-list frames {
+      type identityref {
+	base kos:transport;
       }
-      uses kos:dataflow;
+    }
+    container control {
+      leaf frequency {
+	type uint32;
+	units ms;
+      }
     }
   }
   grouping error {
@@ -192,74 +177,25 @@ module kinetic-object-stream {
     anydata origin;
   }
   /*
-   * Persona Definitions (KOS type system for blueprint nodes)
-   */
-  persona connector {
-    uses dataflow-list;
-  }
-  persona reflector {
-    description
-      "A kinetic persona that enables a blueprint node to mimic the
-      behavior of a target data model configuration node. A reflector
-      node always shows current state of the target data model node,
-      however the operations performed directly on the reflector node
-      does NOT alter the true state of the target data model node.
-
-      The use case for reflector is to validate/observe effects of
-      applying a change to target data node without actually altering
-      the true state of the target node. This allows the blueprint
-      using the reflector node to actuate preparatory workflows prior
-      to committing to the data store.
-
-      When using a reflector, you *must* specify the `path` of the
-      target data model node as a sub-statement.";
-  }
-  persona controller {
-    
-  }
-  persona generator {
-    action start;
-    action stop;
-    output {
-      // must contain data nodes
-    }
-    // cannot contain input nodes
-  }
-  persona processor {
-    input {
-      // must contain data nodes
-    }
-    output {
-      // must contain data nodes
-    }
-  }
-  persona terminator {
-    input {
-      // must contain data nodes
-    }
-    // cannot contain output nodes
-  }
-  persona transformer {
-    uses reaction-list;
-    input {
-      // must contain data nodes
-    }
-    output {
-      // must contain data nodes
-    }
-  }
-  /*
    * Operational state data nodes
    */
   container topology {
     description
       "Contains KOS network topology information.";
-    uses datanode-list;
-    uses dataflow-list;
+    leaf label {
+      type string;
+    }
+    list node {
+      key id;
+      uses kos:node;
+    }
+    list flow {
+      key id;
+      uses kos:flow;
+    }
   }
   notification error {
-    leaf message;
-    anydata origin;
+    uses kos:error;
   }
   notification log {
     leaf level;

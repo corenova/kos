@@ -1,24 +1,17 @@
 const path = require('path');
 
 module.exports = {
-  //stories: ['../demos/*.story.(tsx?|js|mdx)'],
-  addons: [
-    // { name: '@storybook/preset-typescript',
-    //   options: {
-    // 	include: [path.resolve(__dirname, '../demos')]
-    //   }
-    // },
-    '@storybook/addon-actions',
-    //'@storybook/addon-docs',
-    { name: '@storybook/addon-storysource',
-      options: {
-    	rule: {
-    	  include: [
-	    path.resolve(__dirname, '../demos'),
-	    path.resolve(__dirname, '../viz')
-	  ],
-    	}
-      },
-    },
-  ],
+  stories: ['../demos/*.stories.tsx'],
+  addons: [ '@storybook/essentials' ],
+  core: {
+    builder: 'webpack5',
+  },
+  webpackFinal: (config) => {
+    config.module.rules.push(
+      { test: /\.scss$/, use: [	'style-loader',	'css-loader', 'sass-loader' ] },
+      { test: /\.ya?ml$/, use: ['json-loader', 'yaml-loader'] },
+      { test: /\.yang$/,  use: 'yang-loader' },
+    );
+    return config;
+  },
 };

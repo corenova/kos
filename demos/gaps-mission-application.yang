@@ -1,0 +1,247 @@
+module gaps-mission-application {
+  prefix ma;
+
+  import kinetic-object-stream {
+    prefix kos;
+  }
+  //import kinetic-network {
+  //  prefix net;
+  //}
+  //import kinetic-visual-diagram {
+  //  prefix viz;
+  //}
+  import darpa-gaps-types {
+    prefix gaps;
+  }
+  /*
+   * Identities
+   */
+  identity ethernet {
+    base kos:transport;
+  }
+  identity ip {
+    base kos:transport;
+  }
+  identity gaps {
+    base kos:transport;
+  }
+  identity json {
+    base gaps;
+  }
+  identity raw {
+    base kos:transport;
+  }
+  identity MPU {
+    base kos:component;
+  }
+  identity MPX {
+    base kos:component;
+  }
+  identity ISRM {
+    base kos:component;
+  }
+  identity EOIR {
+    base kos:component;
+  }
+  identity RDR {
+    base kos:component;
+  }
+  identity classification;
+  identity person {
+    base classification;
+  }
+  /*
+   * Type Definitions
+   */
+  typedef status {
+    type enumeration {
+      enum "ready";
+      // what else?
+    }
+  }
+  /*
+   * Groupings
+   */
+  grouping coordinates {
+    leaf lat {
+      type decimal64 {
+	fraction-digits 9;
+      }
+    }
+    leaf lon {
+      type decimal64 {
+	fraction-digits 9;
+      }
+    }
+    leaf alt {
+      type decimal64 {
+	fraction-digits 9;
+      }
+    }
+  }
+  grouping telemetry {
+    uses ma:coordinates;
+    leaf bearing {
+      type decimal64;
+    }
+    leaf speed {
+      type decimal64;
+    }
+  }
+  grouping heartbeat {
+    leaf ss {
+      type identityref {
+	base kos:component;
+      }
+    }
+    leaf st {
+      type ma:status;
+    }
+  }
+  grouping mission-plan {
+
+  }
+  grouping pnt-data {
+    uses ma:coordinates;
+    leaf time {
+      type uint32;
+    }
+  }
+  grouping detect-request {
+    leaf phase {
+      type string; // enumeration of different requests?
+    }
+  }
+  grouping detect-response {
+    leaf TGT_ISRM_ID {
+      type uint32;
+    }
+    uses ma:telemetry;
+    leaf classification {
+      type identityref {
+	base ma:classification;
+      }
+    }
+    leaf confidence {
+      type decimal64;
+    }
+  }
+  grouping vehicle-telemetry {
+    leaf vehicleID {
+      type uint16;
+      mandatory true;
+    }
+    uses ma:telemetry;
+  }
+  grouping video-stream {
+    description "H.264 video codec";
+  }
+  /*
+   * Kinetic Reactors
+   */
+  kos:reactor sensor {
+    output {
+      container data;
+    }
+  }
+  kos:reactor processor {
+    input {
+      container heartbeat {
+	uses ma:heartbeat;
+      }
+    }
+    output {
+      container heartbeat {
+	uses ma:heartbeat;
+      }
+    }
+  }
+  kos:reactor mission-plan-executor {
+    kos:extends processor;
+    gaps:sensitivity orange;
+    input {
+      // what are inputs to MPX?
+    }
+    output {
+      container pnt {
+	uses ma:pnt-data;
+      }
+    }
+  }
+  kos:reactor mission-plan-updater {
+    kos:extends processor;
+    gaps:sensitivity orange;
+    input {
+      // what are inputs to MPU?
+    }
+    output {
+      container plan {
+	uses ma:mission-plan;
+      }
+    }
+  }
+  kos:reactor isr-manager {
+    kos:extends processor;
+    gaps:sensitivity orange;
+    input {
+      list detection {
+	uses ma:detect-response;
+      }
+    }
+    output {
+      container detect {
+	uses ma:detect-request;
+      }
+    }
+  }
+  kos:reactor eoir-sensor-manager {
+    kos:extends processor;
+    gaps:sensitivity green;
+    input {
+      container video {
+	uses ma:video-stream;
+      }
+      container plan {
+	uses ma:mission-plan;
+      }
+      container detect {
+	uses ma:detect-request;
+      }
+      container pnt {
+        uses ma:pnt-data;
+      }
+    }
+    output {
+      list detection {
+	uses ma:detect-response;
+      }
+    }
+  }
+  kos:reactor radar-sensor-manager {
+    kos:extends processor;
+    gaps:sensitivity orange;
+    input {
+      container track {
+	uses ma:vehicle-telemetry;
+      }
+    }
+  }
+  kos:reactor eoir-camera {
+    kos:extends sensor;
+    gaps:sensitivity green;
+    output {
+      container video {
+	uses ma:video-stream;
+      }
+    }
+  }
+  kos:reactor tiled-array-radar {
+    kos:extends sensor;
+    gaps:sensitivity green;
+    output {
+      container track {
+	uses ma:vehicle-telemetry;
+      }
+    }
+  }
+}

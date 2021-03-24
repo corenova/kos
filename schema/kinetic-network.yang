@@ -22,14 +22,20 @@ module kinetic-network {
   /*
    * Identities
    */
+  identity ethernet {
+    base kos:transport;
+  }
+  identity ip {
+    base net:ethernet;
+  }
   identity tcp {
-    base kos:protocol;
+    base net:ip;
   }
   identity udp {
-    base kos:protocol;
+    base net:ip;
   }
   identity unix {
-    base kos:protocol;
+    base kos:transport;
   }
   identity ssl {
     base net:tcp;
@@ -70,7 +76,7 @@ module kinetic-network {
   grouping endpoint {
     leaf protocol {
       type identityref {
-        base kos:protocol;
+        base kos:transport;
       }
       default "tcp";
     }

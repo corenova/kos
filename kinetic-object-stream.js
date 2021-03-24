@@ -27,19 +27,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
   },
   
-  'extension(interface)': {
-    scope: {
-      action:          '1..n', // must have at least one action defined
-      description:     '0..1',
-      reference:       '0..1',
-      status:          '0..1',
-    },
-    target: {
-      module: '0..n',
-    },
-  },
-
-  'extension(component)': {
+  'extension(reactor)': {
     scope: {
       action:           '0..n',
       description:      '0..1',
@@ -47,8 +35,9 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       output:           '0..1',
       reference:        '0..1',
       status:           '0..1',
-      'kos:instanceof': '1',    // must be an instanceof a persona
-      'kos:implements': '0..n', // can implement multiple interfaces
+      'kos:extends':    '0..n', // can extend one or more other reactors
+      //'kos:instanceof': '1',    // must be an instanceof a persona
+      //'kos:implements': '0..n', // can implement multiple interfaces
     },
     target: {
       module: '0..n',
@@ -56,8 +45,8 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     resolve() {
       const hasInput  = this.input && this.input.nodes.length;
       const hasOutput = this.output && this.output.nodes.length;
-      if (!hasInput || !hasOutput)
-	throw this.error("component must have input or output nodes");
+      if (!hasInput && !hasOutput)
+	throw this.error("reactor must have input or output nodes");
       
       // let deps = this.match('if-feature','*')
       // if (deps && !deps.every(d => this.lookup('feature', d.tag)))
@@ -65,22 +54,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
   },
 
-  'extension(blueprint)': {
-    scope: {
-      description:  '0..1',
-      reference:    '0..1',
-      status:       '0..1',
-      'kos:link':   '0..n',
-      'kos:node':   '0..n',
-    },
-    target: {
-      module: '0..n',
-    },
-    construct() {
-      return new Container(this).attach(...arguments);
-    },
-  },
-  
+  /*
   'extension(node)': {
     scope: {
       action:           '0..n',
@@ -168,23 +142,29 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       }
     },
   },
-  
+  */  
   'extension(extends)': {
     resolve() {
-      let from = this.lookup('component', this.tag);
+      let from = this.lookup('kos:reactor', this.tag);
       if (!from)
-        throw this.error(`unable to resolve ${this.tag} transform`);
-      for (const n of from.nodes) {
-	this.parent.merge(n.clone({ relative: false }), { replace: true });
-      }
+        throw this.error(`unable to resolve ${this.tag} reactor`);
+      this.parent.once('compiled', () => {
+        for (const n of from.nodes) {
+          if (n.kind === 'kos:reaction') {
+	    this.parent.merge(n.clone({ relative: false }), { replace: true });
+          } else {
+            this.parent.update(n.clone());
+          }
+        }
+      });
       if (!this.parent.binding)
 	this.parent.bind(from.binding)
     }
   },
-  
+  /*
   'extension(implements)': {
     resolve() {
-      let from = this.lookup('interface', this.tag);
+      let from = this.lookup('reactor', this.tag);
       if (!from)
         throw this.error(`unable to resolve ${this.tag} interface`);
       from = from.clone().compile();
@@ -242,7 +222,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       return flow;
     }
   },
-
+  */
   'extension(array)': {
     scope: {
       config:         '0..1',
@@ -306,11 +286,24 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       this.tag = (this.tag === 'true');
     },
     transform(data, ctx) {
-      if (ctx && ctx.property && this.tag) {
+      if (ctx && ctx.node && this.tag) {
         // this forces the context property to become 'hidden' non-enumerable.
-        ctx.property.state.private = this.tag;
+        ctx.node.state.private = this.tag;
       }
       return data;
+    }
+  },
+
+  '/kos:topology/node/schema': {
+    set: (ctx, value) => {
+      if (typeof value === 'string') {
+	const schema = ctx.lookup('kos:reactor', value) || ctx.locate(value);
+	if (!schema) {
+	  throw ctx.error(`unable to resolve passed in schema ${value}`);
+	}
+	return schema;
+      }
+      return value;
     }
   },
   

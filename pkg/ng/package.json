@@ -1,0 +1,13 @@
+{
+  "name": "ng",
+  "version": "1.0.0",
+  "description": "Example mission application",
+  "main": "index.js",
+  "author": "Peter K. Lee",
+  "license": "Proprietary",
+  "private": true,
+  "dependencies": {
+    "pcap": "^3.1.0",
+    "pcap-ng-parser": "^1.0.0"
+  }
+}

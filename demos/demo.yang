@@ -5,6 +5,19 @@ module demo-blueprints {
     prefix kos;
   }
 
+  identity eth {
+    base kos:protocol;
+  }
+  identity ipv4 {
+    base kos:protocol;
+  }
+  identity gaps {
+    base kos:protocol;
+  }
+  identity json {
+    base gaps;
+  }
+  
   grouping coordinates {
     leaf lat {
       type decimal64 {

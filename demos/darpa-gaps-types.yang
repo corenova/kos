@@ -1,0 +1,38 @@
+module darpa-gaps-types {
+  prefix gaps;
+
+  extension sensitivity {
+    argument "sensitivity-level";
+  }
+  grouping header {
+    leaf next {
+      type uint8;
+    }
+    leaf dst {
+      type uint8;
+    }
+    leaf src {
+      type uint8;
+    }
+    leaf dict {
+      type uint8 {
+	range 0..32; // 5-bits
+      }
+    }
+    leaf pivot {
+      type uint8 {
+	range 0..8; // 3-bits
+      }
+    }
+    leaf len {
+      type uint16 {
+	range 0..4096; // 12-bits
+      }
+    }
+    leaf did {
+      type uint32 {
+	range 0..1048576; // 20-bits
+      }
+    }
+  }
+}

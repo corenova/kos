@@ -1,0 +1,82 @@
+kinetic-object-stream:topology:
+  label: Secure Switch
+  node:
+    - id: 1
+      schema: 'gaps-mission-application:mission-plan-executor'
+      name: MPX
+      color: 'orange'
+      x: 100
+      y: 100
+    - id: 2
+      schema: 'gaps-mission-application:mission-plan-updater'
+      name: MPU
+      color: 'orange'
+    - id: 3
+      schema: 'gaps-mission-application:isr-manager'
+      name: ISRM
+      color: 'orange'
+    - id: 4
+      schema: 'gaps-mission-application:eoir-sensor-manager'
+      name: EOIR
+      color: 'green'
+    - id: 5
+      schema: 'gaps-mission-application:radar-sensor-manager'
+      name: RDR
+      color: 'orange'
+    - id: 6
+      schema: 'gaps-mission-application:eoir-camera'
+      name: EOIR Sensor
+      title: Camera
+      color: 'green'
+    - id: 7
+      schema: 'gaps-mission-application:tiled-array-radar'
+      name: RDR Sensor
+      title: Radar
+      color: 'green'
+  flow:
+    - id: 101
+      schema: 'gaps-mission-application:heartbeat'
+      name: component heartbeats
+      mode: 'mesh'
+      nodes: [ 1, 2, 3, 4, 5 ]
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+      control:
+        frequency: 500
+    - id: 102
+      schema: 'ma:mission-plan'
+      label: update mission plan
+      mode: 'unicast'
+      nodes: [ 2, 4 ]
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+    - id: 103
+      label: request EOIR Detections
+      mode: 'unicast'
+      nodes: [ 3, 4 ]
+      schema: 'ma:detect-request'
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+    - id: 104
+      label: receive EOIR Detections
+      mode: 'unicast'
+      nodes: [ 4, 3 ]
+      schema: 'ma:detect-response'
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+    - id: 105
+      label: ground movers
+      mode: 'unicast'
+      nodes: [ 7, 5 ]
+      schema: 'ma:vehicle-telemetry'
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+    - id: 106
+      label: ground movers
+      mode: 'unicast'
+      nodes: [ 6, 4 ]
+      schema: 'ma:video-stream' # what is this?
+      frames: [ 'ethernet', 'ip', 'gaps', 'raw' ]
+    - id: 100
+      label: pnt propagation
+      mode: 'unicast'
+      nodes: [ 1, 4 ]
+      schema: 'ma:pnt-data'
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+      control:
+        frequency: 1000

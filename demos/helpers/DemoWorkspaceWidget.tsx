@@ -39,16 +39,17 @@ export const DemoButton = styled.button`
     border-radius: 3px;
 
     &:hover {
-      background: rgb(0, 192, 255);
+    background: rgb(0, 192, 255);
     }
 `;
 
-export const DemoWorkspaceWidget: React.FC<DemoWorkspaceWidgetProps> = ({
-    buttons, children
-}) => (
-    <S.Container>
-        <S.Toolbar>{buttons}</S.Toolbar>
-        <S.Content>{children}</S.Content>
-    </S.Container>
-);
-
+export class DemoWorkspaceWidget extends React.Component<DemoWorkspaceWidgetProps> {
+    render() {
+	return (
+	    <S.Container>
+		<S.Toolbar>{this.props.buttons}</S.Toolbar>
+		<S.Content>{this.props.children}</S.Content>
+	    </S.Container>
+	);
+    }
+}

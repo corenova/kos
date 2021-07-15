@@ -15,10 +15,18 @@ export class KineticLinkModel extends DefaultLinkModel {
 }
 
 namespace S {
+  export const Keyframes = keyframes`
+    from {
+      stroke-dashoffset: 24;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  `;
 
   const selected = css`
     stroke-dasharray: 10, 2;
-
+    animation: ${Keyframes} 1s linear infinite;    
   `;
   export const Path = styled.path<{ selected: boolean }>`
     ${(p) => p.selected && selected};
@@ -82,15 +90,16 @@ export class KineticLinkSegment extends React.Component<KineticLinkSegmentProps>
   }
 
   render() {
+    const { selected, model } = this.props;
     return (
       <>
       <S.Path
-      selected={this.props.selected}
+      selected={selected}
       ref={ref => {
         this.path = ref;
       }}
-      strokeWidth={this.props.model.getOptions().width}
-      stroke={this.props.model.getOptions().color}
+      strokeWidth={model.getOptions().width}
+      stroke={selected ? model.getOptions().selectedColor : model.getOptions().color}
       d={this.props.path}
       />
       <circle

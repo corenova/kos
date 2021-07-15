@@ -1,5 +1,9 @@
 import * as React from 'react';
-import { DiagramEngine, PortWidget } from '@projectstorm/react-diagrams-core';
+import {
+  DiagramEngine,
+  PortWidget,
+  PortModelAlignment,
+} from '@projectstorm/react-diagrams-core';
 import { KineticPortModel } from './KineticPortModel';
 import styled from '@emotion/styled';
 
@@ -30,14 +34,14 @@ namespace S {
   `;
 
   export const Port = styled.div<{
-    color: string; right: boolean; connected: boolean;
+    color: string; right: boolean; connected: boolean; role: string;
   }>`
         background: ${p => p.color};
         opacity: ${p => p.connected ? 0.8 : 0.1};
         border: solid 1px black;
         border-${p => p.right ? 'right' : 'left'}: 0px;
         border-radius: ${p => p.right ? '15px 0 0 15px' : '0 15px 15px 0'};
-	width: ${p => p.right ? '30px' : '20px'};
+	width: ${p => (p.role === 'output') ? '30px' : '20px'};
 	height: 15px;
         color: black;
         padding-${p => p.right? 'right' : 'left'}: 5px;
@@ -49,15 +53,16 @@ namespace S {
 }
 
 export const KineticPortWidget: React.FC<KineticPortProps> = ({ port, engine }) => {
-  const right = port.role === 'output'
-  const io = port.role === 'output' ? 'OUT' : 'IN';
+  const right = port.getOptions().alignment === PortModelAlignment.RIGHT;
+  const text = port.role === 'output' ? 'OUT' : 'IN';
   const edge = (
     <PortWidget engine={engine} port={port}>
       <S.Port
 	color={port.color}
 	right={right}
+        role={port.role}
 	connected={port.isConnected()}>
-        { io }
+        { text }
       </S.Port>
     </PortWidget>
   );
@@ -68,8 +73,8 @@ export const KineticPortWidget: React.FC<KineticPortProps> = ({ port, engine }) 
       background={port.background}
       right={right}
       connected={port.isConnected()}>
-      {port.role === 'input' ? edge : label}
-      {port.role === 'input' ? label : edge}
+      {!right ? edge : label}
+      {!right ? label : edge}
     </S.PortLabel>
   );
 };

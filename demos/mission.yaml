@@ -1,0 +1,102 @@
+kinetic-object-stream:topology:
+  label: Secure Switch
+  node:
+    - id: 1
+      schema: 'gaps-mission-application:mission-plan-executor'
+      render:
+        name: MPX
+        color: 'orange'
+        x: 330
+        y: 300
+    - id: 2
+      schema: 'gaps-mission-application:mission-plan-updater'
+      render:
+        name: MPU
+        color: 'orange'
+        x: 330
+        y: 180
+    - id: 3
+      schema: 'gaps-mission-application:isr-manager'
+      render:
+        name: ISRM
+        color: 'orange'
+        x: 700
+        y: 420
+        flip: true
+    - id: 4
+      schema: 'gaps-mission-application:eoir-sensor-manager'
+      render:
+        name: EOIR
+        color: 'green'
+        x: 700
+        y: 100
+    - id: 5
+      schema: 'gaps-mission-application:radar-sensor-manager'
+      render:
+        name: RDR
+        color: 'orange'
+        x: 330
+        y: 420
+    - id: 6
+      schema: 'gaps-mission-application:eoir-camera'
+      render:
+        name: EOIR Sensor
+        title: Camera
+        color: 'green'
+        x: 100
+        y: 100
+    - id: 7
+      schema: 'gaps-mission-application:tiled-array-radar'
+      render:
+        name: RDR Sensor
+        title: Radar
+        color: 'green'
+        x: 100
+        y: 420
+  flow:
+    - id: 101
+      schema: 'gaps-mission-application:heartbeat'
+      label: component heartbeats
+      mode: 'mesh'
+      nodes: [ 1, 2, 3, 4, 5 ]
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+      control:
+        frequency: 500
+    - id: 102
+      schema: 'gaps-mission-application:mission-plan'
+      label: update mission plan
+      mode: 'unicast'
+      nodes: [ 2, 4 ]
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+    - id: 103
+      label: request detections
+      mode: 'unicast'
+      nodes: [ 3, 4 ]
+      schema: 'gaps-mission-application:detect-request'
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+    - id: 104
+      label: receive detection results
+      mode: 'unicast'
+      nodes: [ 4, 3 ]
+      schema: 'gaps-mission-application:detect-response'
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+    - id: 105
+      label: ground movers
+      mode: 'unicast'
+      nodes: [ 7, 5 ]
+      schema: 'gaps-mission-application:vehicle-telemetry'
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+    - id: 106
+      label: ground movers
+      mode: 'unicast'
+      nodes: [ 6, 4 ]
+      schema: 'gaps-mission-application:video-stream' # what is this?
+      frames: [ 'ethernet', 'ip', 'gaps', 'raw' ]
+    - id: 100
+      label: pnt propagation
+      mode: 'unicast'
+      nodes: [ 1, 4 ]
+      schema: 'gaps-mission-application:pnt-data'
+      frames: [ 'ethernet', 'ip', 'gaps', 'json' ]
+      control:
+        frequency: 1000

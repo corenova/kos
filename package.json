@@ -58,7 +58,7 @@
     "search": [
       ".",
       "./schema",
-      "./demos",
+      "./demos/schema",
       "yang-js"
     ]
   },
@@ -90,6 +90,7 @@
     "@emotion/styled": "^10",
     "@projectstorm/react-diagrams": "^6.4.2",
     "@storybook/addon-actions": "^6.1.21",
+    "@storybook/addon-console": "^1.2.3",
     "@storybook/addon-docs": "^6.1.21",
     "@storybook/addon-essentials": "^6.1.21",
     "@storybook/addon-info": "^5.3.21",

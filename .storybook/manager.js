@@ -3,7 +3,7 @@ import { create } from '@storybook/theming';
 
 const kosTheme = create({
   base: 'dark',
-  brandTitle: 'KOS Mission Application',
+  brandTitle: 'KOS Dashboard',
   brandUrl: 'http://github.com/corenova/kos'
 });
 

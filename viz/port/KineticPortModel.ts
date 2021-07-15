@@ -6,7 +6,7 @@ import {
   PortModelGenerics,
   PortModelOptions
 } from '@projectstorm/react-diagrams-core';
-//import { DefaultLinkModel } from '@projectstorm/react-diagrams'
+import { DefaultLinkModel } from '@projectstorm/react-diagrams'
 import { KineticLinkModel } from '../link/KineticLink';
 
 export interface KineticPortModelOptions extends PortModelOptions {
@@ -14,6 +14,7 @@ export interface KineticPortModelOptions extends PortModelOptions {
   label?: string;
   color?: string;
   background?: string;
+  flip?: boolean;
 }
 
 export interface KineticPortModelGenerics extends PortModelGenerics {
@@ -31,16 +32,17 @@ export class KineticPortModel extends PortModel<KineticPortModelGenerics> {
   public get kind(): string { return this.schema.kind; }
 
   constructor(schema: any = {}, role: string, options?: KineticPortModelOptions) {
+    const { LEFT, RIGHT, BOTTOM } = PortModelAlignment;
     let alignment: any;
     switch (role) {
       case 'input':
-	alignment = PortModelAlignment.LEFT;
+	alignment = (options && options.flip) ? RIGHT : LEFT;
 	break;
       case 'output':
-	alignment = PortModelAlignment.RIGHT;
+	alignment = (options && options.flip) ? LEFT: RIGHT;
 	break;
       default:
-	alignment = PortModelAlignment.BOTTOM;
+	alignment = BOTTOM;
 	break;
     }
     super({
@@ -89,12 +91,22 @@ export class KineticPortModel extends PortModel<KineticPortModelGenerics> {
     return link as T;
   }
 
-  canLinkToPort(port: PortModel): boolean {
+  canLinkToPort(port: PortModel, schema: any): boolean {
+    const compareSchema = (a, b) => (
+      a.nodes.every( (n1) => b.nodes.some( (n2) => (
+        n1 === n2 ||
+        n1 === n2.origin ||
+        n1.origin === n2 ||
+        n1.origin === n2.origin
+      )))
+    );
     if (port instanceof KineticPortModel) {
       return (
 	this.role !== port.role &&
 	(this.kind == port.kind ||
-	 (['input','output'].includes(this.kind)))
+	 (['input','output'].includes(this.kind))) &&
+        compareSchema(this.schema, schema) &&
+        compareSchema(this.schema, port.schema)
       );
     }
     // can only connect between kinetic ports
@@ -110,6 +122,7 @@ export class KineticPortModel extends PortModel<KineticPortModelGenerics> {
     if (!link && factory) {
       return factory.generateModel({});
     }
-    return link || new KineticLinkModel();
+    //return link || new KineticLinkModel();
+    return link || new DefaultLinkModel();
   }
 }

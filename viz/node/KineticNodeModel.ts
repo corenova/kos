@@ -8,6 +8,7 @@ export interface KineticNodeModelOptions extends BasePositionModelOptions {
     color?: string;
     title?: string;
     instance?: any;
+    flip?: boolean;
 }
 
 export interface KineticNodeModelGenerics extends NodeModelGenerics {
@@ -61,7 +62,7 @@ export class KineticNodeModel extends NodeModel<KineticNodeModelGenerics> {
 
     addPorts(schema: any): void {
 	//this.addPort(new KineticPortModel(schema, 'main'));
-	schema.nodes.forEach(ns => this.addPort(new KineticPortModel(ns, schema.kind)));
+	schema.nodes.forEach(ns => this.addPort(new KineticPortModel(ns, schema.kind, { name: ns.uri, flip: this.options.flip })));
     }
 
     addPort<T extends KineticPortModel>(port: T): T {

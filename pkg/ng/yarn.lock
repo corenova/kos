@@ -19,6 +19,11 @@ mac-address@~0.3.0:
   resolved "https://registry.yarnpkg.com/mac-address/-/mac-address-0.3.0.tgz#48c5049c7d42184361de6790540014ea81bc2c51"
   integrity sha1-SMUEnH1CGENh3meQVAAU6oG8LFE=
 
+minimist@^1.2.5:
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.5.tgz#67d66014b66a6a8aaa0c083c5fd58df4e4e97602"
+  integrity sha512-FM9nNUYrRBAELZQT3xeZQ7fmMOBg6nWNmJKTcgsJeaLstP/UODVpGsr5OhXhhXg6f+qtJ8uiZ+PUxkDWcgIXLw==
+
 nan@^2.14.0:
   version "2.14.2"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.2.tgz#f5376400695168f4cc694ac9393d0c9585eeea19"

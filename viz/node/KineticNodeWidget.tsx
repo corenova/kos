@@ -113,7 +113,8 @@ export const GeneratorNodeWidget: React.FC<KineticNodeWidgetProps> = ({
 
 /**
  * Processor node that models the ProcessorNodeModel. It creates two columns
- * for both all the input ports on the left, and the output ports on the right.
+ * for both all the input ports on the left, and the output ports on the right. 
+* (unless option.flip is true)
  */
 export const ProcessorNodeWidget: React.FC<KineticNodeWidgetProps> = ({ node, engine }) => (
     <S.Node
@@ -126,12 +127,12 @@ export const ProcessorNodeWidget: React.FC<KineticNodeWidgetProps> = ({ node, en
 	</S.Title>
 	<S.Ports>
 	    <S.PortsContainer>
-		{node.portsIn.map(port => (
+		{(node.getOptions().flip ? node.portsOut : node.portsIn).map(port => (
 		    <KineticPortWidget engine={engine} port={port} key={port.id}/>
 		))}
 	    </S.PortsContainer>
 	    <S.PortsContainer>
-		{node.portsOut.map(port => (
+		{(node.getOptions().flip ? node.portsIn : node.portsOut).map(port => (
 		    <KineticPortWidget engine={engine} port={port} key={port.id}/>
 		))}
 	    </S.PortsContainer>

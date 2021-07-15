@@ -1,0 +1,103 @@
+#!/usr/bin/env node
+let argv = require('minimist')(process.argv.slice(2));
+if (!argv.i) {
+  console.log('missing argument -i <input pcap filename>');
+  process.exit(1);
+}
+if (!argv.o) {
+  console.log('missing argument -o <output json filename>');
+  process.exit(1);
+}
+
+const path = require('path');
+const pcapFile = path.resolve(argv.i);
+const jsonFile = path.resolve(argv.o);
+
+//const PcapParser = require('pcap-ng-parser');
+//const pcapParser = new PcapParser();
+//const myFileStream = require('fs').createReadStream(`./${argv.f}`);
+//const EtherFrame = require('ether-frame');
+
+const pcap = require('pcap');
+const ipv4 = require('pcap/decode/ipv4');
+
+class GAPS {
+  constructor(emitter) {
+    this.emitter = emitter;
+    this.next = undefined;
+    this.dst = undefined;
+    this.src = undefined;
+    this.dict = undefined;
+    this.pivot = undefined
+    this.len = undefined;
+    this.did = undefined;
+    this.data = undefined;
+  }
+  decode(raw, offset) {
+    this.next = raw[offset];
+    offset += 1;
+    this.dst = raw[offset];
+    offset += 1;
+    this.src = raw[offset];
+    offset += 1;
+    this.dict = (raw[offset] & 0xfe) >> 3;
+    this.pivot = (raw[offset] & 0x07) << 5;
+    offset += 1;
+    //this.len = (raw.readUInt32BE(offset) >> 21); // first 11-bits
+    //this.did = ((raw.readUInt32BE(offset) & 0x001fffff)); // last 21-bits
+    //console.warn('32-bits:', (raw.readUInt32BE(offset) >>> 0).toString(2).padStart(32,'0'));
+    //console.warn((raw.readUInt32BE(offset) >> 21) & 0x7ff, this.len.toString(2));
+    //console.warn(raw.readUInt32BE(offset) & 0x001fffff, this.did.toString(2));
+    // BELOW is what we WILL eventually update to
+    this.len = (raw.readUInt32BE(offset) >> 20) & 0xfff; // first 12-bits
+    this.did = ((raw.readUInt32BE(offset) & 0x000fffff));
+    offset += 4;
+    this.data = raw.slice(offset, offset + this.len);
+    return this;
+  }
+}
+
+ipv4.protocols[253] = GAPS;
+
+const max = argv.c ? parseInt(argv.c) : 0;
+let total = 0;
+let count = 0;
+let skipped = 0;
+let delim = '';
+const pcapSession = pcap.createOfflineSession(pcapFile);
+const out = require('fs').createWriteStream(jsonFile);
+
+const finalize = () => {
+  out.write("]\n");
+  out.end();
+  console.info(`processed ${count}/${total} packets (skipped ${skipped}) from ${pcapFile}`);
+};
+
+out.write("[");
+pcapSession.on('packet', (raw) => {
+  if (max && total >= max) {
+    pcapSession.close();
+    finalize();
+    return;
+  }
+  total += 1;
+  try {
+    const packet = pcap.decode.packet(raw);
+    const ip = packet.payload.payload;
+    if (ip.protocol !== 253) { skipped++; return; }
+    const gaps = ip.payload;
+    if (gaps.src !== 7)
+      gaps.data = JSON.parse(gaps.data,0);
+    if (argv.v) {
+      console.log(gaps);
+    }
+    if (count) delim = ',';
+    out.write(delim + JSON.stringify(packet));
+    count++;
+  } catch (err) {
+    console.warn(err.message);
+  }
+});
+pcapSession.on('complete', finalize);
+
+console.warn('complete listening now');

@@ -27,7 +27,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     },
   },
   
-  'extension(reactor)': {
+  'extension(component)': {
     scope: {
       action:           '0..n',
       description:      '0..1',
@@ -35,7 +35,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       output:           '0..1',
       reference:        '0..1',
       status:           '0..1',
-      'kos:extends':    '0..n', // can extend one or more other reactors
+      'kos:extends':    '0..n', // can extend one or more comopnents
       //'kos:instanceof': '1',    // must be an instanceof a persona
       //'kos:implements': '0..n', // can implement multiple interfaces
     },
@@ -46,7 +46,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
       const hasInput  = this.input && this.input.nodes.length;
       const hasOutput = this.output && this.output.nodes.length;
       if (!hasInput && !hasOutput)
-	throw this.error("reactor must have input or output nodes");
+	throw this.error("component must have input or output nodes");
       
       // let deps = this.match('if-feature','*')
       // if (deps && !deps.every(d => this.lookup('feature', d.tag)))
@@ -145,9 +145,9 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   */  
   'extension(extends)': {
     resolve() {
-      let from = this.lookup('kos:reactor', this.tag);
+      let from = this.lookup('kos:component', this.tag);
       if (!from)
-        throw this.error(`unable to resolve ${this.tag} reactor`);
+        throw this.error(`unable to resolve ${this.tag} component`);
       this.parent.once('compiled', () => {
         for (const n of from.nodes) {
           if (n.kind === 'kos:reaction') {
@@ -164,7 +164,7 @@ module.exports = require('./kinetic-object-stream.yang').bind({
   /*
   'extension(implements)': {
     resolve() {
-      let from = this.lookup('reactor', this.tag);
+      let from = this.lookup('kos:component', this.tag);
       if (!from)
         throw this.error(`unable to resolve ${this.tag} interface`);
       from = from.clone().compile();
@@ -294,10 +294,10 @@ module.exports = require('./kinetic-object-stream.yang').bind({
     }
   },
 
-  '/kos:topology/node/schema': {
+  'grouping(kos:element)/schema': {
     set: (ctx, value) => {
       if (typeof value === 'string') {
-	const schema = ctx.lookup('kos:reactor', value) || ctx.locate(value);
+	const schema = ctx.lookup(ctx.schema.reference.tag, value) || ctx.locate(value);
 	if (!schema) {
 	  throw ctx.error(`unable to resolve passed in schema ${value}`);
 	}

@@ -27,27 +27,27 @@ module kinetic-object-stream {
     description
       "defines a processing behavior that can be instantiated by an actor node";
   }
-  extension reactor {
-    argument "reactor-name";
+  extension component {
+    argument "component-name";
     description
-      "primary data processing model that instantiates a persona, extends a
-      component, and implements other interfaces";
+      "primary data processing model that instantiates a persona, extends other
+      components, and implements other interfaces";
   }
   extension reaction {
     argument "reaction-function-name";
     description
-      "A reactive function within a reactor that triggers based on one or more
+      "A reactive function within a component that triggers based on one or more
       inputs and produces one or more outputs.";
   }
   extension implements {
-    argument "target-reactor-identifier";
+    argument "target-interface-identifier";
     description
-      "used by persona to implement one or more reactor definitions";
+      "used by a component to implement one or more interface definitions";
   }
   extension extends {
-    argument "target-reactor-identifier";
+    argument "target-component-identifier";
     description
-      "used by reactor to extend another reactor definition";
+      "used by a component to extend another component definition";
   }
   extension array {
     argument "array-name";
@@ -127,15 +127,14 @@ module kinetic-object-stream {
     anydata schema {
       mandatory true;
     }
-    leaf name {
-      type string;
-    }
     anydata instance {
       config false;
     }
   }
-  grouping node {
-    uses kos:element;
+  grouping render {
+    leaf name {
+      type string;
+    }
     leaf title {
       type string;
     }
@@ -144,13 +143,36 @@ module kinetic-object-stream {
     }
     leaf x {
       type uint16;
+      default 0;
     }
     leaf y {
       type uint16;
+      default 0;
+    }
+    leaf flip {
+      type boolean;
+      default false;
+    }
+  }
+  grouping node {
+    uses kos:element {
+      refine schema {
+        reference "kos:component";
+      }
+    }
+    container render {
+      uses kos:render;
     }
   }
   grouping flow {
-    uses kos:element;
+    uses kos:element {
+      refine schema {
+        reference "grouping";
+      }
+    }
+    leaf label {
+      type string;
+    }
     leaf mode {
       type kos:flow-mode;
     }

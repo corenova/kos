@@ -15,7 +15,9 @@ module kinetic-chrono {
       type chrono:event-name;
     }
     leaf delay {
-      type uint16;
+      type uint32 {
+        range 0..360000; // maximum alarm delay is 1 hour
+      }
       units ms;
       default 0;
     }

@@ -1,6 +1,6 @@
 {
   "name": "kos",
-  "version": "2.6.22",
+  "version": "2.6.23",
   "description": "Stream processing framework for creating distributed data pipelines and autonomic neural networks",
   "main": "index.js",
   "repository": {
@@ -72,7 +72,7 @@
   },
   "optionalDependencies": {
     "net-snmp": "^1.2.0",
-    "simple-websocket": "^5.0.0",
+    "simple-websocket": "^9.1.0",
     "superagent": "^4.1.0"
   },
   "devDependencies": {

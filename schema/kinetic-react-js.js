@@ -7,12 +7,15 @@ Schema.at('Component').bind({
   
   transform: (ctx, target) => {
     const lifecycle = {
-      componentWillMount:        "mounting",
+      // below deprecated react 17.x
+      // componentWillMount:        "mounting",
       componentDidMount:         "mounted",
       componentWillUnmount:      "unmounting",
-      componentWillUpdate:       "updating",
+      // below deprecated react 17.x
+      //componentWillUpdate:       "updating",
       componentDidUpdate:        "updated",
-      componentWillReceiveProps: "receive"
+      // below deprecated react 17.x
+      //componentWillReceiveProps: "receive"
     }
     const { props, state = {}, setState } = target;
     const propagate = prop => {
@@ -37,9 +40,10 @@ Schema.at('Component').bind({
       const f = target[event], state = lifecycle[event]
       target[event] = (...args) => {
         switch (state) {
-        case 'mounting':
-          ctx.on('update', propagate);
+        //case 'mounting':
+        //  ctx.on('update', propagate);
         case 'mounted':
+          ctx.on('update', propagate);
           active = true; break;
         case 'unmounting':
           ctx.off('update', propagate);

@@ -36,7 +36,7 @@ module kinetic-react-js {
    * Groupings
    */
   grouping component {
-    container state;
+    container kos;
     // action setState;
     // action componentWillMount;
     // action componentDidMount;

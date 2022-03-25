@@ -7,14 +7,12 @@ Schema.at('Component').bind({
   
   transform: (ctx, target) => {
     const lifecycle = {
-      // below deprecated react 17.x
-      // componentWillMount:        "mounting",
       componentDidMount:         "mounted",
       componentWillUnmount:      "unmounting",
-      // below deprecated react 17.x
-      //componentWillUpdate:       "updating",
       componentDidUpdate:        "updated",
       // below deprecated react 17.x
+      //componentWillMount:        "mounting",
+      //componentWillUpdate:       "updating",
       //componentWillReceiveProps: "receive"
     }
     const { props, state = {}, setState } = target;
@@ -24,10 +22,11 @@ Schema.at('Component').bind({
 
     ctx.merge(state, { suppress: true }); // update initial state
 
-    // override target to compute 'state' from ctx
-    Object.defineProperty(target, 'state', {
+    // --override target to compute 'state' from ctx
+    // attach 'kos' to the target component to access reactor instance
+    Object.defineProperty(target, 'kos', {
       configurable: true,
-      get: () => ctx.data,
+      get: () => ctx,
       set: () => undefined, // noop
     })
     
@@ -43,6 +42,8 @@ Schema.at('Component').bind({
         //case 'mounting':
         //  ctx.on('update', propagate);
         case 'mounted':
+          //if (ctx.data)
+          //  setState(ctx.data); // initialize from schema any defaults
           ctx.on('update', propagate);
           active = true; break;
         case 'unmounting':
@@ -74,6 +75,7 @@ Schema.at('Component').bind({
   },
   
   applyState: async (ctx, lifecycle, setter, state) => {
+    //console.warn('APPLY REACT STATE:', lifecycle.active, state);
     if (lifecycle.active) {
       setter(state);
     }

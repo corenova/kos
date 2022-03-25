@@ -39,11 +39,8 @@ Schema.at('Component').bind({
       const f = target[event], state = lifecycle[event]
       target[event] = (...args) => {
         switch (state) {
-        //case 'mounting':
-        //  ctx.on('update', propagate);
         case 'mounted':
-          //if (ctx.data)
-          //  setState(ctx.data); // initialize from schema any defaults
+          setState.call(target, ctx.data); // initialize from schema any defaults
           ctx.on('update', propagate);
           active = true; break;
         case 'unmounting':

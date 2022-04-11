@@ -17,7 +17,16 @@ Schema.at('Component').bind({
     }
     const { props, state = {}, setState } = target;
     const propagate = prop => {
-      prop.changed && ctx.send('react:state', prop.change);
+      // 3 options for dealing with diff vs full data
+      // 1. prop.data
+      // 2. prop.toJSON()
+      // 3. go through prop.changes and recompose only changed props
+      if (!prop.changed) return;
+      let diff = {}
+      for (const changedProp of prop.changes) {
+        Object.assign(diff, changedProp.toJSON(true)); 
+      }
+      ctx.send('react:state', diff);
     };
 
     ctx.merge(state, { suppress: true }); // update initial state

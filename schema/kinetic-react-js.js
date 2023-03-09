@@ -113,6 +113,16 @@ Schema.at('Form').bind({
     } catch (e) {
       target.classList.add('is-invalid');
       target.setCustomValidity(e.message);
+      // we still call setState on react component and update the value...
+      const keys = name.split('/');
+      let last, obj, root, k;
+      obj = root = ctx.data.toJSON() || {};
+      while ((k = keys.shift())) {
+        last = { root, k };
+        root = root[k] = root[k] || {};
+      }
+      last.root[last.k] = value;
+      ctx.send('react:state', obj);
     }
     target.reportValidity();
     

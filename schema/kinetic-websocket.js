@@ -25,9 +25,12 @@ Schema.at('Connector').bind({
 	}
 	if (typeof retry !== 'number') retry = 100
 	ctx.logDebug(`reconnecting to ${uri} in ${retry}ms...`, remote.query);
-	retry = await ctx.after(retry, max);
-	remote = Object.assign({}, remote, { uri: undefined, query: { retry } })
-	ctx.feed('ws:endpoint', remote)
+        let newRetry = await ctx.after(retry, max);
+        if (retry) { // ensure we do NOT retry connect when explicitly closed while we were awaiting
+          retry = newRetry
+	  remote = Object.assign({}, remote, { uri: undefined, query: { retry } })
+	  ctx.feed('ws:endpoint', remote)
+        }
       });
       socket.on('error', err => {
 	if (err === 'close') retry = 0;

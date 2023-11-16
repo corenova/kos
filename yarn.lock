@@ -2739,6 +2739,11 @@ locate-path@^3.0.0:
     p-locate "^3.0.0"
     path-exists "^3.0.0"
 
+lodash.clonedeep@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
+  integrity sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==
+
 lodash@^4.17.11, lodash@^4.17.13:
   version "4.17.15"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
@@ -4406,14 +4411,15 @@ yaml-loader@^0.5.0:
   dependencies:
     js-yaml "^3.5.2"
 
-yang-js@^0.24.65:
-  version "0.24.65"
-  resolved "https://registry.yarnpkg.com/yang-js/-/yang-js-0.24.65.tgz#b7379379b5f69716f83a064903e1a4b42a73bf6b"
-  integrity sha512-4+g2Go/DbsZLB7Ms92icF7J3Wn1+nrQ6pibAsN4LMbeuRwOigfaFQzp9rwRuSLuJ1CA5ovO623VhvKH7dpOgzQ==
+yang-js@^0.24.67:
+  version "0.24.67"
+  resolved "https://registry.yarnpkg.com/yang-js/-/yang-js-0.24.67.tgz#e0bb61853ef149040561758e3749ba36cfb2f849"
+  integrity sha512-yewcznD2WxOyCdCZXmLQAZEcf6O/C0PzFai5yrDza+fPxdThEDu8xz5pIrOl1HG3OxquERYgrOwmGRrHzJCyEw==
   dependencies:
     debug "^4.1.1"
     delegates "^1.0.0"
     indent-string "^2.1.0"
+    lodash.clonedeep "^4.5.0"
     stacktrace-parser "^0.1.4"
     xparse "^1.0.0"
     yang-parser "^0.2.1"

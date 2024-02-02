@@ -113,9 +113,11 @@ Schema.at('Form').bind({
       // will throw error if the $key does not exist (as side-effect)
       const keys = name.split('/');
       let node = ctx;
+      let next;
       while (node && keys.length) {
         const key = keys.shift();
-        const next = node.at(key);
+        try { next = node.at(key); }
+        catch (e) { console.warn(e.message); }
         if (!next || !keys.length) {
           node.merge(objectify([ key, ...keys ].join('/'), value));
           break;

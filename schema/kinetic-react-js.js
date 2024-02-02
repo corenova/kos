@@ -106,7 +106,22 @@ Schema.at('Form').bind({
       value = !!value ? value : undefined;
     }
     try {
-      ctx.merge(objectify(name, value));
+      // enhanced to handle list key named form targets
+      // name: some-list/$key/foo/bar
+      // value: 12345
+      // will iterate through all matching ctx.state
+      // will throw error if the $key does not exist (as side-effect)
+      const keys = name.split('/');
+      let target = ctx;
+      while (target && keys.length) {
+        const key = keys.shift();
+        const next = target.in(key);
+        if (!next) {
+          target.merge(objectify([ key, ...keys ].join('/'), value));
+          break;
+        }
+        target = next;
+      }
       if (value !== undefined)
         target.classList.add('is-valid');
       target.setCustomValidity('');

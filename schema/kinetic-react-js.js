@@ -112,15 +112,15 @@ Schema.at('Form').bind({
       // will iterate through all matching ctx.state
       // will throw error if the $key does not exist (as side-effect)
       const keys = name.split('/');
-      let target = ctx;
-      while (target && keys.length) {
+      let node = ctx;
+      while (node && keys.length) {
         const key = keys.shift();
-        const next = target.in(key);
-        if (!next) {
-          target.merge(objectify([ key, ...keys ].join('/'), value));
+        const next = node.at(key);
+        if (!next || !keys.length) {
+          node.merge(objectify([ key, ...keys ].join('/'), value));
           break;
         }
-        target = next;
+        node = next;
       }
       if (value !== undefined)
         target.classList.add('is-valid');

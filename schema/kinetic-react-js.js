@@ -117,7 +117,7 @@ Schema.at('Form').bind({
       while (node && keys.length) {
         const key = keys.shift();
         try { next = node.at(key); }
-        catch (e) { console.warn(e.message); }
+        catch (e) { next = null }
         if (!next || !keys.length) {
           node.merge(objectify([ key, ...keys ].join('/'), value));
           break;
